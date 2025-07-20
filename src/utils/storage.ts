@@ -1,10 +1,11 @@
-import type { Problem, Contest } from '@/types';
+import type { Problem, Contest, Todo } from '@/types';
 import ApiService from '@/services/api';
 
 const PROBLEMS_KEY = 'leetcode-cf-tracker-problems';
 const POTD_PROBLEMS_KEY = 'potd-problems';
 const COMPANY_PROBLEMS_KEY = 'company-problems';
 const CONTESTS_KEY = 'contests';
+const TODOS_KEY = 'todos';
 const OFFLINE_MODE_KEY = 'offline-mode';
 
 class StorageService {
@@ -349,6 +350,126 @@ class StorageService {
     }
   }
 
+  // Todo methods
+  static async getTodos(): Promise<Todo[]> {
+    if (this.isOfflineMode()) {
+      try {
+        const todos = localStorage.getItem(TODOS_KEY);
+        return todos ? JSON.parse(todos) : [];
+      } catch (error) {
+        console.error('Error parsing todos from storage:', error);
+        return [];
+      }
+    }
+
+    try {
+      const todos = await ApiService.getTodos();
+      // Cache for offline use
+      localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+      return todos;
+    } catch (error) {
+      console.error('Error fetching todos from API:', error);
+      // Fallback to localStorage if API fails
+      try {
+        const todos = localStorage.getItem(TODOS_KEY);
+        return todos ? JSON.parse(todos) : [];
+      } catch (storageError) {
+        console.error('Error parsing todos from storage:', storageError);
+        return [];
+      }
+    }
+  }
+
+  static async saveTodos(todos: Todo[]): Promise<void> {
+    try {
+      localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+    } catch (error) {
+      console.error('Error saving todos to storage:', error);
+      throw error;
+    }
+  }
+
+  static async addTodo(todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo> {
+    if (this.isOfflineMode()) {
+      // Only use localStorage in offline mode
+      const todos = await this.getTodos();
+
+      const newTodo: Todo = {
+        id: this.generateId(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        ...todoData,
+      };
+
+      todos.push(newTodo);
+      await this.saveTodos(todos);
+
+      return newTodo;
+    }
+
+    // When authenticated, always save to database
+    const newTodo = await ApiService.createTodo(todoData);
+
+    // Update local cache with the new todo from server
+    const todos = JSON.parse(localStorage.getItem(TODOS_KEY) || '[]') as Todo[];
+    todos.push(newTodo);
+    localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+
+    return newTodo;
+  }
+
+  static async updateTodo(id: string, updates: Partial<Todo>): Promise<Todo> {
+    if (this.isOfflineMode()) {
+      const todos = await this.getTodos();
+      const todoIndex = todos.findIndex(t => t.id === id);
+
+      if (todoIndex === -1) {
+        throw new Error('Todo not found');
+      }
+
+      const updatedTodo = {
+        ...todos[todoIndex],
+        ...updates,
+        updatedAt: new Date().toISOString()
+      };
+
+      todos[todoIndex] = updatedTodo;
+      await this.saveTodos(todos);
+
+      return updatedTodo;
+    }
+
+    // When authenticated, update in database
+    const updatedTodo = await ApiService.updateTodo(id, updates);
+
+    // Update local cache
+    const todos = JSON.parse(localStorage.getItem(TODOS_KEY) || '[]') as Todo[];
+    const todoIndex = todos.findIndex(t => t.id === id);
+    if (todoIndex !== -1) {
+      todos[todoIndex] = updatedTodo;
+      localStorage.setItem(TODOS_KEY, JSON.stringify(todos));
+    }
+
+    return updatedTodo;
+  }
+
+  static async deleteTodo(id: string): Promise<void> {
+    if (this.isOfflineMode()) {
+      const todos = await this.getTodos();
+      const filteredTodos = todos.filter(t => t.id !== id);
+      await this.saveTodos(filteredTodos);
+      return;
+    }
+
+    // When authenticated, delete from database
+    await ApiService.deleteTodo(id);
+
+    // Update local cache
+    const todos = JSON.parse(localStorage.getItem(TODOS_KEY) || '[]') as Todo[];
+    const filteredTodos = todos.filter(t => t.id !== id);
+    localStorage.setItem(TODOS_KEY, JSON.stringify(filteredTodos));
+  }
+
   private static async syncProblemsWithServer(): Promise<void> {
     try {
       console.log('🔄 Syncing problems with server...');
@@ -385,6 +506,24 @@ class StorageService {
 
     } catch (error) {
       console.error('Failed to sync contests with server:', error);
+      throw error;
+    }
+  }
+
+  private static async syncTodosWithServer(): Promise<void> {
+    try {
+      console.log('🔄 Syncing todos with server...');
+
+      // Get server todos
+      const serverTodos = await ApiService.getTodos();
+
+      // Update local cache
+      localStorage.setItem(TODOS_KEY, JSON.stringify(serverTodos));
+
+      console.log(`✅ Synced ${serverTodos.length} todos from server`);
+
+    } catch (error) {
+      console.error('Failed to sync todos with server:', error);
       throw error;
     }
   }
