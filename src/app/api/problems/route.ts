@@ -113,7 +113,8 @@ export async function POST(request: NextRequest) {
       nextReviewDate: problemData.nextReviewDate || null,
       topics: problemData.topics || [],
       status: problemData.status || 'active',
-      companies: problemData.companies || []
+      companies: problemData.companies || [],
+      source: problemData.source || 'manual'
     });
 
     await problem.save();
@@ -134,7 +135,8 @@ export async function POST(request: NextRequest) {
       nextReviewDate: problem.nextReviewDate,
       topics: problem.topics,
       status: problem.status,
-      companies: problem.companies
+      companies: problem.companies,
+      source: problem.source || 'manual'
     };
 
     return NextResponse.json({

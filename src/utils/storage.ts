@@ -182,8 +182,8 @@ class StorageService {
       const newProblem: Problem = {
         id: this.generateId(),
         createdAt: new Date().toISOString(),
-        source: 'manual', // Default to manual for user-added problems
         ...problemData,
+        source: problemData.source || 'manual', // Preserve provided source, default to manual
       };
 
       problems.push(newProblem);

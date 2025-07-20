@@ -410,6 +410,10 @@ export default function HomePage() {
   const handleImportProblems = async (companyName: string, problemsToImport: any[]) => {
     try {
       const newProblems: Problem[] = [];
+      const duplicateProblems: string[] = [];
+      const failedProblems: string[] = [];
+
+      console.log(`Starting import of ${problemsToImport.length} problems from ${companyName}`);
 
       // Create problems one by one using the API (which handles user association)
       for (const problem of problemsToImport) {
@@ -434,9 +438,16 @@ export default function HomePage() {
         try {
           const createdProblem = await StorageService.addProblem(problemData);
           newProblems.push(createdProblem);
-        } catch (error) {
+          console.log(`✅ Imported: ${problem.title} with source: ${createdProblem.source}`);
+        } catch (error: any) {
           console.warn(`Failed to import problem: ${problem.title}`, error);
-          // Continue with other problems even if one fails
+
+          // Check if it's a duplicate error
+          if (error.message && error.message.includes('already exists')) {
+            duplicateProblems.push(problem.title);
+          } else {
+            failedProblems.push(problem.title);
+          }
         }
       }
 
@@ -444,7 +455,28 @@ export default function HomePage() {
       const refreshedProblems = await StorageService.getProblems();
       setProblems(refreshedProblems);
 
-      toast.success(`Successfully imported ${newProblems.length} problems from ${companyName}! Check the Companies tab to see them organized.`);
+      // Provide detailed feedback
+      let message = '';
+      if (newProblems.length > 0) {
+        message += `Successfully imported ${newProblems.length} new problems from ${companyName}!`;
+      }
+      if (duplicateProblems.length > 0) {
+        message += ` ${duplicateProblems.length} problems were already imported.`;
+      }
+      if (failedProblems.length > 0) {
+        message += ` ${failedProblems.length} problems failed to import.`;
+      }
+
+      if (newProblems.length > 0) {
+        message += ' Check the Companies tab to see them organized.';
+        toast.success(message);
+      } else if (duplicateProblems.length > 0) {
+        toast.info(message);
+      } else {
+        toast.error(message || 'No problems were imported.');
+      }
+
+      console.log(`Import completed: ${newProblems.length} new, ${duplicateProblems.length} duplicates, ${failedProblems.length} failed`);
     } catch (error) {
       console.error('Failed to import problems:', error);
       toast.error('Failed to import problems');
