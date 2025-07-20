@@ -47,15 +47,44 @@ export default function HomePage() {
 
   const loadData = async () => {
     try {
-      const authenticated = ApiService.isAuthenticated();
+      // Check authentication status more reliably
+      const authenticated = await ApiService.checkAuthStatus();
       setIsAuthenticated(authenticated);
 
+      // If authenticated, try to get user profile
+      if (authenticated) {
+        try {
+          const userProfile = await ApiService.getProfile();
+          setCurrentUser(userProfile);
+        } catch (error) {
+          console.error('Failed to get user profile:', error);
+        }
+      }
+
       // Load data (will use API if authenticated, localStorage if offline)
-      const [problemsData, potdData, contestsData] = await Promise.all([
-        StorageService.getProblems(),
-        StorageService.getPotdProblems(),
-        StorageService.getContests()
-      ]);
+      let problemsData: Problem[] = [];
+      let potdData: Problem[] = [];
+      let contestsData: Contest[] = [];
+
+      try {
+        [problemsData, potdData, contestsData] = await Promise.all([
+          StorageService.getProblems(),
+          StorageService.getPotdProblems(),
+          StorageService.getContests()
+        ]);
+      } catch (error) {
+        console.error('Error loading data:', error);
+        // If API calls fail due to authentication, show login modal
+        if (error instanceof Error && error.message.includes('Access token required')) {
+          setIsAuthenticated(false);
+          setShowAuthModal(true);
+          toast.error('Please log in to access your data');
+        }
+        // Use empty arrays as fallback
+        problemsData = [];
+        potdData = [];
+        contestsData = [];
+      }
 
       // Clean up any invalid dates before setting state
       const cleanedProblems = cleanupInvalidDates(problemsData);
@@ -92,17 +121,28 @@ export default function HomePage() {
 
   const handleAddProblem = async (problem: Omit<Problem, 'id' | 'createdAt'>) => {
     try {
-      // Use the API to create the problem (which handles user association)
-      await StorageService.addProblem(problem);
+      if (!isAuthenticated) {
+        toast.error('Please log in to add problems');
+        setShowAuthModal(true);
+        return;
+      }
 
-      // Refresh the problems list from the server to get the latest data
-      const refreshedProblems = await StorageService.getProblems();
-      setProblems(refreshedProblems);
+      // Create the problem via API (which handles user association)
+      const newProblem = await StorageService.addProblem(problem);
+
+      // Add to local state immediately for better UX
+      setProblems(prevProblems => [newProblem, ...prevProblems]);
 
       toast.success('Problem added successfully!');
     } catch (error) {
       console.error('Failed to add problem:', error);
-      toast.error('Failed to add problem');
+      if (error instanceof Error && error.message.includes('Access token required')) {
+        setIsAuthenticated(false);
+        setShowAuthModal(true);
+        toast.error('Please log in to add problems');
+      } else {
+        toast.error('Failed to add problem. Please try again.');
+      }
     }
   };
   const handleUpdateProblem = async (updatedProblem: Problem) => {
@@ -406,11 +446,18 @@ export default function HomePage() {
                       <SettingsIcon className="h-4 w-4 mr-2" />
                       Settings
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => {
-                      ApiService.logout();
-                      setIsAuthenticated(false);
-                      setCurrentUser(null);
-                      toast.success('Logged out successfully');
+                    <DropdownMenuItem onClick={async () => {
+                      try {
+                        await ApiService.logout();
+                        setIsAuthenticated(false);
+                        setCurrentUser(null);
+                        toast.success('Logged out successfully');
+                        // Reload data to clear user-specific content
+                        loadData();
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                        toast.error('Logout failed');
+                      }
                     }}>
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout

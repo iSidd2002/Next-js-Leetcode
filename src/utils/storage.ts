@@ -10,11 +10,22 @@ const OFFLINE_MODE_KEY = 'offline-mode';
 class StorageService {
   private static isOfflineMode(): boolean {
     try {
-      return localStorage.getItem(OFFLINE_MODE_KEY) === 'true' || !ApiService.isAuthenticated();
+      // Only consider offline if explicitly set to offline mode
+      // Don't rely on ApiService.isAuthenticated() here as it might be unreliable during startup
+      return localStorage.getItem(OFFLINE_MODE_KEY) === 'true';
     } catch (error) {
       console.error('Error accessing localStorage for offline mode:', error);
-      // Default to offline mode if localStorage is not accessible
-      return true;
+      // Default to online mode if localStorage is not accessible
+      return false;
+    }
+  }
+
+  static getOfflineMode(): boolean {
+    try {
+      return localStorage.getItem(OFFLINE_MODE_KEY) === 'true';
+    } catch (error) {
+      console.error('Error accessing localStorage for offline mode:', error);
+      return false;
     }
   }
 
@@ -35,8 +46,12 @@ class StorageService {
       localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
       return problems;
     } catch (error) {
-      console.error('Error fetching problems from API, falling back to local storage:', error);
-      // Fallback to local storage
+      console.error('Error fetching problems from API:', error);
+      // If it's an authentication error, don't fallback to localStorage
+      if (error instanceof Error && error.message.includes('Access token required')) {
+        throw error; // Re-throw authentication errors
+      }
+      // For other errors, fallback to local storage
       const problems = localStorage.getItem(PROBLEMS_KEY);
       return problems ? JSON.parse(problems) : [];
     }
@@ -85,8 +100,12 @@ class StorageService {
       localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
       return contests;
     } catch (error) {
-      console.error('Error fetching contests from API, falling back to local storage:', error);
-      // Fallback to local storage
+      console.error('Error fetching contests from API:', error);
+      // If it's an authentication error, don't fallback to localStorage
+      if (error instanceof Error && error.message.includes('Access token required')) {
+        throw error; // Re-throw authentication errors
+      }
+      // For other errors, fallback to local storage
       const contests = localStorage.getItem(CONTESTS_KEY);
       return contests ? JSON.parse(contests) : [];
     }
@@ -155,6 +174,7 @@ class StorageService {
 
   static async addProblem(problemData: Omit<Problem, 'id' | 'createdAt'>): Promise<Problem> {
     if (this.isOfflineMode()) {
+      // Only use localStorage in offline mode
       const problems = await this.getProblems();
 
       const newProblem: Problem = {
@@ -169,33 +189,15 @@ class StorageService {
       return newProblem;
     }
 
-    try {
-      // Add id field for API compatibility
-      const problemWithId = { ...problemData, id: crypto.randomUUID() };
-      const newProblem = await ApiService.createProblem(problemWithId);
+    // When authenticated, always save to database
+    const newProblem = await ApiService.createProblem(problemData);
 
-      // Update local cache with the new problem from server
-      const problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY) || '[]') as Problem[];
-      problems.push(newProblem);
-      localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+    // Update local cache with the new problem from server
+    const problems = JSON.parse(localStorage.getItem(PROBLEMS_KEY) || '[]') as Problem[];
+    problems.push(newProblem);
+    localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
 
-      return newProblem;
-    } catch (error) {
-      console.error('Error creating problem via API, falling back to local storage:', error);
-      // Fallback to local storage
-      const problems = await this.getProblems();
-
-      const newProblem: Problem = {
-        id: this.generateId(),
-        createdAt: new Date().toISOString(),
-        ...problemData,
-      };
-
-      problems.push(newProblem);
-      await this.saveProblems(problems);
-
-      return newProblem;
-    }
+    return newProblem;
   }
 
   static async updateProblem(id: string, updates: Partial<Problem>): Promise<Problem | null> {

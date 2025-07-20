@@ -43,6 +43,12 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
     try {
       await ApiService.login(loginForm.email, loginForm.password);
+
+      // Clean up old localStorage token if it exists
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-token');
+      }
+
       toast.success('Login successful!');
       onAuthSuccess();
       onOpenChange(false);
@@ -75,10 +81,16 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
     try {
       await ApiService.register(registerForm.email, registerForm.username, registerForm.password);
+
+      // Clean up old localStorage token if it exists
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('auth-token');
+      }
+
       toast.success('Registration successful!');
       onAuthSuccess();
       onOpenChange(false);
-      
+
       // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
     } catch (error) {
@@ -95,6 +107,17 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     onAuthSuccess();
   };
 
+  const handleLogout = async () => {
+    try {
+      await ApiService.logout();
+      toast.success('Logged out successfully!');
+      onAuthSuccess(); // Refresh the app state
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Logout failed');
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
@@ -107,6 +130,15 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
           </DialogTitle>
           <DialogDescription className="text-base">
             Sign in to sync your progress across devices or continue offline to get started locally.
+            {/* Show upgrade message if user has localStorage data but no cookies */}
+            {typeof window !== 'undefined' && (
+              localStorage.getItem('auth-token') ||
+              localStorage.getItem('leetcode-cf-tracker-problems')
+            ) && !document.cookie.includes('auth-token=') && (
+              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
+                <strong>Authentication Upgrade:</strong> We've upgraded to a more secure authentication system. Please log in again to access your synced data.
+              </div>
+            )}
           </DialogDescription>
         </DialogHeader>
 

@@ -89,10 +89,10 @@ export async function POST(request: NextRequest) {
     const problemData = await request.json();
 
     // Validation
-    if (!problemData.title || !problemData.url || !problemData.platform) {
+    if (!problemData.title || !problemData.platform) {
       return NextResponse.json({
         success: false,
-        error: 'Title, URL, and platform are required'
+        error: 'Title and platform are required'
       }, { status: 400 });
     }
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
       title: problemData.title,
       problemId: problemData.problemId || '',
       difficulty: problemData.difficulty || '',
-      url: problemData.url,
+      url: problemData.url || '',
       dateSolved: problemData.dateSolved || new Date().toISOString(),
       createdAt: new Date().toISOString(),
       notes: problemData.notes || '',
