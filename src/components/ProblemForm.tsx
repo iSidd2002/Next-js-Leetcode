@@ -89,23 +89,23 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim() || !formData.difficulty.trim()) {
-      // toast.error('Please fill in required fields'); // Removed toast import
+      alert('Please fill in the title and difficulty fields');
       return;
     }
 
     const problemData = {
       ...formData,
+      title: formData.title.trim(),
       problemId: formData.title.trim().toLowerCase().replace(/\s+/g, '-'),
+      url: formData.url.trim() || '', // Ensure URL is always a string
     };
 
     if (problemToEdit) {
       onUpdateProblem(problemToEdit.id, problemData);
-      // toast.success('Problem updated successfully!'); // Removed toast import
     } else {
       onAddProblem(problemData);
-      // toast.success('Problem added successfully!'); // Removed toast import
     }
-    
+
     onOpenChange(false);
   };
 

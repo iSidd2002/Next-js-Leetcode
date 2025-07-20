@@ -12,6 +12,7 @@ const PROTECTED_API_ROUTES = [
 const PUBLIC_API_ROUTES = [
   '/api/auth/login',
   '/api/auth/register',
+  '/api/auth/logout',
   '/api/potd',
   '/api/companies'
 ];
@@ -44,17 +45,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Extract and verify JWT token
-  const authHeader = request.headers.get('authorization');
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  // Extract JWT token from cookies
+  const token = request.cookies.get('auth-token')?.value;
+
+  if (!token) {
     return NextResponse.json(
       { success: false, error: 'Access token required' },
       { status: 401 }
     );
   }
-
-  const token = authHeader.substring(7);
   
   try {
     const payload = verifyToken(token);

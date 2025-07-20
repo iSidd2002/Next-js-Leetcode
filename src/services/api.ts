@@ -5,31 +5,23 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   : '/api';
 
 class ApiService {
-  private static token: string | null = null;
-
-  static setToken(token: string | null) {
-    this.token = token;
-    if (typeof window !== 'undefined') {
-      if (token) {
-        localStorage.setItem('auth-token', token);
-      } else {
-        localStorage.removeItem('auth-token');
-      }
-    }
-  }
-
-  static getToken(): string | null {
-    if (this.token) return this.token;
-    
-    if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('auth-token');
-    }
-    
-    return this.token;
-  }
-
   static isAuthenticated(): boolean {
-    return !!this.getToken();
+    // Check if we have auth cookies
+    if (typeof window !== 'undefined') {
+      const cookies = document.cookie.split(';');
+      return cookies.some(cookie => cookie.trim().startsWith('auth-token=') && cookie.trim().length > 'auth-token='.length);
+    }
+    return false;
+  }
+
+  // More reliable authentication check by making an API call
+  static async checkAuthStatus(): Promise<boolean> {
+    try {
+      await this.getProfile();
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 
   private static async request<T>(
@@ -37,14 +29,13 @@ class ApiService {
     options: RequestInit = {}
   ): Promise<ApiResponse<T>> {
     const url = `${API_BASE_URL}${endpoint}`;
-    const token = this.getToken();
 
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
+      credentials: 'include', // Include cookies in requests
       ...options,
     };
 
@@ -69,11 +60,7 @@ class ApiService {
       method: 'POST',
       body: JSON.stringify({ email, username, password }),
     });
-    
-    if (response.success && response.data) {
-      this.setToken(response.data.token);
-    }
-    
+
     return response.data!;
   }
 
@@ -83,10 +70,6 @@ class ApiService {
       body: JSON.stringify({ email, password }),
     });
 
-    if (response.success && response.data) {
-      this.setToken(response.data.token);
-    }
-
     return response.data!;
   }
 
@@ -95,8 +78,10 @@ class ApiService {
     return response.data!;
   }
 
-  static logout() {
-    this.setToken(null);
+  static async logout(): Promise<void> {
+    await this.request('/auth/logout', {
+      method: 'POST',
+    });
   }
 
   // Problem methods
@@ -123,9 +108,27 @@ class ApiService {
   }
 
   static async createProblem(problem: Omit<Problem, 'id' | 'createdAt'>): Promise<Problem> {
+    // Clean the problem data to only include necessary fields
+    const cleanProblem = {
+      platform: problem.platform,
+      title: problem.title,
+      problemId: problem.problemId || problem.title.toLowerCase().replace(/\s+/g, '-'),
+      difficulty: problem.difficulty,
+      url: problem.url || '', // Ensure URL is always provided, even if empty
+      dateSolved: problem.dateSolved,
+      notes: problem.notes || '',
+      isReview: problem.isReview || false,
+      repetition: problem.repetition || 0,
+      interval: problem.interval || 0,
+      nextReviewDate: problem.nextReviewDate,
+      topics: problem.topics || [],
+      status: problem.status || 'active',
+      companies: problem.companies || []
+    };
+
     const response = await this.request<Problem>('/problems', {
       method: 'POST',
-      body: JSON.stringify(problem),
+      body: JSON.stringify(cleanProblem),
     });
     return response.data!;
   }

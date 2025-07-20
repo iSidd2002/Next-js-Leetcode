@@ -29,6 +29,13 @@ export function verifyToken(token: string): JWTPayload {
 }
 
 export function getTokenFromRequest(request: NextRequest): string | null {
+  // First try to get token from cookies
+  const cookieToken = request.cookies.get('auth-token')?.value;
+  if (cookieToken) {
+    return cookieToken;
+  }
+
+  // Fallback to Authorization header for backward compatibility
   const authHeader = request.headers.get('authorization');
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return null;
