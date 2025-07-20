@@ -8,16 +8,19 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { 
-  ChevronDown, 
-  ChevronRight, 
-  Building2, 
-  Users, 
+import {
+  ChevronDown,
+  ChevronRight,
+  Building2,
+  Users,
   CheckCircle,
   Clock,
-  Star
+  Star,
+  Download,
+  Plus
 } from 'lucide-react';
 import ProblemList from './ProblemList';
+import ImportProblems from './ImportProblems';
 
 interface CompanyGroupedProblemListProps {
   problems: Problem[];
@@ -53,6 +56,7 @@ const CompanyGroupedProblemList = ({
 }: CompanyGroupedProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedCompanies, setExpandedCompanies] = useState<Set<string>>(new Set());
+  const [isImporting, setIsImporting] = useState(false);
 
   // Group problems by company
   const groupProblemsByCompany = (): CompanyGroup[] => {
@@ -141,18 +145,26 @@ const CompanyGroupedProblemList = ({
       <div className="flex flex-col space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-2xl font-bold tracking-tight">{title}</h2>
-          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-            <div className="flex items-center space-x-1">
-              <Building2 className="h-4 w-4" />
-              <span>{totalCompanies} companies</span>
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+              <div className="flex items-center space-x-1">
+                <Building2 className="h-4 w-4" />
+                <span>{totalCompanies} companies</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Users className="h-4 w-4" />
+                <span>{totalProblems} problems</span>
+              </div>
             </div>
-            <div className="flex items-center space-x-1">
-              <Users className="h-4 w-4" />
-              <span>{totalProblems} problems</span>
-            </div>
+            {onImportProblems && (
+              <Button onClick={() => setIsImporting(true)} size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Import Problems
+              </Button>
+            )}
           </div>
         </div>
-        
+
         <Input
           placeholder="Search problems by title, topic, or company..."
           value={searchTerm}
@@ -245,6 +257,15 @@ const CompanyGroupedProblemList = ({
           </Card>
         )}
       </div>
+
+      {/* Import Problems Dialog */}
+      {onImportProblems && (
+        <ImportProblems
+          open={isImporting}
+          onOpenChange={setIsImporting}
+          onImport={onImportProblems}
+        />
+      )}
     </div>
   );
 };

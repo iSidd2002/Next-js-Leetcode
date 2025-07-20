@@ -133,7 +133,8 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
           interval: 0, // No spaced repetition interval
           nextReviewDate: null, // No review scheduled
           dateSolved: '', // Empty = not solved yet
-          createdAt: new Date().toISOString() // When imported
+          createdAt: new Date().toISOString(), // When imported
+          source: 'company' as const // Mark as company-imported problem
         };
       });
 
