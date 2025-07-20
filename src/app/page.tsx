@@ -59,8 +59,16 @@ export default function HomePage() {
         try {
           const userProfile = await ApiService.getProfile();
           setCurrentUser(userProfile);
-        } catch (error) {
+        } catch (error: any) {
           console.error('Failed to get user profile:', error);
+
+          // If user not found, clear auth state and set as unauthenticated
+          if (error.message === 'User not found' || error.status === 404) {
+            console.log('User profile not found, clearing authentication state');
+            setIsAuthenticated(false);
+            setCurrentUser(null);
+            ApiService.clearAuthState();
+          }
         }
       }
 

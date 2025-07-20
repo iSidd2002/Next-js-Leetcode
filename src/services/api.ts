@@ -19,7 +19,19 @@ class ApiService {
     try {
       await this.getProfile();
       return true;
-    } catch (error) {
+    } catch (error: any) {
+      // Log the specific error for debugging
+      console.log('Auth check failed:', error.message);
+
+      // If it's a "User not found" error, clear any stale tokens
+      if (error.message === 'User not found' || error.status === 404) {
+        console.log('User not found in database, clearing stale authentication');
+        // Only clear auth state in browser environment
+        if (typeof window !== 'undefined') {
+          this.clearAuthState();
+        }
+      }
+
       return false;
     }
   }
@@ -85,6 +97,19 @@ class ApiService {
     await this.request('/auth/logout', {
       method: 'POST',
     });
+  }
+
+  // Clear authentication state (useful for handling stale tokens)
+  static clearAuthState(): void {
+    // Only run in browser environment
+    if (typeof window === 'undefined') return;
+
+    // Clear auth cookie
+    document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+
+    // Clear any localStorage auth data if present
+    localStorage.removeItem('auth-token');
+    localStorage.removeItem('user');
   }
 
   // Problem methods
