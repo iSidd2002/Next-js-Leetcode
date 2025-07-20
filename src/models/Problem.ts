@@ -24,8 +24,8 @@ const ProblemSchema = new Schema<IProblem>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
+    // Note: Index created by compound indexes below, no need for individual index
   },
   platform: {
     type: String,

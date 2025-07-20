@@ -20,8 +20,8 @@ const ContestSchema = new Schema<IContest>({
   userId: {
     type: Schema.Types.ObjectId,
     ref: 'User',
-    required: true,
-    index: true
+    required: true
+    // Note: Index created by compound indexes below, no need for individual index
   },
   name: {
     type: String,
