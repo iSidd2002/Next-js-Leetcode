@@ -4,10 +4,13 @@ import { useState } from 'react';
 import type { Contest } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { fetchContests } from '@/utils/contestFetcher';
 import ContestList from './ContestList';
 import ContestForm from './ContestForm';
+import AllContestsList from './AllContestsList';
 import { toast } from 'sonner';
+import { Globe, Plus, RefreshCw } from 'lucide-react';
 
 interface ContestTrackerProps {
   contests: Contest[];
@@ -20,6 +23,7 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
   const [isFetching, setIsFetching] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [contestToEdit, setContestToEdit] = useState<Contest | null>(null);
+  const [showAllContests, setShowAllContests] = useState(false);
 
   const handleFetchContests = async () => {
     setIsFetching(true);
@@ -74,10 +78,28 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
             {contests.length} contests tracked
           </p>
           <div className="flex space-x-2">
-            <Button onClick={handleFetchContests} disabled={isFetching}>
-              {isFetching ? 'Fetching...' : 'Fetch Upcoming Contests'}
+            <Button onClick={handleFetchContests} disabled={isFetching} variant="outline">
+              <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? 'Fetching...' : 'Fetch Upcoming'}
             </Button>
-            <Button onClick={() => handleOpenForm()}>Add Contest</Button>
+            <Dialog open={showAllContests} onOpenChange={setShowAllContests}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Globe className="h-4 w-4 mr-2" />
+                  All Contests
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>All Contests from Every Platform</DialogTitle>
+                </DialogHeader>
+                <AllContestsList />
+              </DialogContent>
+            </Dialog>
+            <Button onClick={() => handleOpenForm()}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Contest
+            </Button>
           </div>
         </div>
       </CardHeader>
