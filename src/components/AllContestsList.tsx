@@ -222,21 +222,21 @@ const AllContestsList = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
         <div>
-          <h2 className="text-2xl font-bold">All Contests</h2>
-          <p className="text-muted-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold">All Contests</h2>
+          <p className="text-sm sm:text-base text-muted-foreground">
             {contests.summary.total} contests from {contests.summary.platforms.length} platforms
           </p>
         </div>
-        <Button onClick={fetchAllContests} disabled={loading}>
-          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-          Refresh
+        <Button onClick={fetchAllContests} disabled={loading} size="sm">
+          <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
+          <span className="hidden sm:inline">Refresh</span>
         </Button>
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
@@ -284,8 +284,8 @@ const AllContestsList = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex gap-4 flex-wrap">
-        <div className="flex-1 min-w-[200px]">
+      <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex-1">
           <Input
             placeholder="Search contests, platforms, or types..."
             value={searchTerm}
@@ -296,7 +296,7 @@ const AllContestsList = () => {
         <select
           value={selectedPlatform}
           onChange={(e) => setSelectedPlatform(e.target.value)}
-          className="px-3 py-2 border rounded-md bg-background"
+          className="px-3 py-2 border rounded-md bg-background text-sm"
         >
           <option value="all">All Platforms</option>
           {contests.summary.platforms.map(platform => (
@@ -320,7 +320,7 @@ const AllContestsList = () => {
         </TabsList>
 
         <TabsContent value="upcoming" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filterContests(contests.categorized.upcoming).map(contest => (
               <ContestCard key={contest.id} contest={contest} />
             ))}
@@ -333,7 +333,7 @@ const AllContestsList = () => {
         </TabsContent>
 
         <TabsContent value="running" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filterContests(contests.categorized.running).map(contest => (
               <ContestCard key={contest.id} contest={contest} />
             ))}
@@ -346,7 +346,7 @@ const AllContestsList = () => {
         </TabsContent>
 
         <TabsContent value="recent" className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
             {filterContests(contests.categorized.recent).map(contest => (
               <ContestCard key={contest.id} contest={contest} />
             ))}

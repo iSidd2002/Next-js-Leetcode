@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import type { Problem } from '@/types';
 import { formatDate } from '@/utils/dateMigration';
+import { format } from 'date-fns';
 import { Input } from '@/components/ui/input';
 import {
   Table,
@@ -20,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,14 +135,14 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                         )}
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <div className="w-full sm:w-80">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                    <div className="flex-1 min-w-0">
                         <Input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search problems..."
-                            className="bg-background"
+                            className="bg-background w-full"
                         />
                     </div>
                     {/* Clear All Button - only show for non-review lists and when there are problems */}
@@ -151,10 +152,11 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                                 <Button
                                     variant="destructive"
                                     size="sm"
-                                    className="whitespace-nowrap"
+                                    className="whitespace-nowrap shrink-0"
                                 >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Clear All
+                                    <Trash2 className="h-4 w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Clear All</span>
+                                    <span className="sm:hidden">Clear</span>
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -185,7 +187,97 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
             </div>
         </CardHeader>
       <CardContent>
-        <div className="rounded-md border">
+        {/* Mobile Card Layout */}
+        <div className="block md:hidden space-y-3 mb-6">
+          {filteredProblems.length > 0 ? (
+            filteredProblems.map((problem) => (
+              <div key={problem.id} className={`border rounded-lg p-4 ${isDueForReview(problem) ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'bg-card'}`}>
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      {problem.url ? (
+                        <a href={problem.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:underline flex items-center gap-1 truncate">
+                          {problem.title}
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                        </a>
+                      ) : (
+                        <span className="font-medium text-sm truncate">{problem.title}</span>
+                      )}
+                      {problem.isReview && <Star className={`h-4 w-4 shrink-0 ${isDueForReview(problem) ? 'text-blue-500' : 'text-yellow-500'}`} />}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'} className="text-xs">
+                        {problem.platform === 'leetcode' ? 'LeetCode' : 'CodeForces'}
+                      </Badge>
+                      <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
+                        {problem.difficulty}
+                      </Badge>
+                      <Badge variant={problem.status === 'learned' ? 'default' : 'secondary'} className="text-xs">
+                        {problem.status === 'learned' ? 'Learned' : 'Active'}
+                      </Badge>
+                    </div>
+
+                    {problem.topics && problem.topics.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-2">
+                        {problem.topics.slice(0, 3).map(topic => (
+                          <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>
+                        ))}
+                        {problem.topics.length > 3 && (
+                          <Badge variant="secondary" className="text-xs">+{problem.topics.length - 3}</Badge>
+                        )}
+                      </div>
+                    )}
+
+                    {problem.dateSolved && (
+                      <p className="text-xs text-muted-foreground">
+                        Solved: {format(new Date(problem.dateSolved), 'MMM dd, yyyy')}
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 ml-2">
+                    <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => onDeleteProblem(problem.id)} className="h-8 w-8 text-destructive">
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+
+                {problem.notes && (
+                  <div className="mt-3 pt-3 border-t">
+                    <p className="text-xs text-muted-foreground">{problem.notes}</p>
+                  </div>
+                )}
+
+                {isReviewList && (
+                  <div className="mt-3 pt-3 border-t flex gap-2">
+                    <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} className="flex-1 text-xs">
+                      <CheckCircle className="h-3 w-3 mr-1" />
+                      Easy
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 3)} className="flex-1 text-xs">
+                      Good
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 1)} className="flex-1 text-xs">
+                      Hard
+                    </Button>
+                  </div>
+                )}
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-50" />
+              <p>No problems found matching your search.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Desktop Table Layout */}
+        <div className="rounded-md border hidden md:block">
           <Table>
             <TableHeader>
               <TableRow>

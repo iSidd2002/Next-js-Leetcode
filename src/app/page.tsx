@@ -519,27 +519,27 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans antialiased">
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
+        <div className="container mx-auto px-2 sm:px-4">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-lg">LC</span>
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white font-bold text-sm sm:text-lg">LC</span>
                 </div>
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                   LeetCode Tracker
                 </h1>
-                <p className="text-xs text-muted-foreground">Master coding problems</p>
+                <p className="text-xs text-muted-foreground hidden sm:block">Master coding problems</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1 sm:space-x-2">
               {isAuthenticated && (
-                <div className="hidden sm:flex items-center space-x-2 mr-4">
-                  <div className="flex items-center space-x-1 px-3 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
+                <div className="hidden md:flex items-center space-x-2 mr-2 sm:mr-4">
+                  <div className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
                     <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                     <span className="text-xs font-medium text-green-700 dark:text-green-400">Online</span>
                   </div>
@@ -547,7 +547,7 @@ export default function HomePage() {
                     variant="outline"
                     size="sm"
                     onClick={() => handleOpenForm()}
-                    className="hidden sm:flex"
+                    className="hidden lg:flex"
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Problem
@@ -559,9 +559,9 @@ export default function HomePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                className="rounded-full"
+                className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
               >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                {theme === 'light' ? <Moon className="h-4 w-4 sm:h-5 sm:w-5" /> : <Sun className="h-4 w-4 sm:h-5 sm:w-5" />}
               </Button>
 
               {isAuthenticated ? (
@@ -612,15 +612,15 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <ClientOnly>
-          <Tabs defaultValue="dashboard" className="space-y-6">
-          <div className="flex flex-col space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
+          <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col space-y-3 sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
             <div className="space-y-1">
-              <h1 className="text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
                 Problem Tracker
               </h1>
-              <p className="text-muted-foreground">
+              <p className="text-sm sm:text-base text-muted-foreground">
                 Track your coding journey across LeetCode, CodeForces & more
               </p>
             </div>
@@ -629,88 +629,86 @@ export default function HomePage() {
               {isAuthenticated && (
                 <Button
                   onClick={() => handleOpenForm()}
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 sm:hidden"
+                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 md:hidden"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Add
+                  Add Problem
                 </Button>
               )}
             </div>
           </div>
 
-          <div className="border-b">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 h-auto p-1 bg-muted/50">
-              <TabsTrigger value="dashboard" className="flex-col h-16 lg:h-10 lg:flex-row">
-                <HomeIcon className="h-4 w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm">Dashboard</span>
+          <div className="border-b overflow-x-auto">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
+              <TabsTrigger value="dashboard" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
               </TabsTrigger>
 
-              <TabsTrigger value="companies" className="flex-col h-16 lg:h-10 lg:flex-row">
-                <Building2 className="h-4 w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm">Companies</span>
+              <TabsTrigger value="companies" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Companies</span>
               </TabsTrigger>
 
-
-
-              <TabsTrigger value="potd" className="flex-col h-16 lg:h-10 lg:flex-row relative">
-                <Star className="h-4 w-4 lg:mr-2 text-yellow-500" />
-                <span className="text-xs lg:text-sm">POTD</span>
+              <TabsTrigger value="potd" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-yellow-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">POTD</span>
                 {potdProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
                     {potdProblems.length}
                   </Badge>
                 )}
               </TabsTrigger>
 
-              <TabsTrigger value="contests" className="flex-col h-16 lg:h-10 lg:flex-row">
-                <Trophy className="h-4 w-4 lg:mr-2 text-amber-500" />
-                <span className="text-xs lg:text-sm">Contests</span>
+              <TabsTrigger value="contests" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-amber-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Contests</span>
               </TabsTrigger>
 
-              <TabsTrigger value="todos" className="flex-col h-16 lg:h-10 lg:flex-row relative">
-                <CheckSquare className="h-4 w-4 lg:mr-2 text-purple-500" />
-                <span className="text-xs lg:text-sm">Todos</span>
+              <TabsTrigger value="todos" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-purple-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Todos</span>
                 {todos.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
                     {todos.length}
                   </Badge>
                 )}
               </TabsTrigger>
 
-              <TabsTrigger value="problems" className="flex-col h-16 lg:h-10 lg:flex-row relative">
-                <List className="h-4 w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm">Problems</span>
+              <TabsTrigger value="problems" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+                <List className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Problems</span>
                 {activeProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
                     {activeProblems.length}
                   </Badge>
                 )}
               </TabsTrigger>
 
-              <TabsTrigger value="review" className="flex-col h-16 lg:h-10 lg:flex-row relative">
-                <History className="h-4 w-4 lg:mr-2 text-orange-500" />
-                <span className="text-xs lg:text-sm">Review</span>
+              <TabsTrigger value="review" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+                <History className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-orange-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Review</span>
                 {reviewProblems.length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
                     {reviewProblems.length}
                   </Badge>
                 )}
               </TabsTrigger>
 
-              <TabsTrigger value="learned" className="flex-col h-16 lg:h-10 lg:flex-row relative">
-                <LearnedIcon className="h-4 w-4 lg:mr-2 text-green-500" />
-                <span className="text-xs lg:text-sm">Learned</span>
+              <TabsTrigger value="learned" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+                <LearnedIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-green-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Learned</span>
                 {learnedProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
                     {learnedProblems.length}
                   </Badge>
                 )}
               </TabsTrigger>
 
-              <TabsTrigger value="analytics" className="flex-col h-16 lg:h-10 lg:flex-row">
-                <BarChart3 className="h-4 w-4 lg:mr-2 text-blue-500" />
-                <span className="text-xs lg:text-sm">Analytics</span>
+              <TabsTrigger value="analytics" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-blue-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Analytics</span>
               </TabsTrigger>
             </TabsList>
           </div>

@@ -73,32 +73,35 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
     <Card>
       <CardHeader>
         <CardTitle>Contest Tracker</CardTitle>
-        <div className="flex justify-between items-center pt-4">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 space-y-3 sm:space-y-0">
           <p className="text-sm text-muted-foreground">
             {contests.length} contests tracked
           </p>
-          <div className="flex space-x-2">
-            <Button onClick={handleFetchContests} disabled={isFetching} variant="outline">
-              <RefreshCw className={`h-4 w-4 mr-2 ${isFetching ? 'animate-spin' : ''}`} />
-              {isFetching ? 'Fetching...' : 'Fetch Upcoming'}
+          <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+            <Button onClick={handleFetchContests} disabled={isFetching} variant="outline" size="sm">
+              <RefreshCw className={`h-4 w-4 sm:mr-2 ${isFetching ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">{isFetching ? 'Fetching...' : 'Fetch Upcoming'}</span>
+              <span className="sm:hidden">{isFetching ? 'Fetching...' : 'Fetch'}</span>
             </Button>
             <Dialog open={showAllContests} onOpenChange={setShowAllContests}>
               <DialogTrigger asChild>
-                <Button variant="outline">
-                  <Globe className="h-4 w-4 mr-2" />
-                  All Contests
+                <Button variant="outline" size="sm">
+                  <Globe className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">All Contests</span>
+                  <span className="sm:hidden">All</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                  <DialogTitle>All Contests from Every Platform</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl">All Contests from Every Platform</DialogTitle>
                 </DialogHeader>
                 <AllContestsList />
               </DialogContent>
             </Dialog>
-            <Button onClick={() => handleOpenForm()}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Contest
+            <Button onClick={() => handleOpenForm()} size="sm">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Contest</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </div>
         </div>

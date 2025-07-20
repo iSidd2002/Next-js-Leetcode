@@ -173,8 +173,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
 
   return (
-    <div className="space-y-8">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+    <div className="space-y-6 sm:space-y-8">
+      <div className="grid gap-4 sm:grid-cols-2">
         <ProblemOfTheDay onAddPotd={onAddPotd} />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -220,14 +220,14 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
           </div>
           
           {/* LeetCode-style heatmap */}
-          <div className="w-full">
+          <div className="w-full overflow-x-auto">
             {/* Month labels */}
-            <div className="relative mb-6 ml-12 h-4">
+            <div className="relative mb-4 sm:mb-6 ml-8 sm:ml-12 h-4">
               {monthLabels.map((month, i) => (
-                <div 
-                  key={i} 
+                <div
+                  key={i}
                   className="absolute text-xs text-muted-foreground font-medium"
-                  style={{ 
+                  style={{
                     left: `${(month.weekIndex / weeks.length) * 100}%`,
                     top: '0px'
                   }}
@@ -238,21 +238,24 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </div>
             
             {/* Heatmap grid */}
-            <div className="flex items-start">
+            <div className="flex items-start min-w-max">
               {/* Day labels */}
-              <div className="flex flex-col justify-around text-xs text-muted-foreground mr-3 font-medium" style={{ height: '112px' }}>
+              <div className="flex flex-col justify-around text-xs text-muted-foreground mr-2 sm:mr-3 font-medium" style={{ height: '112px' }}>
                 <span></span>
-                <span>Mon</span>
+                <span className="hidden sm:inline">Mon</span>
+                <span className="sm:hidden">M</span>
                 <span></span>
-                <span>Wed</span>
+                <span className="hidden sm:inline">Wed</span>
+                <span className="sm:hidden">W</span>
                 <span></span>
-                <span>Fri</span>
+                <span className="hidden sm:inline">Fri</span>
+                <span className="sm:hidden">F</span>
                 <span></span>
               </div>
-              
+
               {/* Calendar grid - Fill all gaps */}
               <div className="flex-1">
-                <div className="grid gap-[1px] w-full" style={{ gridTemplateColumns: `repeat(${weeks.length}, 1fr)` }}>
+                <div className="grid gap-[1px] w-full" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(10px, 1fr))` }}>
                   {heatmapData.map((week, weekIdx) => (
                     <div key={weekIdx} className="flex flex-col gap-[1px]">
                       {week.map((cell, dayIdx) => {
@@ -300,7 +303,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
           </div>
         </CardContent>
       </Card>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Problems</CardTitle>
