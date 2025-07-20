@@ -123,7 +123,8 @@ class ApiService {
       nextReviewDate: problem.nextReviewDate,
       topics: problem.topics || [],
       status: problem.status || 'active',
-      companies: problem.companies || []
+      companies: problem.companies || [],
+      source: problem.source || 'manual'
     };
 
     const response = await this.request<Problem>('/problems', {

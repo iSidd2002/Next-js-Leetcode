@@ -7,6 +7,7 @@ import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
 import { markAsReviewed, initializeSpacedRepetition } from '@/utils/spacedRepetition';
+import { isToday, isPast } from 'date-fns';
 import Dashboard from '@/components/Dashboard';
 import ProblemForm from '@/components/ProblemForm';
 import ProblemList from '@/components/ProblemList';
@@ -362,6 +363,7 @@ export default function HomePage() {
       topics: potd.question.topicTags.map(t => t.name),
       status: 'active',
       companies: [],
+      source: 'potd', // Mark as Problem of the Day
     };
 
     const updatedPotdProblems = [...potdProblems, newProblem];
@@ -391,6 +393,7 @@ export default function HomePage() {
           topics: problem.topics || [],
           status: 'active' as const,
           companies: [companyName],
+          source: 'company' as const, // Mark as company-imported problem
         };
 
         try {
@@ -424,9 +427,19 @@ export default function HomePage() {
     );
   }
 
-  const activeProblems = problems.filter(p => p.status === 'active');
-  const reviewProblems = activeProblems.filter(p => p.isReview && p.nextReviewDate);
-  const learnedProblems = problems.filter(p => p.status === 'learned');
+  // Filter problems based on source for proper separation
+  // Manual problems (for Problems tab) - exclude company-imported problems
+  const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source); // Include legacy problems without source
+  const activeProblems = manualProblems.filter(p => p.status === 'active');
+  const reviewProblems = manualProblems.filter(p =>
+    p.isReview &&
+    p.nextReviewDate &&
+    (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
+  );
+  const learnedProblems = manualProblems.filter(p => p.status === 'learned');
+
+  // Company problems (for Companies tab) - only company-imported problems
+  const companyProblems = problems.filter(p => p.source === 'company');
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans antialiased">
@@ -629,7 +642,7 @@ export default function HomePage() {
 
           <TabsContent value="dashboard" className="space-y-6">
             <Dashboard
-              problems={activeProblems}
+              problems={manualProblems}
               todos={todos}
               onUpdateProblem={handleUpdateProblem}
               onAddPotd={handleAddPotdProblem}
@@ -638,9 +651,9 @@ export default function HomePage() {
           </TabsContent>
 
           <TabsContent value="companies" className="space-y-6">
-            <CompanyDashboard problems={problems} />
+            <CompanyDashboard problems={companyProblems} />
             <CompanyGroupedProblemList
-              problems={problems}
+              problems={companyProblems}
               onUpdateProblem={handleUpdateProblem}
               onToggleReview={handleToggleReview}
               onDeleteProblem={handleDeleteProblem}
@@ -735,7 +748,7 @@ export default function HomePage() {
           <TabsContent value="analytics" className="space-y-6">
             <div className="rounded-lg border bg-card">
               <Analytics
-                problems={problems}
+                problems={manualProblems}
               />
             </div>
           </TabsContent>

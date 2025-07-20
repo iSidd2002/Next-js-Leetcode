@@ -18,6 +18,7 @@ export interface IProblem extends Document {
   topics: string[];
   status: 'active' | 'learned';
   companies: string[];
+  source: 'manual' | 'company' | 'potd';
 }
 
 const ProblemSchema = new Schema<IProblem>({
@@ -95,7 +96,12 @@ const ProblemSchema = new Schema<IProblem>({
   companies: [{
     type: String,
     trim: true
-  }]
+  }],
+  source: {
+    type: String,
+    enum: ['manual', 'company', 'potd'],
+    default: 'manual'
+  }
 }, {
   timestamps: true
 });

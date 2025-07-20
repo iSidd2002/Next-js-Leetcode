@@ -165,7 +165,8 @@ class StorageService {
       nextReviewDate: null,
       topics: problemData.topics || [],
       status: 'active', // Not solved yet
-      companies: problemData.companies || []
+      companies: problemData.companies || [],
+      source: 'company' // Company problems are imported from company lists
     };
 
     const updatedProblems = [...companyProblems, newProblem];
@@ -181,6 +182,7 @@ class StorageService {
       const newProblem: Problem = {
         id: this.generateId(),
         createdAt: new Date().toISOString(),
+        source: 'manual', // Default to manual for user-added problems
         ...problemData,
       };
 

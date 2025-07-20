@@ -15,6 +15,7 @@ export interface Problem {
   topics: string[];
   status: 'active' | 'learned';
   companies: string[];
+  source: 'manual' | 'company' | 'potd'; // Track the source of the problem
 }
 
 export interface PlatformStats {

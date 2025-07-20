@@ -50,6 +50,7 @@ model Problem {
   topics         String[]
   status         String   @default("active") // 'active' | 'learned'
   companies      String[]
+  source         String   @default("manual") // 'manual' | 'company' | 'potd'
 
   // Relations
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

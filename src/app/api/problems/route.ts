@@ -56,7 +56,8 @@ export async function GET(request: NextRequest) {
       nextReviewDate: p.nextReviewDate,
       topics: p.topics,
       status: p.status,
-      companies: p.companies
+      companies: p.companies,
+      source: p.source || 'manual' // Default to manual for backward compatibility
     }));
 
     return NextResponse.json({
