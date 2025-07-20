@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heatmap Mobile Test</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Simulate the current heatmap styles */
+        .heatmap-container {
+            width: 100%;
+            overflow-x: auto;
+        }
+        
+        .month-labels {
+            position: relative;
+            margin-bottom: 12px;
+            height: 20px;
+        }
+        
+        .month-labels-inner {
+            margin-left: 24px;
+            position: relative;
+        }
+        
+        .day-labels {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+            width: 24px;
+            flex-shrink: 0;
+            height: 112px;
+        }
+        
+        .calendar-grid {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .weeks-grid {
+            display: grid;
+            gap: 1px;
+            width: 100%;
+            min-width: max-content;
+            grid-template-columns: repeat(53, minmax(12px, 16px));
+        }
+        
+        .week-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+        
+        .day-cell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background-color: #f3f4f6;
+        }
+        
+        @media (min-width: 640px) {
+            .month-labels {
+                margin-bottom: 24px;
+                height: 24px;
+            }
+            
+            .month-labels-inner {
+                margin-left: 48px;
+            }
+            
+            .day-labels {
+                width: 48px;
+            }
+            
+            .day-cell {
+                width: 16px;
+                height: 16px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-2xl font-bold mb-6">Heatmap Mobile Responsiveness Test</h1>
+        
+        <!-- Current Implementation Test -->
+        <div class="bg-white rounded-lg p-6 mb-8 shadow">
+            <h2 class="text-lg font-semibold mb-4">Current Implementation</h2>
+            
+            <div class="heatmap-container">
+                <!-- Month labels -->
+                <div class="month-labels">
+                    <div class="month-labels-inner">
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 10%; top: 0px; transform: translateX(-50%);">
+                            Jan
+                        </div>
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 25%; top: 0px; transform: translateX(-50%);">
+                            Mar
+                        </div>
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 40%; top: 0px; transform: translateX(-50%);">
+                            May
+                        </div>
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 55%; top: 0px; transform: translateX(-50%);">
+                            Jul
+                        </div>
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 70%; top: 0px; transform: translateX(-50%);">
+                            Sep
+                        </div>
+                        <div class="absolute text-xs text-gray-500 font-medium whitespace-nowrap" style="left: 85%; top: 0px; transform: translateX(-50%);">
+                            Nov
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Heatmap grid -->
+                <div class="flex items-start">
+                    <!-- Day labels -->
+                    <div class="day-labels">
+                        <span class="text-center"></span>
+                        <span class="text-center hidden sm:inline">Mon</span>
+                        <span class="text-center sm:hidden">M</span>
+                        <span class="text-center"></span>
+                        <span class="text-center hidden sm:inline">Wed</span>
+                        <span class="text-center sm:hidden">W</span>
+                        <span class="text-center"></span>
+                        <span class="text-center hidden sm:inline">Fri</span>
+                        <span class="text-center sm:hidden">F</span>
+                        <span class="text-center"></span>
+                    </div>
+
+                    <!-- Calendar grid -->
+                    <div class="calendar-grid">
+                        <div class="weeks-grid">
+                            <!-- Generate 53 weeks of sample data -->
+                            <script>
+                                for (let week = 0; week < 53; week++) {
+                                    document.write('<div class="week-column">');
+                                    for (let day = 0; day < 7; day++) {
+                                        const intensity = Math.floor(Math.random() * 5);
+                                        let bgColor = 'bg-gray-100';
+                                        if (intensity === 1) bgColor = 'bg-green-200';
+                                        if (intensity === 2) bgColor = 'bg-green-300';
+                                        if (intensity === 3) bgColor = 'bg-green-400';
+                                        if (intensity === 4) bgColor = 'bg-green-500';
+                                        
+                                        document.write(`<div class="day-cell ${bgColor}"></div>`);
+                                    }
+                                    document.write('</div>');
+                                }
+                            </script>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Issues Analysis -->
+        <div class="bg-white rounded-lg p-6 mb-8 shadow">
+            <h2 class="text-lg font-semibold mb-4">Mobile Issues Analysis</h2>
+            
+            <div class="space-y-4">
+                <div class="p-4 bg-red-50 border border-red-200 rounded">
+                    <h3 class="font-medium text-red-800">Potential Issues:</h3>
+                    <ul class="mt-2 text-sm text-red-700 space-y-1">
+                        <li>• Month labels may overlap on very small screens</li>
+                        <li>• Day cells might be too small (12px) for touch interaction</li>
+                        <li>• Horizontal scrolling required for full year view</li>
+                        <li>• Day labels (M, W, F) might be unclear</li>
+                        <li>• Grid might not align properly on different screen sizes</li>
+                    </ul>
+                </div>
+                
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded">
+                    <h3 class="font-medium text-blue-800">Current Responsive Features:</h3>
+                    <ul class="mt-2 text-sm text-blue-700 space-y-1">
+                        <li>• ✅ Horizontal scroll container for overflow</li>
+                        <li>• ✅ Responsive cell sizes (12px mobile, 16px desktop)</li>
+                        <li>• ✅ Responsive day labels (M/W/F vs Mon/Wed/Fri)</li>
+                        <li>• ✅ Responsive margins and spacing</li>
+                        <li>• ✅ Fixed width day labels to prevent layout shift</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Screen Size Indicators -->
+        <div class="bg-white rounded-lg p-6 shadow">
+            <h2 class="text-lg font-semibold mb-4">Current Screen Size</h2>
+            
+            <div class="space-y-2">
+                <div class="block sm:hidden p-2 bg-red-100 text-red-800 rounded">
+                    📱 Mobile View (< 640px)
+                </div>
+                <div class="hidden sm:block md:hidden p-2 bg-yellow-100 text-yellow-800 rounded">
+                    📱 Small Tablet (640px - 768px)
+                </div>
+                <div class="hidden md:block lg:hidden p-2 bg-blue-100 text-blue-800 rounded">
+                    💻 Tablet (768px - 1024px)
+                </div>
+                <div class="hidden lg:block p-2 bg-green-100 text-green-800 rounded">
+                    🖥️ Desktop (> 1024px)
+                </div>
+            </div>
+            
+            <div class="mt-4 text-sm text-gray-600">
+                <p><strong>Window Width:</strong> <span id="width"></span>px</p>
+                <p><strong>Window Height:</strong> <span id="height"></span>px</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateDimensions() {
+            document.getElementById('width').textContent = window.innerWidth;
+            document.getElementById('height').textContent = window.innerHeight;
+        }
+        
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+    </script>
+</body>
+</html>
