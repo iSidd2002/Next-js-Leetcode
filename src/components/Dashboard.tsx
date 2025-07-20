@@ -221,41 +221,44 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
           
           {/* LeetCode-style heatmap */}
           <div className="w-full overflow-x-auto">
-            {/* Month labels */}
-            <div className="relative mb-4 sm:mb-6 ml-8 sm:ml-12 h-4">
-              {monthLabels.map((month, i) => (
-                <div
-                  key={i}
-                  className="absolute text-xs text-muted-foreground font-medium"
-                  style={{
-                    left: `${(month.weekIndex / weeks.length) * 100}%`,
-                    top: '0px'
-                  }}
-                >
-                  {month.label}
-                </div>
-              ))}
+            {/* Month labels - Fixed positioning */}
+            <div className="relative mb-3 sm:mb-6 h-5 sm:h-6">
+              <div className="ml-6 sm:ml-12 relative">
+                {monthLabels.map((month, i) => (
+                  <div
+                    key={i}
+                    className="absolute text-xs sm:text-sm text-muted-foreground font-medium whitespace-nowrap"
+                    style={{
+                      left: `${(month.weekIndex / weeks.length) * 100}%`,
+                      top: '0px',
+                      transform: 'translateX(-50%)'
+                    }}
+                  >
+                    {month.label}
+                  </div>
+                ))}
+              </div>
             </div>
-            
+
             {/* Heatmap grid */}
-            <div className="flex items-start min-w-max">
-              {/* Day labels */}
-              <div className="flex flex-col justify-around text-xs text-muted-foreground mr-2 sm:mr-3 font-medium" style={{ height: '112px' }}>
-                <span></span>
-                <span className="hidden sm:inline">Mon</span>
-                <span className="sm:hidden">M</span>
-                <span></span>
-                <span className="hidden sm:inline">Wed</span>
-                <span className="sm:hidden">W</span>
-                <span></span>
-                <span className="hidden sm:inline">Fri</span>
-                <span className="sm:hidden">F</span>
-                <span></span>
+            <div className="flex items-start">
+              {/* Day labels - Fixed width */}
+              <div className="flex flex-col justify-around text-xs text-muted-foreground font-medium w-6 sm:w-12 shrink-0" style={{ height: '112px' }}>
+                <span className="text-center"></span>
+                <span className="text-center hidden sm:inline">Mon</span>
+                <span className="text-center sm:hidden">M</span>
+                <span className="text-center"></span>
+                <span className="text-center hidden sm:inline">Wed</span>
+                <span className="text-center sm:hidden">W</span>
+                <span className="text-center"></span>
+                <span className="text-center hidden sm:inline">Fri</span>
+                <span className="text-center sm:hidden">F</span>
+                <span className="text-center"></span>
               </div>
 
-              {/* Calendar grid - Fill all gaps */}
-              <div className="flex-1">
-                <div className="grid gap-[1px] w-full" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(10px, 1fr))` }}>
+              {/* Calendar grid - Responsive sizing */}
+              <div className="flex-1 min-w-0">
+                <div className="grid gap-[1px] w-full min-w-max" style={{ gridTemplateColumns: `repeat(${weeks.length}, minmax(12px, 16px))` }}>
                   {heatmapData.map((week, weekIdx) => (
                     <div key={weekIdx} className="flex flex-col gap-[1px]">
                       {week.map((cell, dayIdx) => {
@@ -265,13 +268,13 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                         return (
                           <div
                             key={dayIdx}
-                            className={`aspect-square rounded-[2px] ${
-                              isOutOfRange 
-                                ? 'bg-gray-100 dark:bg-gray-800' 
+                            className={`w-3 h-3 sm:w-4 sm:h-4 rounded-[2px] ${
+                              isOutOfRange
+                                ? 'bg-gray-100 dark:bg-gray-800'
                                 : getColor(cell.count)
                             } hover:ring-1 hover:ring-gray-400 transition-all cursor-default`}
                             title={
-                              isOutOfRange 
+                              isOutOfRange
                                 ? `${format(cell.date, 'MMM d, yyyy')}: Out of range`
                                 : `${format(cell.date, 'MMM d, yyyy')}: ${cell.count} ${cell.count === 1 ? 'problem' : 'problems'}`
                             }
@@ -285,21 +288,21 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </div>
             
             {/* Legend */}
-            <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-              <span>Less</span>
+            <div className="flex items-center justify-between mt-3 sm:mt-4 text-xs text-muted-foreground px-2">
+              <span className="text-xs">Less</span>
               <div className="flex items-center gap-[1px]">
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-gray-100 dark:bg-gray-800" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-200 dark:bg-green-900" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-300 dark:bg-green-800" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-400 dark:bg-green-700" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-500 dark:bg-green-600" />
+                <div className="w-3 h-3 sm:w-[12px] sm:h-[12px] rounded-[1px] bg-gray-100 dark:bg-gray-800" />
+                <div className="w-3 h-3 sm:w-[12px] sm:h-[12px] rounded-[1px] bg-green-200 dark:bg-green-900" />
+                <div className="w-3 h-3 sm:w-[12px] sm:h-[12px] rounded-[1px] bg-green-300 dark:bg-green-800" />
+                <div className="w-3 h-3 sm:w-[12px] sm:h-[12px] rounded-[1px] bg-green-400 dark:bg-green-700" />
+                <div className="w-3 h-3 sm:w-[12px] sm:h-[12px] rounded-[1px] bg-green-500 dark:bg-green-600" />
               </div>
-              <span>More</span>
+              <span className="text-xs">More</span>
             </div>
           </div>
-          <div className="text-center space-y-1">
-            <div className="text-lg font-medium">{pastYearSolves} Submissions in the past year</div>
-            <div className="text-sm text-muted-foreground">Total Active Days: {activeDays} ({activePercentage}%)</div>
+          <div className="text-center space-y-1 mt-3 sm:mt-4">
+            <div className="text-base sm:text-lg font-medium">{pastYearSolves} Submissions in the past year</div>
+            <div className="text-xs sm:text-sm text-muted-foreground">Total Active Days: {activeDays} ({activePercentage}%)</div>
           </div>
         </CardContent>
       </Card>

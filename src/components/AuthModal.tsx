@@ -120,15 +120,15 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
-            <span className="text-white font-bold text-2xl">LC</span>
+      <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="text-center space-y-2 sm:space-y-3 pb-2">
+          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center">
+            <span className="text-white font-bold text-lg sm:text-2xl">LC</span>
           </div>
-          <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+          <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
             Welcome to LeetCode Tracker
           </DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-sm sm:text-base">
             Sign in to sync your progress across devices or continue offline to get started locally.
             {/* Show upgrade message if user has localStorage data but no cookies */}
             {typeof window !== 'undefined' && (
@@ -142,24 +142,24 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 sm:mt-6">
           <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-            <TabsTrigger value="login" className="data-[state=active]:bg-background">Login</TabsTrigger>
-            <TabsTrigger value="register" className="data-[state=active]:bg-background">Register</TabsTrigger>
+            <TabsTrigger value="login" className="data-[state=active]:bg-background text-sm sm:text-base">Login</TabsTrigger>
+            <TabsTrigger value="register" className="data-[state=active]:bg-background text-sm sm:text-base">Register</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="login" className="mt-6">
+          <TabsContent value="login" className="mt-4 sm:mt-6">
             <Card className="border-0 shadow-none">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl">Welcome Back</CardTitle>
-                <CardDescription>
+              <CardHeader className="text-center pb-3 sm:pb-4 px-2 sm:px-6">
+                <CardTitle className="text-lg sm:text-xl">Welcome Back</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Sign in to sync your data across devices
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="login-email">Email</Label>
+              <CardContent className="px-2 sm:px-6">
+                <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="login-email" className="text-sm">Email</Label>
                     <Input
                       id="login-email"
                       type="email"
@@ -167,10 +167,11 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={loginForm.email}
                       onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                       required
+                      className="h-10 sm:h-11"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="login-password">Password</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="login-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Input
                         id="login-password"
@@ -179,6 +180,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         required
+                        className="h-10 sm:h-11 pr-10"
                       />
                       <Button
                         type="button"
@@ -193,16 +195,15 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                   </div>
 
                   {error && (
-                    <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                    <div className="p-2 sm:p-3 text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                       {error}
                     </div>
                   )}
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700"
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 h-10 sm:h-11"
                     disabled={isLoading}
-                    size="lg"
                   >
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Sign In
@@ -212,18 +213,18 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
             </Card>
           </TabsContent>
 
-          <TabsContent value="register" className="mt-6">
+          <TabsContent value="register" className="mt-4 sm:mt-6">
             <Card className="border-0 shadow-none">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl">Create Account</CardTitle>
-                <CardDescription>
+              <CardHeader className="text-center pb-3 sm:pb-4 px-2 sm:px-6">
+                <CardTitle className="text-lg sm:text-xl">Create Account</CardTitle>
+                <CardDescription className="text-sm sm:text-base">
                   Join thousands of developers tracking their progress
                 </CardDescription>
               </CardHeader>
-              <CardContent>
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="register-email">Email</Label>
+              <CardContent className="px-2 sm:px-6">
+                <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4">
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="register-email" className="text-sm">Email</Label>
                     <Input
                       id="register-email"
                       type="email"
@@ -231,10 +232,11 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                       required
+                      className="h-10 sm:h-11"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-username">Username</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="register-username" className="text-sm">Username</Label>
                     <Input
                       id="register-username"
                       type="text"
@@ -242,10 +244,11 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.username}
                       onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
                       required
+                      className="h-10 sm:h-11"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-password">Password</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="register-password" className="text-sm">Password</Label>
                     <div className="relative">
                       <Input
                         id="register-password"
@@ -254,6 +257,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                         required
+                        className="h-10 sm:h-11 pr-10"
                       />
                       <Button
                         type="button"
@@ -266,8 +270,8 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="register-confirm-password">Confirm Password</Label>
+                  <div className="space-y-1 sm:space-y-2">
+                    <Label htmlFor="register-confirm-password" className="text-sm">Confirm Password</Label>
                     <Input
                       id="register-confirm-password"
                       type={showPassword ? 'text' : 'password'}
@@ -275,18 +279,19 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.confirmPassword}
                       onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
                       required
+                      className="h-10 sm:h-11"
                     />
                   </div>
 
                   {error && (
-                    <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
+                    <div className="p-2 sm:p-3 text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
                       {error}
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
+                  <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 h-10 sm:h-11" disabled={isLoading}>
                     {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Register
+                    Create Account
                   </Button>
                 </form>
               </CardContent>
