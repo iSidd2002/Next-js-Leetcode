@@ -34,9 +34,8 @@ const UserSchema = new Schema<IUser>({
   timestamps: true,
 });
 
-// Create indexes
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
+// Note: Indexes are automatically created by unique: true in schema definition
+// No need for manual index creation to avoid duplicate index warnings
 
 // Prevent re-compilation during development
 const User = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
