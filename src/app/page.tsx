@@ -6,6 +6,7 @@ import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
+import { isCleanupNeeded } from '@/utils/potdCleanup';
 import { markAsReviewed, initializeSpacedRepetition } from '@/utils/spacedRepetition';
 import { isToday, isPast } from 'date-fns';
 import Dashboard from '@/components/Dashboard';
@@ -117,6 +118,20 @@ export default function HomePage() {
       if (JSON.stringify(cleanedPotdProblems) !== JSON.stringify(potdData)) {
         console.log('Cleaned up invalid dates in POTD data');
         StorageService.savePotdProblems(cleanedPotdProblems);
+      }
+
+      // Automatic POTD cleanup - remove expired POTD problems
+      try {
+        const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
+        if (cleanupResult.removedCount > 0) {
+          console.log('🧹 POTD Auto-cleanup:', cleanupResult.summary);
+          // Reload POTD problems after cleanup
+          const updatedPotdProblems = await StorageService.getPotdProblems();
+          setPotdProblems(updatedPotdProblems);
+          toast.info(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
+        }
+      } catch (error) {
+        console.error('🧹 POTD Auto-cleanup failed:', error);
       }
 
       // Auto-sync with server if authenticated and online
@@ -413,6 +428,23 @@ export default function HomePage() {
     setPotdProblems(updatedPotdProblems);
     StorageService.savePotdProblems(updatedPotdProblems);
     toast.success('Problem of the day added to your list!');
+  };
+
+  const handleCleanupPotd = async () => {
+    try {
+      const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
+      if (cleanupResult.removedCount > 0) {
+        // Reload POTD problems after cleanup
+        const updatedPotdProblems = await StorageService.getPotdProblems();
+        setPotdProblems(updatedPotdProblems);
+        toast.success(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
+      } else {
+        toast.info('No expired POTD problems found');
+      }
+    } catch (error) {
+      console.error('POTD cleanup failed:', error);
+      toast.error('Failed to cleanup POTD problems');
+    }
   };
 
   const handleImportProblems = async (companyName: string, problemsToImport: any[]) => {
@@ -728,6 +760,7 @@ export default function HomePage() {
               onUpdateProblem={handleUpdateProblem}
               onAddPotd={handleAddPotdProblem}
               onImportProblems={handleImportProblems}
+              onCleanupPotd={handleCleanupPotd}
             />
           </TabsContent>
 

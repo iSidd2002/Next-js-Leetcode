@@ -1,5 +1,6 @@
 import type { Problem, Contest, Todo } from '@/types';
 import ApiService from '@/services/api';
+import { cleanupExpiredPotdProblems, isCleanupNeeded, getCleanupSummary } from './potdCleanup';
 
 const PROBLEMS_KEY = 'leetcode-cf-tracker-problems';
 const POTD_PROBLEMS_KEY = 'potd-problems';
@@ -82,6 +83,42 @@ class StorageService {
 
   static async savePotdProblems(problems: Problem[]): Promise<void> {
     localStorage.setItem(POTD_PROBLEMS_KEY, JSON.stringify(problems));
+  }
+
+  static async cleanupExpiredPotdProblems(): Promise<{
+    removedCount: number;
+    summary: string;
+  }> {
+    try {
+      const potdProblems = await this.getPotdProblems();
+
+      if (!isCleanupNeeded(potdProblems)) {
+        console.log('🧹 POTD Cleanup: No expired POTD problems found');
+        return {
+          removedCount: 0,
+          summary: 'No expired POTD problems found'
+        };
+      }
+
+      const { cleanedProblems, removedCount, removedProblems } = cleanupExpiredPotdProblems(potdProblems);
+
+      // Save cleaned problems back to storage
+      await this.savePotdProblems(cleanedProblems);
+
+      const summary = getCleanupSummary(removedCount, removedProblems);
+      console.log(`🧹 POTD Cleanup: ${summary}`);
+
+      return {
+        removedCount,
+        summary
+      };
+    } catch (error) {
+      console.error('🧹 POTD Cleanup: Error during cleanup:', error);
+      return {
+        removedCount: 0,
+        summary: 'Cleanup failed due to error'
+      };
+    }
   }
 
   static async getContests(): Promise<Contest[]> {

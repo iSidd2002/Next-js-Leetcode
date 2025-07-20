@@ -4,7 +4,7 @@ import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target } from 'lucide-react';
+import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2 } from 'lucide-react';
 import { isToday, isPast } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
@@ -18,11 +18,34 @@ interface DashboardProps {
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
   onAddPotd: (potd: ActiveDailyCodingChallengeQuestion) => void;
   onImportProblems: (companyName: string, problemsToImport: any[]) => void;
+  onCleanupPotd?: () => Promise<void>;
 }
 
-const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems }: DashboardProps) => {
+const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems, onCleanupPotd }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
+  const [isCleaningPotd, setIsCleaningPotd] = useState(false);
+
   const totalProblems = problems.length;
+  const potdProblems = problems.filter(p => p.source === 'potd');
+  const expiredPotdCount = potdProblems.filter(p => {
+    const problemDate = new Date(p.dateSolved || p.createdAt);
+    const now = new Date();
+    const daysDifference = Math.floor((now.getTime() - problemDate.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDifference > 7; // POTD retention period
+  }).length;
+
+  const handleCleanupPotd = async () => {
+    if (!onCleanupPotd) return;
+
+    setIsCleaningPotd(true);
+    try {
+      await onCleanupPotd();
+    } catch (error) {
+      console.error('POTD cleanup failed:', error);
+    } finally {
+      setIsCleaningPotd(false);
+    }
+  };
   const thisWeek = problems.filter((p) => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -174,7 +197,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ProblemOfTheDay onAddPotd={onAddPotd} />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -192,6 +215,40 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </Button>
           </CardContent>
         </Card>
+
+        {/* POTD Cleanup Card */}
+        {onCleanupPotd && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">
+                POTD Cleanup
+              </CardTitle>
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-sm text-muted-foreground mb-2">
+                {potdProblems.length} POTD problems total
+              </div>
+              {expiredPotdCount > 0 ? (
+                <div className="text-sm text-orange-600 dark:text-orange-400 mb-4">
+                  {expiredPotdCount} expired (&gt;7 days old)
+                </div>
+              ) : (
+                <div className="text-sm text-green-600 dark:text-green-400 mb-4">
+                  All POTD problems are current
+                </div>
+              )}
+              <Button
+                onClick={handleCleanupPotd}
+                disabled={isCleaningPotd || expiredPotdCount === 0}
+                variant={expiredPotdCount > 0 ? "default" : "secondary"}
+                size="sm"
+              >
+                {isCleaningPotd ? 'Cleaning...' : 'Cleanup Old POTD'}
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
       
       <ImportProblems 
