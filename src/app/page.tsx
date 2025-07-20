@@ -484,7 +484,7 @@ export default function HomePage() {
                 Problem Tracker
               </h1>
               <p className="text-muted-foreground">
-                hii siddhant
+                Track your coding journey across LeetCode, CodeForces & more
               </p>
             </div>
 
