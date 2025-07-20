@@ -442,11 +442,19 @@ export default function HomePage() {
         } catch (error: any) {
           console.warn(`Failed to import problem: ${problem.title}`, error);
 
-          // Check if it's a duplicate error
-          if (error.message && error.message.includes('already exists')) {
+          // Check if it's a duplicate error (409 status or "already exists" message)
+          const isDuplicate = error.message && (
+            error.message.includes('already exists') ||
+            error.message.includes('HTTP error! status: 409') ||
+            error.status === 409
+          );
+
+          if (isDuplicate) {
             duplicateProblems.push(problem.title);
+            console.log(`🔄 Duplicate detected: ${problem.title}`);
           } else {
             failedProblems.push(problem.title);
+            console.error(`❌ Failed to import: ${problem.title}`, error);
           }
         }
       }
