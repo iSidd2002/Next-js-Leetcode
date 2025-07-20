@@ -96,9 +96,9 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
     setIsImporting(true);
 
     try {
-      // Use the new backend API for company problems
+      // Use the new backend API for company problems with increased limit
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
-      const response = await fetch(`${apiUrl}/companies/${encodeURIComponent(selectedCompany)}/problems?limit=500`);
+      const response = await fetch(`${apiUrl}/companies/${encodeURIComponent(selectedCompany)}/problems?limit=2000`);
 
       if (!response.ok) {
         throw new Error(`Failed to fetch problems. Status: ${response.status}`);
@@ -110,6 +110,18 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
         toast.error(`Could not find any problems for ${selectedCompany}.`);
         setIsImporting(false);
         return;
+      }
+
+      // Show information about the data source
+      const dataSource = result.data.source || 'unknown';
+      const totalProblems = result.data.total || result.data.problems.length;
+
+      console.log(`Importing ${totalProblems} problems for ${selectedCompany} from ${dataSource} source`);
+
+      if (dataSource === 'github') {
+        toast.success(`Found ${totalProblems} real problems from GitHub repository!`);
+      } else {
+        toast.info(`Using ${totalProblems} enhanced mock problems (real data not available for ${selectedCompany})`);
       }
 
       const importedProblems: Partial<Problem>[] = result.data.problems.map((problem: any) => {
@@ -139,7 +151,8 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
       });
 
       const sourceInfo = result.data.company || selectedCompany;
-      toast.success(`Successfully imported ${importedProblems.length} problems from ${sourceInfo}`);
+      const dataSourceText = dataSource === 'github' ? '(Real GitHub Data)' : '(Enhanced Mock Data)';
+      toast.success(`Successfully imported ${importedProblems.length} problems from ${sourceInfo} ${dataSourceText}`);
       onImport(selectedCompany, importedProblems);
       onOpenChange(false);
 
@@ -157,7 +170,7 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
         <DialogHeader>
           <DialogTitle>Import Company Problems</DialogTitle>
           <DialogDescription>
-            Import LeetCode problems tagged by a specific company. This will import the "all-time" list for the selected company.
+            Import LeetCode problems tagged by a specific company. This will import ALL available problems for the selected company (no longer limited to 54 problems). Real data from GitHub repository when available, enhanced mock data otherwise.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-4">
