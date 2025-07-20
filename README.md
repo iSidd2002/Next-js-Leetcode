@@ -66,7 +66,7 @@ A comprehensive problem tracking application built with Next.js, featuring the e
 
    Update `.env.local` with your values:
    ```env
-   DATABASE_URL="mongodb://localhost:27017/leetcode-cf-tracker"
+   NEXT_PUBLIC_DATABASE_URL="mongodb://localhost:27017/leetcode-cf-tracker"
    JWT_SECRET="your-super-secret-32-character-jwt-key"
    JWT_EXPIRES_IN="7d"
    NEXTAUTH_SECRET="your-nextauth-secret"

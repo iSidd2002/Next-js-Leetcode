@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.DATABASE_URL || 'mongodb://localhost:27017/leetcode-tracker';
+const MONGODB_URI = process.env.NEXT_PUBLIC_DATABASE_URL || 'mongodb://localhost:27017/leetcode-tracker';
 
 if (!MONGODB_URI) {
   throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
