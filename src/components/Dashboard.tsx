@@ -275,11 +275,12 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
               {/* Calendar grid - Enhanced mobile responsiveness */}
               <div className="flex-1 min-w-0">
                 <div
-                  className="grid gap-[1px] w-full min-w-max"
+                  className="grid gap-[1px] w-full min-w-max heatmap-grid"
                   style={{
-                    gridTemplateColumns: `repeat(${weeks.length}, 15px)`,
-                    // Use fixed 15px columns for better mobile consistency
-                  }}
+                    '--cell-size-mobile': '15px',
+                    '--cell-size-desktop': '16px',
+                    '--weeks-count': weeks.length,
+                  } as React.CSSProperties}
                 >
                   {heatmapData.map((week, weekIdx) => (
                     <div key={weekIdx} className="flex flex-col gap-[1px]">
@@ -300,11 +301,6 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                 ? `${format(cell.date, 'MMM d, yyyy')}: Out of range`
                                 : `${format(cell.date, 'MMM d, yyyy')}: ${cell.count} ${cell.count === 1 ? 'problem' : 'problems'}`
                             }
-                            // Better touch targets for mobile
-                            style={{
-                              minWidth: '15px',
-                              minHeight: '15px'
-                            }}
                           />
                         );
                       })}
