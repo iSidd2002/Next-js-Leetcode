@@ -30,6 +30,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import React from 'react';
@@ -44,10 +45,11 @@ interface ProblemListProps {
   onDeleteProblem: (id: string) => void;
   onEditProblem: (problem: Problem) => void;
   onProblemReviewed: (id: string, quality?: number) => void;
+  onClearAll?: () => void;
   isReviewList?: boolean;
 }
 
-const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, isReviewList = false }: ProblemListProps) => {
+const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false }: ProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -132,14 +134,53 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                         )}
                     </p>
                 </div>
-                <div className="w-full sm:w-80">
-                    <Input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Search problems..."
-                        className="bg-background"
-                    />
+                <div className="flex items-center gap-3">
+                    <div className="w-full sm:w-80">
+                        <Input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search problems..."
+                            className="bg-background"
+                        />
+                    </div>
+                    {/* Clear All Button - only show for non-review lists and when there are problems */}
+                    {!isReviewList && onClearAll && problems.length > 0 && (
+                        <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    className="whitespace-nowrap"
+                                >
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    Clear All
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                    <AlertDialogTitle>Clear All Problems</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        Are you sure you want to delete all manually added problems?
+                                        This will remove {problems.length} problem{problems.length !== 1 ? 's' : ''} from your personal tracking.
+                                        <br /><br />
+                                        <strong>This action cannot be undone.</strong>
+                                        <br /><br />
+                                        <em>Note: Company-imported problems in the Companies tab will not be affected.</em>
+                                    </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction
+                                        onClick={onClearAll}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                    >
+                                        Clear All Problems
+                                    </AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                    )}
                 </div>
             </div>
         </CardHeader>

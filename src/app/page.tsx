@@ -339,6 +339,41 @@ export default function HomePage() {
     }
   };
 
+  const handleClearAllProblems = async () => {
+    try {
+      // Get manual and POTD problems to clear (exclude company problems)
+      const problemsToClear = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
+
+      if (problemsToClear.length === 0) {
+        toast.info('No problems to clear');
+        return;
+      }
+
+      // Delete each problem individually to ensure proper cleanup
+      for (const problem of problemsToClear) {
+        try {
+          if (!StorageService.getOfflineMode()) {
+            await ApiService.deleteProblem(problem.id);
+          }
+        } catch (error) {
+          console.warn(`Failed to delete problem ${problem.id} from server:`, error);
+        }
+      }
+
+      // Update local state - keep only company problems
+      const remainingProblems = problems.filter(p => p.source === 'company');
+      setProblems(remainingProblems);
+
+      // Update localStorage
+      await StorageService.saveProblems(remainingProblems);
+
+      toast.success(`Successfully cleared ${problemsToClear.length} problems!`);
+    } catch (error) {
+      console.error('Failed to clear problems:', error);
+      toast.error('Failed to clear problems');
+    }
+  };
+
   const handleAddPotdProblem = (potd: ActiveDailyCodingChallengeQuestion) => {
     const isDuplicate = potdProblems.some(p => p.problemId === potd.question.titleSlug);
     if (isDuplicate) {
@@ -712,6 +747,7 @@ export default function HomePage() {
                 onDeleteProblem={handleDeleteProblem}
                 onEditProblem={handleEditProblem}
                 onProblemReviewed={handleProblemReviewed}
+                onClearAll={handleClearAllProblems}
                 isReviewList={false}
               />
             </div>
