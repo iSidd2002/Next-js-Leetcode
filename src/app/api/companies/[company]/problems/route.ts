@@ -25,37 +25,61 @@ const DIFFICULTY_MAP = {
 // GitHub repository base URL for company problems
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/liquidslr/leetcode-company-wise-problems/main';
 
-// Parse CSV data from GitHub
+// Parse CSV data from GitHub (space-separated format)
 function parseCSV(csvText: string): any[] {
   const lines = csvText.trim().split('\n');
   if (lines.length < 2) return [];
 
-  const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+  // The first line contains headers separated by commas
+  const headerLine = lines[0];
+  const headers = headerLine.split(',').map(h => h.trim());
+  console.log('CSV Headers:', headers);
+
   const problems = [];
 
   for (let i = 1; i < lines.length; i++) {
-    const values = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-    if (values.length >= headers.length) {
-      const problem: any = {};
-      headers.forEach((header, index) => {
-        problem[header] = values[index]?.trim().replace(/"/g, '') || '';
-      });
-      problems.push(problem);
+    const line = lines[i].trim();
+    if (!line) continue;
+
+    // Parse the space-separated format: DIFFICULTY,Title,Frequency,AcceptanceRate,Link,"Topics"
+    // The format appears to be: DIFFICULTY,Title,Frequency,Rate,URL,"Topics in quotes"
+    const parts = line.split(',');
+
+    if (parts.length >= 5) {
+      const difficulty = parts[0]?.trim();
+      const title = parts[1]?.trim();
+      const frequency = parts[2]?.trim();
+      const acceptanceRate = parts[3]?.trim();
+      const link = parts[4]?.trim();
+      const topics = parts.slice(5).join(',').trim().replace(/"/g, '');
+
+      if (title && link && difficulty) {
+        problems.push({
+          difficulty,
+          title,
+          frequency: parseFloat(frequency) || 0,
+          acceptanceRate: parseFloat(acceptanceRate) || 0,
+          link,
+          topics: topics || ''
+        });
+      }
     }
   }
 
+  console.log(`Parsed ${problems.length} problems from CSV`);
   return problems;
 }
 
 // Fetch company problems from GitHub repository
 async function fetchCompanyProblemsFromGitHub(company: string): Promise<CompanyProblem[]> {
   try {
-    // Try different file naming conventions
+    // Try the actual file naming conventions from the repository
     const possibleFiles = [
-      `${company}_all_time.csv`,
-      `${company}_All_Time.csv`,
-      `${company}.csv`,
-      `${company}_alltime.csv`
+      '5. All.csv',           // All-time problems (most comprehensive)
+      '4. More Than Six Months.csv',
+      '3. Six Months.csv',
+      '2. Three Months.csv',
+      '1. Thirty Days.csv'
     ];
 
     let csvData = null;
@@ -159,11 +183,16 @@ export async function GET(
 
     // First try to fetch real data from GitHub
     let allProblems = await fetchCompanyProblemsFromGitHub(company);
+    let dataSource = 'mock';
 
     // If no real data found, fall back to enhanced mock data
     if (allProblems.length === 0) {
       console.log(`No real data found for ${company}, using enhanced mock data`);
       allProblems = generateEnhancedMockCompanyProblems(company, Math.max(limit, 200));
+      dataSource = 'mock';
+    } else {
+      console.log(`Using real GitHub data for ${company}`);
+      dataSource = 'github';
     }
 
     console.log(`Total problems available for ${company}: ${allProblems.length}`);
@@ -199,7 +228,7 @@ export async function GET(
         hasMore: endIndex < filteredProblems.length,
         actualLimit: actualLimit,
         requestedLimit: limit,
-        source: allProblems.length > 200 ? 'github' : 'mock',
+        source: dataSource,
         page: page
       }
     });

@@ -39,6 +39,20 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import EmptyState from '@/components/EmptyState';
 
+// Helper function to get difficulty badge variant
+const getDifficultyVariant = (difficulty: string) => {
+  switch (difficulty.toLowerCase()) {
+    case 'easy':
+      return 'default';
+    case 'medium':
+      return 'secondary';
+    case 'hard':
+      return 'destructive';
+    default:
+      return 'outline';
+  }
+};
+
 interface ProblemListProps {
   problems: Problem[];
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
