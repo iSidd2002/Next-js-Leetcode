@@ -159,14 +159,5 @@ body {
     box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
   }
 
-  /* Responsive heatmap grid */
-  .heatmap-grid {
-    grid-template-columns: repeat(var(--weeks-count), var(--cell-size-mobile));
-  }
 
-  @media (min-width: 640px) {
-    .heatmap-grid {
-      grid-template-columns: repeat(var(--weeks-count), var(--cell-size-desktop));
-    }
-  }
 }

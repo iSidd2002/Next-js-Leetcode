@@ -20,8 +20,12 @@ class ApiService {
       await this.getProfile();
       return true;
     } catch (error: any) {
-      // Log the specific error for debugging
-      console.log('Auth check failed:', error.message);
+      // Silently handle auth failures - user is simply not logged in
+      if (error.status === 401 || error.status === 404 || error.message?.includes('User not found')) {
+        return false;
+      }
+      // Only log unexpected errors
+      console.log('Unexpected auth check error:', error.message);
 
       // If it's a "User not found" error, clear any stale tokens
       if (error.message === 'User not found' || error.status === 404) {
