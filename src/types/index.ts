@@ -178,3 +178,39 @@ export interface DBUser {
   updatedAt: Date;
   settings: UserSettings;
 }
+
+// Todo interfaces
+export interface Todo {
+  id: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  category: 'coding' | 'study' | 'interview-prep' | 'project' | 'personal' | 'other';
+  dueDate?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+  estimatedTime?: number; // in minutes
+  actualTime?: number; // in minutes
+  notes?: string;
+}
+
+export interface DBTodo {
+  _id: string;
+  userId: string;
+  title: string;
+  description?: string;
+  priority: 'low' | 'medium' | 'high' | 'urgent';
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  category: 'coding' | 'study' | 'interview-prep' | 'project' | 'personal' | 'other';
+  dueDate?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+  tags: string[];
+  estimatedTime?: number;
+  actualTime?: number;
+  notes?: string;
+}

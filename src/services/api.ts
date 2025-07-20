@@ -1,4 +1,4 @@
-import type { Problem, Contest, User, AuthResponse, ApiResponse, ActiveDailyCodingChallengeQuestion } from '@/types';
+import type { Problem, Contest, User, AuthResponse, ApiResponse, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? process.env.NEXT_PUBLIC_API_URL || '/api'
@@ -182,6 +182,49 @@ class ApiService {
       body: JSON.stringify({ query, variables }),
     });
     return response.data!;
+  }
+
+  // Todo methods
+  static async getTodos(filters?: {
+    status?: string;
+    category?: string;
+    priority?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<Todo[]> {
+    const params = new URLSearchParams();
+    if (filters) {
+      Object.entries(filters).forEach(([key, value]) => {
+        if (value !== undefined) {
+          params.append(key, value.toString());
+        }
+      });
+    }
+
+    const response = await this.request<Todo[]>(`/todos?${params}`);
+    return response.data!;
+  }
+
+  static async createTodo(todo: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>): Promise<Todo> {
+    const response = await this.request<Todo>('/todos', {
+      method: 'POST',
+      body: JSON.stringify(todo),
+    });
+    return response.data!;
+  }
+
+  static async updateTodo(id: string, todo: Partial<Todo>): Promise<Todo> {
+    const response = await this.request<Todo>(`/todos/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(todo),
+    });
+    return response.data!;
+  }
+
+  static async deleteTodo(id: string): Promise<void> {
+    await this.request(`/todos/${id}`, {
+      method: 'DELETE',
+    });
   }
 }
 

@@ -1,10 +1,10 @@
 "use client"
 
-import type { Problem, ActiveDailyCodingChallengeQuestion } from '@/types';
+import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookCopy, CalendarDays, Star, Trophy, Clock, Download } from 'lucide-react';
+import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target } from 'lucide-react';
 import { isToday, isPast } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
@@ -14,12 +14,13 @@ import { useState } from 'react';
 
 interface DashboardProps {
   problems: Problem[];
+  todos?: Todo[];
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
   onAddPotd: (potd: ActiveDailyCodingChallengeQuestion) => void;
   onImportProblems: (companyName: string, problemsToImport: any[]) => void;
 }
 
-const Dashboard = ({ problems, onUpdateProblem, onAddPotd, onImportProblems }: DashboardProps) => {
+const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
   const totalProblems = problems.length;
   const thisWeek = problems.filter((p) => {
@@ -28,10 +29,25 @@ const Dashboard = ({ problems, onUpdateProblem, onAddPotd, onImportProblems }: D
     return new Date(p.dateSolved) >= weekAgo;
   }).length;
   const forReview = problems.filter((p) => p.isReview).length;
-  const dueForReview = problems.filter(p => 
-    p.isReview && 
-    p.nextReviewDate && 
+  const dueForReview = problems.filter(p =>
+    p.isReview &&
+    p.nextReviewDate &&
     (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
+  ).length;
+
+  // Todo statistics
+  const totalTodos = todos.length;
+  const completedTodos = todos.filter(t => t.status === 'completed').length;
+  const pendingTodos = todos.filter(t => t.status === 'pending').length;
+  const inProgressTodos = todos.filter(t => t.status === 'in-progress').length;
+  const overdueTodos = todos.filter(t =>
+    t.dueDate &&
+    new Date(t.dueDate) < new Date() &&
+    t.status !== 'completed'
+  ).length;
+  const urgentTodos = todos.filter(t =>
+    t.priority === 'urgent' &&
+    t.status !== 'completed'
   ).length;
 
   const getDifficultyBadgeVariant = (difficulty: string, platform: string): "default" | "destructive" | "secondary" | "outline" | "success" | "warning" => {
@@ -331,6 +347,64 @@ const Dashboard = ({ problems, onUpdateProblem, onAddPotd, onImportProblems }: D
             </CardContent>
         </Card>
       </div>
+
+      {/* Todo Statistics */}
+      {totalTodos > 0 && (
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Todos</CardTitle>
+              <CheckSquare className="h-6 w-6 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalTodos}</div>
+              <p className="text-xs text-muted-foreground">
+                {completedTodos} completed
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+              <Target className="h-6 w-6 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{inProgressTodos}</div>
+              <p className="text-xs text-muted-foreground">
+                {pendingTodos} pending
+              </p>
+            </CardContent>
+          </Card>
+          {overdueTodos > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Overdue</CardTitle>
+                <AlertTriangle className="h-6 w-6 text-red-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{overdueTodos}</div>
+                <p className="text-xs text-muted-foreground">
+                  Need attention
+                </p>
+              </CardContent>
+            </Card>
+          )}
+          {urgentTodos > 0 && (
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Urgent</CardTitle>
+                <AlertTriangle className="h-6 w-6 text-orange-500" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{urgentTodos}</div>
+                <p className="text-xs text-muted-foreground">
+                  High priority
+                </p>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      )}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <Card className="col-span-4">
           <CardHeader>

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Problem, Contest, ActiveDailyCodingChallengeQuestion } from '@/types';
+import type { Problem, Contest, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
 import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
@@ -14,7 +14,7 @@ import CompanyGroupedProblemList from '@/components/CompanyGroupedProblemList';
 import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText } from 'lucide-react';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
@@ -26,11 +26,13 @@ import CompanyView from '@/components/CompanyView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import Sheets from '@/components/Sheets';
 import ClientOnly from '@/components/client-only';
+import TodoList from '@/components/TodoList';
 
 export default function HomePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
   const [potdProblems, setPotdProblems] = useState<Problem[]>([]);
   const [contests, setContests] = useState<Contest[]>([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -65,12 +67,14 @@ export default function HomePage() {
       let problemsData: Problem[] = [];
       let potdData: Problem[] = [];
       let contestsData: Contest[] = [];
+      let todosData: Todo[] = [];
 
       try {
-        [problemsData, potdData, contestsData] = await Promise.all([
+        [problemsData, potdData, contestsData, todosData] = await Promise.all([
           StorageService.getProblems(),
           StorageService.getPotdProblems(),
-          StorageService.getContests()
+          StorageService.getContests(),
+          StorageService.getTodos()
         ]);
       } catch (error) {
         console.error('Error loading data:', error);
@@ -84,6 +88,7 @@ export default function HomePage() {
         problemsData = [];
         potdData = [];
         contestsData = [];
+        todosData = [];
       }
 
       // Clean up any invalid dates before setting state
@@ -93,6 +98,7 @@ export default function HomePage() {
       setProblems(cleanedProblems);
       setPotdProblems(cleanedPotdProblems);
       setContests(contestsData);
+      setTodos(todosData);
 
       // Save cleaned data back if any changes were made
       if (JSON.stringify(cleanedProblems) !== JSON.stringify(problemsData)) {
@@ -145,14 +151,23 @@ export default function HomePage() {
       }
     }
   };
-  const handleUpdateProblem = async (updatedProblem: Problem) => {
+  const handleUpdateProblem = async (id: string, updates: Partial<Problem>) => {
     try {
-      // Use the API to update the problem (which handles user association)
-      await StorageService.updateProblem(updatedProblem.id, updatedProblem);
+      // Find the existing problem
+      const existingProblem = problems.find(p => p.id === id);
+      if (!existingProblem) {
+        toast.error('Problem not found');
+        return;
+      }
 
-      // Refresh the problems list from the server to get the latest data
-      const refreshedProblems = await StorageService.getProblems();
-      setProblems(refreshedProblems);
+      // Create the updated problem
+      const updatedProblem = { ...existingProblem, ...updates };
+
+      // Use the API to update the problem (which handles user association)
+      await StorageService.updateProblem(id, updates);
+
+      // Update local state
+      setProblems(problems.map(p => p.id === id ? updatedProblem : p));
 
       toast.success('Problem updated successfully!');
     } catch (error) {
@@ -188,7 +203,7 @@ export default function HomePage() {
         updatedProblem = { ...problem, ...updates };
       }
 
-      await handleUpdateProblem(updatedProblem);
+      await handleUpdateProblem(problem.id, updates);
     } catch (error) {
       console.error('Failed to toggle review:', error);
       toast.error('Failed to update review status');
@@ -234,7 +249,7 @@ export default function HomePage() {
       // Use the proper spaced repetition algorithm
       const updatedProblem = markAsReviewed(problem, quality);
 
-      await handleUpdateProblem(updatedProblem);
+      await handleUpdateProblem(problem.id, updatedProblem);
       toast.success(`Problem marked as reviewed! Next review in ${updatedProblem.interval} days.`);
     } catch (error) {
       console.error('Failed to mark problem as reviewed:', error);
@@ -286,6 +301,40 @@ export default function HomePage() {
     } catch (error) {
       console.error('Failed to delete contest:', error);
       toast.error('Failed to delete contest');
+    }
+  };
+
+  // Todo handlers
+  const handleAddTodo = async (todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      const newTodo = await StorageService.addTodo(todoData);
+      setTodos([...todos, newTodo]);
+      toast.success('Todo added successfully!');
+    } catch (error) {
+      console.error('Failed to add todo:', error);
+      toast.error('Failed to add todo');
+    }
+  };
+
+  const handleUpdateTodo = async (id: string, updates: Partial<Todo>) => {
+    try {
+      const updatedTodo = await StorageService.updateTodo(id, updates);
+      setTodos(todos.map(t => t.id === id ? updatedTodo : t));
+      toast.success('Todo updated successfully!');
+    } catch (error) {
+      console.error('Failed to update todo:', error);
+      toast.error('Failed to update todo');
+    }
+  };
+
+  const handleDeleteTodo = async (id: string) => {
+    try {
+      await StorageService.deleteTodo(id);
+      setTodos(todos.filter(t => t.id !== id));
+      toast.success('Todo deleted successfully!');
+    } catch (error) {
+      console.error('Failed to delete todo:', error);
+      toast.error('Failed to delete todo');
     }
   };
 
@@ -503,7 +552,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-b">
-            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-8 h-auto p-1 bg-muted/50">
+            <TabsList className="grid w-full grid-cols-3 lg:grid-cols-9 h-auto p-1 bg-muted/50">
               <TabsTrigger value="dashboard" className="flex-col h-16 lg:h-10 lg:flex-row">
                 <HomeIcon className="h-4 w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm">Dashboard</span>
@@ -529,6 +578,16 @@ export default function HomePage() {
               <TabsTrigger value="contests" className="flex-col h-16 lg:h-10 lg:flex-row">
                 <Trophy className="h-4 w-4 lg:mr-2 text-amber-500" />
                 <span className="text-xs lg:text-sm">Contests</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="todos" className="flex-col h-16 lg:h-10 lg:flex-row relative">
+                <CheckSquare className="h-4 w-4 lg:mr-2 text-purple-500" />
+                <span className="text-xs lg:text-sm">Todos</span>
+                {todos.length > 0 && (
+                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-5 w-5 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
+                    {todos.length}
+                  </Badge>
+                )}
               </TabsTrigger>
 
               <TabsTrigger value="problems" className="flex-col h-16 lg:h-10 lg:flex-row relative">
@@ -571,6 +630,7 @@ export default function HomePage() {
           <TabsContent value="dashboard" className="space-y-6">
             <Dashboard
               problems={activeProblems}
+              todos={todos}
               onUpdateProblem={handleUpdateProblem}
               onAddPotd={handleAddPotdProblem}
               onImportProblems={handleImportProblems}
@@ -615,6 +675,17 @@ export default function HomePage() {
                 onAddContest={handleAddContest}
                 onUpdateContest={handleUpdateContest}
                 onDeleteContest={handleDeleteContest}
+              />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="todos" className="space-y-6">
+            <div className="rounded-lg border bg-card p-6">
+              <TodoList
+                todos={todos}
+                onAddTodo={handleAddTodo}
+                onUpdateTodo={handleUpdateTodo}
+                onDeleteTodo={handleDeleteTodo}
               />
             </div>
           </TabsContent>
@@ -679,8 +750,7 @@ export default function HomePage() {
           onOpenChange={setIsFormOpen}
           onAddProblem={handleAddProblem}
           onUpdateProblem={(id: string, updates: Partial<Problem>) => {
-            const updatedProblem = { ...problemToEdit!, ...updates };
-            handleUpdateProblem(updatedProblem);
+            handleUpdateProblem(id, updates);
           }}
           problemToEdit={problemToEdit}
         />

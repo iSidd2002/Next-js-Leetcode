@@ -27,6 +27,7 @@ model User {
   // Relations
   problems Problem[]
   contests Contest[]
+  todos    Todo[]
 
   @@map("users")
 }
@@ -76,4 +77,27 @@ model Contest {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("contests")
+}
+
+model Todo {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String   @db.ObjectId
+  title         String
+  description   String?
+  priority      String   @default("medium") // 'low' | 'medium' | 'high' | 'urgent'
+  status        String   @default("pending") // 'pending' | 'in-progress' | 'completed' | 'cancelled'
+  category      String   @default("other") // 'coding' | 'study' | 'interview-prep' | 'project' | 'personal' | 'other'
+  dueDate       String?
+  completedAt   String?
+  createdAt     String
+  updatedAt     String
+  tags          String[]
+  estimatedTime Int? // in minutes
+  actualTime    Int? // in minutes
+  notes         String?
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("todos")
 }
