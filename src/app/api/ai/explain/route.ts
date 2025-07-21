@@ -11,58 +11,97 @@ function generateFallbackExplanation(code: string, language: string, problemTitl
 
   // Analyze problem type
   let problemType = "general algorithm";
-  if (problemTitle.toLowerCase().includes("two sum")) problemType = "hash map lookup";
-  else if (problemTitle.toLowerCase().includes("binary search")) problemType = "divide and conquer";
-  else if (problemTitle.toLowerCase().includes("tree")) problemType = "tree traversal";
-  else if (problemTitle.toLowerCase().includes("sort")) problemType = "sorting algorithm";
+  let timeComplexity = "O(n)";
+  let spaceComplexity = "O(1)";
 
-  let explanation = `This ${language} solution implements a ${problemType} approach.\n\n`;
+  if (problemTitle.toLowerCase().includes("two sum")) {
+    problemType = "hash map lookup";
+    timeComplexity = "O(n)";
+    spaceComplexity = "O(n)";
+  } else if (problemTitle.toLowerCase().includes("binary search")) {
+    problemType = "divide and conquer";
+    timeComplexity = "O(log n)";
+    spaceComplexity = "O(1)";
+  } else if (problemTitle.toLowerCase().includes("tree")) {
+    problemType = "tree traversal";
+    timeComplexity = "O(n)";
+    spaceComplexity = "O(h)";
+  } else if (problemTitle.toLowerCase().includes("sort")) {
+    problemType = "sorting algorithm";
+    timeComplexity = "O(n log n)";
+    spaceComplexity = "O(1)";
+  }
 
-  // Step-by-step breakdown
-  explanation += "**Step-by-step breakdown:**\n\n";
+  // Build step-by-step breakdown
+  const stepByStep = [];
+  let stepCount = 1;
 
   if (hasDataStructures) {
-    explanation += "1. **Data Structure Setup**: The code initializes data structures to store intermediate results\n";
+    stepByStep.push({
+      step: stepCount++,
+      description: "Initialize Data Structures",
+      codeSnippet: code.split('\n')[0] || "const map = new Map();",
+      explanation: "Set up data structures to store intermediate results and enable efficient lookups."
+    });
   }
 
   if (hasLoops) {
-    explanation += "2. **Iteration**: Uses loops to process input data systematically\n";
+    const loopLine = code.split('\n').find(line => /for|while|forEach/.test(line)) || "for (let i = 0; i < nums.length; i++)";
+    stepByStep.push({
+      step: stepCount++,
+      description: "Iterate Through Data",
+      codeSnippet: loopLine.trim(),
+      explanation: "Process each element systematically to build the solution."
+    });
   }
 
   if (hasConditionals) {
-    explanation += "3. **Conditional Logic**: Implements decision-making logic to handle different cases\n";
+    const conditionLine = code.split('\n').find(line => /if|else/.test(line)) || "if (condition)";
+    stepByStep.push({
+      step: stepCount++,
+      description: "Apply Conditional Logic",
+      codeSnippet: conditionLine.trim(),
+      explanation: "Make decisions based on current state to determine the next action."
+    });
   }
 
-  if (hasRecursion) {
-    explanation += "4. **Recursive Approach**: Uses recursion to break down the problem into smaller subproblems\n";
-  }
-
-  explanation += "\n**Key Concepts:**\n";
-
+  // Generate key insights based on problem type
+  const keyInsights = [];
   if (problemType === "hash map lookup") {
-    explanation += "- Hash maps provide O(1) average lookup time\n";
-    explanation += "- Complement search technique for pair problems\n";
+    keyInsights.push("Hash maps provide O(1) average lookup time");
+    keyInsights.push("Complement search technique efficiently finds pairs");
+    keyInsights.push("Single-pass solution reduces time complexity");
   } else if (problemType === "divide and conquer") {
-    explanation += "- Divides problem space in half each iteration\n";
-    explanation += "- Achieves O(log n) time complexity\n";
+    keyInsights.push("Divides problem space in half each iteration");
+    keyInsights.push("Logarithmic time complexity through elimination");
+    keyInsights.push("Efficient for sorted data structures");
   } else if (problemType === "tree traversal") {
-    explanation += "- Tree traversal patterns (DFS/BFS)\n";
-    explanation += "- Recursive tree processing\n";
+    keyInsights.push("Tree traversal patterns (DFS/BFS)");
+    keyInsights.push("Recursive processing of tree nodes");
+    keyInsights.push("Space complexity depends on tree height");
   } else {
-    explanation += "- Efficient algorithm design principles\n";
-    explanation += "- Optimal time and space complexity considerations\n";
+    keyInsights.push("Systematic approach to problem solving");
+    keyInsights.push("Efficient use of data structures");
+    keyInsights.push("Clear separation of concerns");
   }
 
   return {
-    explanation,
-    keyPoints: [
-      hasDataStructures ? "Uses appropriate data structures for efficiency" : "Simple algorithmic approach",
-      hasLoops ? "Iterative processing of input data" : "Direct computation method",
-      hasConditionals ? "Handles multiple cases and edge conditions" : "Straightforward logic flow"
-    ],
-    timeComplexity: hasLoops && hasRecursion ? "O(n log n)" : hasLoops ? "O(n)" : "O(1)",
-    spaceComplexity: hasDataStructures ? "O(n)" : "O(1)",
-    approach: problemType
+    overview: `This ${language} solution implements a ${problemType} approach to solve the ${problemTitle} problem efficiently.`,
+    stepByStep,
+    keyInsights,
+    timeComplexity: {
+      analysis: timeComplexity,
+      explanation: `The algorithm runs in ${timeComplexity} time due to its ${problemType} approach.`
+    },
+    spaceComplexity: {
+      analysis: spaceComplexity,
+      explanation: `Space complexity is ${spaceComplexity} based on the data structures used.`
+    },
+    alternativeApproaches: [
+      "Brute force approach with nested loops",
+      "Optimized sorting-based solution",
+      "Dynamic programming approach (if applicable)"
+    ]
   };
 }
 
