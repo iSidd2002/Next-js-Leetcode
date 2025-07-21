@@ -130,16 +130,16 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
           </DialogTitle>
           <DialogDescription className="text-sm sm:text-base">
             Sign in to sync your progress across devices or continue offline to get started locally.
-            {/* Show upgrade message if user has localStorage data but no cookies */}
-            {typeof window !== 'undefined' && (
-              localStorage.getItem('auth-token') ||
-              localStorage.getItem('leetcode-cf-tracker-problems')
-            ) && !document.cookie.includes('auth-token=') && (
-              <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
-                <strong>Authentication Upgrade:</strong> We've upgraded to a more secure authentication system. Please log in again to access your synced data.
-              </div>
-            )}
           </DialogDescription>
+          {/* Show upgrade message if user has localStorage data but no cookies */}
+          {typeof window !== 'undefined' && (
+            localStorage.getItem('auth-token') ||
+            localStorage.getItem('leetcode-cf-tracker-problems')
+          ) && !document.cookie.includes('auth-token=') && (
+            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
+              <strong>Authentication Upgrade:</strong> We've upgraded to a more secure authentication system. Please log in again to access your synced data.
+            </div>
+          )}
         </DialogHeader>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 sm:mt-6">

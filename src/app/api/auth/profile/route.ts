@@ -16,23 +16,12 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Handle development mode with mock user
-    if (process.env.NODE_ENV === 'development' && authUser.id === '507f1f77bcf86cd799439011') {
+    // Validate user ID format
+    if (!authUser.id || typeof authUser.id !== 'string') {
       return NextResponse.json({
-        success: true,
-        data: {
-          id: authUser.id,
-          email: authUser.email,
-          username: authUser.username,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-          settings: {
-            theme: 'light',
-            notifications: true,
-            emailUpdates: false
-          }
-        }
-      });
+        success: false,
+        error: 'Invalid user ID'
+      }, { status: 400 });
     }
 
     // Get user profile from database

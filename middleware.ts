@@ -5,7 +5,11 @@ import { verifyToken } from '@/lib/auth';
 const PROTECTED_API_ROUTES = [
   '/api/problems',
   '/api/contests',
-  '/api/auth/profile'
+  '/api/todos',
+  '/api/auth/profile',
+  '/api/study',
+  '/api/ai',
+  '/api/debug'
 ];
 
 // Define public API routes that don't require authentication
@@ -14,7 +18,8 @@ const PUBLIC_API_ROUTES = [
   '/api/auth/register',
   '/api/auth/logout',
   '/api/potd',
-  '/api/companies'
+  '/api/companies',
+  '/api/health'
 ];
 
 export function middleware(request: NextRequest) {
@@ -50,7 +55,15 @@ export function middleware(request: NextRequest) {
 
   if (!token) {
     return NextResponse.json(
-      { success: false, error: 'Access token required' },
+      { success: false, error: 'Authentication required' },
+      { status: 401 }
+    );
+  }
+
+  // Additional security: Check token format
+  if (typeof token !== 'string' || token.length < 10) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid token format' },
       { status: 401 }
     );
   }
