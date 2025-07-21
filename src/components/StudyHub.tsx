@@ -17,9 +17,6 @@ import {
   TrendingUp
 } from 'lucide-react';
 import FlashcardSystem from './study/FlashcardSystem';
-// import FlashcardCreateModal from './study/FlashcardCreateModal';
-// import TemplateManager from './study/TemplateManager';
-// import LearningPathManager from './study/LearningPathManager';
 import AIAssistant from './ai/AIAssistant';
 
 interface StudyHubProps {
@@ -108,10 +105,44 @@ const StudyHub = ({}: StudyHubProps) => {
         {/* Code Templates Tab */}
         <TabsContent value="templates" className="space-y-4">
           <Card>
-            <CardContent className="p-12 text-center">
-              <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Templates - Temporarily Disabled</h3>
-              <p className="text-muted-foreground">Testing AI Assistant functionality</p>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Code className="h-5 w-5" />
+                Code Templates
+                <Button size="sm" className="ml-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Template
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Code Templates Coming Soon</h3>
+                <p className="text-muted-foreground mb-4">
+                  Save and reuse code patterns for common algorithms and data structures.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+                  <div className="p-4 border rounded-lg">
+                    <div className="font-medium mb-2">Two Pointers</div>
+                    <div className="text-sm text-muted-foreground">
+                      Template for two-pointer technique problems
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="font-medium mb-2">Binary Search</div>
+                    <div className="text-sm text-muted-foreground">
+                      Standard binary search implementation
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="font-medium mb-2">DFS/BFS</div>
+                    <div className="text-sm text-muted-foreground">
+                      Graph traversal templates
+                    </div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -119,25 +150,61 @@ const StudyHub = ({}: StudyHubProps) => {
         {/* Learning Paths Tab */}
         <TabsContent value="paths" className="space-y-4">
           <Card>
-            <CardContent className="p-12 text-center">
-              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-medium mb-2">Learning Paths - Temporarily Disabled</h3>
-              <p className="text-muted-foreground">Testing AI Assistant functionality</p>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Learning Paths
+                <Button size="sm" className="ml-auto">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Path
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-12">
+                <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-lg font-medium mb-2">Learning Paths Coming Soon</h3>
+                <p className="text-muted-foreground mb-4">
+                  Structured learning paths to guide your algorithm and data structure journey.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Clock className="h-4 w-4 text-green-600" />
+                      <div className="font-medium">Beginner Path</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Start with basic data structures and algorithms
+                    </div>
+                    <div className="text-xs text-green-600">4 weeks • 50 problems</div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <TrendingUp className="h-4 w-4 text-blue-600" />
+                      <div className="font-medium">Interview Prep</div>
+                    </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      Comprehensive preparation for technical interviews
+                    </div>
+                    <div className="text-xs text-blue-600">8 weeks • 150 problems</div>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      {/* Create Flashcard Modal */}
+      {/* Create Flashcard Modal would go here */}
       {showCreateFlashcard && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <Card className="w-full max-w-2xl mx-4">
             <CardHeader>
-              <CardTitle>Create Flashcard - Temporarily Disabled</CardTitle>
+              <CardTitle>Create Flashcard - Coming Soon</CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-muted-foreground mb-4">
-                Testing AI Assistant functionality
+                Flashcard creation form will be implemented here.
               </p>
               <Button onClick={() => setShowCreateFlashcard(false)}>
                 Close
