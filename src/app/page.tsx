@@ -16,7 +16,7 @@ import CompanyGroupedProblemList from '@/components/CompanyGroupedProblemList';
 import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare } from 'lucide-react';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
@@ -29,6 +29,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import Sheets from '@/components/Sheets';
 import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
+import StudyHub from '@/components/StudyHub';
 
 export default function HomePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -680,7 +681,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-b overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-9 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-10 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
               <TabsTrigger value="dashboard" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
@@ -714,6 +715,11 @@ export default function HomePage() {
                     {todos.length}
                   </Badge>
                 )}
+              </TabsTrigger>
+
+              <TabsTrigger value="study" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <Brain className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-indigo-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Study</span>
               </TabsTrigger>
 
               <TabsTrigger value="problems" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
@@ -815,6 +821,10 @@ export default function HomePage() {
                 onDeleteTodo={handleDeleteTodo}
               />
             </div>
+          </TabsContent>
+
+          <TabsContent value="study" className="space-y-6">
+            <StudyHub />
           </TabsContent>
 
           <TabsContent value="problems" className="space-y-6">
