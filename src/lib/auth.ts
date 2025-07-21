@@ -45,6 +45,19 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 
 export async function authenticateRequest(request: NextRequest): Promise<JWTPayload | null> {
   try {
+    // Development mode: Allow testing without authentication
+    if (process.env.NODE_ENV === 'development') {
+      // Check for test header to enable mock user
+      const testMode = request.headers.get('x-test-mode');
+      if (testMode === 'true' || !request.headers.get('authorization')) {
+        return {
+          id: 'dev-user-123',
+          email: 'developer@example.com',
+          username: 'developer'
+        };
+      }
+    }
+
     // First try to get user info from middleware headers
     const userId = request.headers.get('x-user-id');
     const userEmail = request.headers.get('x-user-email');
