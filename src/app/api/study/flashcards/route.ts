@@ -82,11 +82,37 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { title, front, back, category, difficulty, tags } = body;
 
-    // Validation
-    if (!title || !front || !back || !category || !difficulty) {
+    // Input type validation
+    if (typeof title !== 'string' || typeof front !== 'string' || typeof back !== 'string') {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields'
+        error: 'Title, front, and back must be strings'
+      }, { status: 400 });
+    }
+
+    // Required field validation
+    if (!title.trim() || !front.trim() || !back.trim() || !category || !difficulty) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing required fields: title, front, back, category, difficulty'
+      }, { status: 400 });
+    }
+
+    // Category validation with helpful error message
+    const validCategories = ['algorithm', 'data-structure', 'concept', 'pattern', 'complexity'];
+    if (!validCategories.includes(category)) {
+      return NextResponse.json({
+        success: false,
+        error: `Invalid category '${category}'. Must be one of: ${validCategories.join(', ')}`
+      }, { status: 400 });
+    }
+
+    // Difficulty validation with helpful error message
+    const validDifficulties = ['easy', 'medium', 'hard'];
+    if (!validDifficulties.includes(difficulty)) {
+      return NextResponse.json({
+        success: false,
+        error: `Invalid difficulty '${difficulty}'. Must be one of: ${validDifficulties.join(', ')}`
       }, { status: 400 });
     }
 
@@ -109,6 +135,28 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Create flashcard error:', error);
+
+    // Handle validation errors specifically
+    if (error instanceof Error && error.message.includes('validation failed')) {
+      const validationError = error.message;
+      if (validationError.includes('category')) {
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid category. Must be one of: algorithm, data-structure, concept, pattern, complexity'
+        }, { status: 400 });
+      }
+      if (validationError.includes('difficulty')) {
+        return NextResponse.json({
+          success: false,
+          error: 'Invalid difficulty. Must be one of: easy, medium, hard'
+        }, { status: 400 });
+      }
+      return NextResponse.json({
+        success: false,
+        error: 'Validation error: Please check your input data'
+      }, { status: 400 });
+    }
+
     return NextResponse.json({
       success: false,
       error: 'Internal server error'
