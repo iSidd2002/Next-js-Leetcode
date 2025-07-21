@@ -54,6 +54,7 @@ const AIAssistant = ({
       const response = await fetch('/api/ai/code-review', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           code,
           language,
@@ -88,6 +89,7 @@ const AIAssistant = ({
       const response = await fetch('/api/ai/hint', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           problemTitle,
           problemDescription,
@@ -122,6 +124,7 @@ const AIAssistant = ({
       const response = await fetch('/api/ai/explain', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           code,
           language,
@@ -155,6 +158,7 @@ const AIAssistant = ({
       const response = await fetch('/api/ai/bugs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify({
           code,
           language,

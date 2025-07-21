@@ -17,9 +17,9 @@ import {
   TrendingUp
 } from 'lucide-react';
 import FlashcardSystem from './study/FlashcardSystem';
-import FlashcardCreateModal from './study/FlashcardCreateModal';
-import TemplateManager from './study/TemplateManager';
-import LearningPathManager from './study/LearningPathManager';
+// import FlashcardCreateModal from './study/FlashcardCreateModal';
+// import TemplateManager from './study/TemplateManager';
+// import LearningPathManager from './study/LearningPathManager';
 import AIAssistant from './ai/AIAssistant';
 
 interface StudyHubProps {
@@ -107,24 +107,44 @@ const StudyHub = ({}: StudyHubProps) => {
 
         {/* Code Templates Tab */}
         <TabsContent value="templates" className="space-y-4">
-          <TemplateManager />
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Code className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Templates - Temporarily Disabled</h3>
+              <p className="text-muted-foreground">Testing AI Assistant functionality</p>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         {/* Learning Paths Tab */}
         <TabsContent value="paths" className="space-y-4">
-          <LearningPathManager />
+          <Card>
+            <CardContent className="p-12 text-center">
+              <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Learning Paths - Temporarily Disabled</h3>
+              <p className="text-muted-foreground">Testing AI Assistant functionality</p>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
 
       {/* Create Flashcard Modal */}
       {showCreateFlashcard && (
-        <FlashcardCreateModal
-          onClose={() => setShowCreateFlashcard(false)}
-          onSuccess={() => {
-            setShowCreateFlashcard(false);
-            // Refresh flashcards if needed
-          }}
-        />
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-2xl mx-4">
+            <CardHeader>
+              <CardTitle>Create Flashcard - Temporarily Disabled</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground mb-4">
+                Testing AI Assistant functionality
+              </p>
+              <Button onClick={() => setShowCreateFlashcard(false)}>
+                Close
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
