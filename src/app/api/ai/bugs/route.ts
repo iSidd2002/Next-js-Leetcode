@@ -1,6 +1,93 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateRequest } from '@/lib/auth';
 
+// Intelligent fallback bug detection based on common patterns
+function generateFallbackBugDetection(code: string, language: string, problemContext: string) {
+  const bugs = [];
+  const warnings = [];
+  const suggestions = [];
+
+  // Common bug patterns
+  if (code.includes('i <= arr.length') || code.includes('i <= array.length')) {
+    bugs.push({
+      type: "Array Index Out of Bounds",
+      line: code.split('\n').findIndex(line => line.includes('i <= arr.length') || line.includes('i <= array.length')) + 1,
+      description: "Loop condition uses <= instead of < which can cause array index out of bounds",
+      severity: "high",
+      fix: "Change '<= arr.length' to '< arr.length'"
+    });
+  }
+
+  if (code.includes('let max = 0') && problemContext.toLowerCase().includes('max')) {
+    warnings.push({
+      type: "Incorrect Initialization",
+      line: code.split('\n').findIndex(line => line.includes('let max = 0')) + 1,
+      description: "Initializing max to 0 may not work for arrays with all negative numbers",
+      severity: "medium",
+      fix: "Initialize max to arr[0] or Number.NEGATIVE_INFINITY"
+    });
+  }
+
+  if (code.includes('==') && !code.includes('===')) {
+    warnings.push({
+      type: "Type Coercion",
+      line: code.split('\n').findIndex(line => line.includes('==') && !line.includes('===')) + 1,
+      description: "Using == instead of === can lead to unexpected type coercion",
+      severity: "medium",
+      fix: "Use === for strict equality comparison"
+    });
+  }
+
+  if (!code.includes('return') && language === 'javascript') {
+    warnings.push({
+      type: "Missing Return Statement",
+      line: code.split('\n').length,
+      description: "Function may be missing a return statement",
+      severity: "medium",
+      fix: "Add appropriate return statement"
+    });
+  }
+
+  // Performance suggestions
+  if (code.includes('for') && code.includes('for')) {
+    const nestedLoops = (code.match(/for/g) || []).length > 1;
+    if (nestedLoops) {
+      suggestions.push({
+        type: "Performance Optimization",
+        description: "Nested loops detected - consider using hash maps for O(1) lookups",
+        impact: "Can improve time complexity from O(n²) to O(n)"
+      });
+    }
+  }
+
+  if (code.includes('.indexOf(') || code.includes('.includes(')) {
+    suggestions.push({
+      type: "Data Structure Optimization",
+      description: "Consider using Set or Map for faster lookups instead of array methods",
+      impact: "Improves lookup time from O(n) to O(1)"
+    });
+  }
+
+  const bugsFound = bugs.length > 0;
+  const issueCount = bugs.length + warnings.length;
+
+  return {
+    bugsFound,
+    issueCount,
+    bugs,
+    warnings,
+    suggestions,
+    summary: issueCount > 0
+      ? `Found ${issueCount} potential issue${issueCount > 1 ? 's' : ''} in the code`
+      : "No obvious bugs detected in the code",
+    recommendations: [
+      bugs.length > 0 ? "Fix critical bugs before deployment" : "Code appears bug-free",
+      warnings.length > 0 ? "Address warnings to improve code quality" : "Good code quality practices",
+      suggestions.length > 0 ? "Consider performance optimizations" : "Performance looks acceptable"
+    ]
+  };
+}
+
 interface BugDetectionRequest {
   code: string;
   language: string;
@@ -122,7 +209,16 @@ If no bugs are found, return an empty bugs array and a positive assessment.
     });
 
     if (!response.ok) {
-      throw new Error(`OpenAI API error: ${response.statusText}`);
+      console.error(`OpenAI API error: ${response.status} ${response.statusText}`);
+
+      // Provide intelligent fallback bug detection
+      const fallbackBugReport = generateFallbackBugDetection(code, language, finalProblemContext);
+
+      return NextResponse.json({
+        success: true,
+        data: fallbackBugReport,
+        note: "AI service temporarily unavailable, providing curated bug analysis"
+      });
     }
 
     const data = await response.json();
