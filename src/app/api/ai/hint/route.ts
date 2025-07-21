@@ -141,12 +141,16 @@ export async function POST(request: NextRequest) {
     const body: HintRequest = await request.json();
     const { problemTitle, problemDescription, difficulty, currentAttempt, stuckPoint } = body;
 
-    if (!problemTitle || !problemDescription) {
+    if (!problemTitle || !problemTitle.trim()) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: problemTitle, problemDescription'
+        error: 'Missing required field: problemTitle'
       }, { status: 400 });
     }
+
+    // Use default description if not provided
+    const finalProblemDescription = problemDescription && problemDescription.trim() ?
+      problemDescription.trim() : 'No description provided';
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -161,7 +165,7 @@ You are a coding mentor helping a student solve algorithm problems.
 Provide a progressive hint that guides without giving away the complete solution.
 
 Problem: ${problemTitle}
-Description: ${problemDescription}
+Description: ${finalProblemDescription}
 Difficulty: ${difficulty}
 ${currentAttempt ? `Current Attempt: ${currentAttempt}` : ''}
 ${stuckPoint ? `Student is stuck on: ${stuckPoint}` : ''}

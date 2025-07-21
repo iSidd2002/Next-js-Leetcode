@@ -40,12 +40,15 @@ export async function POST(request: NextRequest) {
     const body: ExplanationRequest = await request.json();
     const { code, language, problemTitle } = body;
 
-    if (!code || !language || !problemTitle) {
+    if (!code || !code.trim() || !language || !language.trim()) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: code, language, problemTitle'
+        error: 'Missing required fields: code and language are required'
       }, { status: 400 });
     }
+
+    // Use default problem title if not provided
+    const finalProblemTitle = problemTitle && problemTitle.trim() ? problemTitle.trim() : 'Code Explanation';
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -59,7 +62,7 @@ export async function POST(request: NextRequest) {
 You are a computer science educator. Please provide a comprehensive explanation 
 of the following solution to help students understand the approach and implementation.
 
-Problem: ${problemTitle}
+Problem: ${finalProblemTitle}
 Language: ${language}
 
 Solution:

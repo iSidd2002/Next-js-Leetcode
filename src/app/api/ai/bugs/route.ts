@@ -31,12 +31,16 @@ export async function POST(request: NextRequest) {
     const body: BugDetectionRequest = await request.json();
     const { code, language, problemContext } = body;
 
-    if (!code || !language || !problemContext) {
+    if (!code || !code.trim() || !language || !language.trim()) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: code, language, problemContext'
+        error: 'Missing required fields: code and language are required'
       }, { status: 400 });
     }
+
+    // Use default problem context if not provided
+    const finalProblemContext = problemContext && problemContext.trim() ?
+      problemContext.trim() : 'General code analysis';
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
     const prompt = `
 Analyze the following code for potential bugs, edge cases, and logical errors.
 
-Context: ${problemContext}
+Context: ${finalProblemContext}
 Language: ${language}
 
 Code:

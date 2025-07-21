@@ -43,6 +43,42 @@ interface CodeReviewResponse {
 
 // Intelligent fallback code review based on code analysis
 function generateFallbackCodeReview(code: string, language: string): CodeReviewResponse {
+  // Handle empty or invalid code
+  if (!code || !code.trim()) {
+    return {
+      overallScore: 1,
+      codeQuality: {
+        score: 1,
+        feedback: "No code provided for review.",
+        suggestions: ["Please provide code to analyze"]
+      },
+      efficiency: {
+        score: 1,
+        feedback: "Cannot analyze efficiency without code.",
+        timeComplexity: "N/A",
+        spaceComplexity: "N/A",
+        optimizations: ["Provide code for analysis"]
+      },
+      readability: {
+        score: 1,
+        feedback: "Cannot assess readability without code.",
+        improvements: ["Submit code for review"]
+      },
+      bestPractices: {
+        score: 1,
+        feedback: "Cannot evaluate best practices without code.",
+        violations: ["No code provided"],
+        recommendations: ["Submit code for analysis"]
+      },
+      bugs: {
+        found: false,
+        issues: [],
+        fixes: []
+      },
+      summary: "No code provided for review. Please submit code to receive analysis."
+    };
+  }
+
   const codeLines = code.split('\n');
   const codeLength = code.length;
 
@@ -133,12 +169,15 @@ export async function POST(request: NextRequest) {
     const body: CodeReviewRequest = await request.json();
     const { code, language, problemTitle, problemDescription } = body;
 
-    if (!code || !language || !problemTitle) {
+    if (!code || !code.trim() || !language || !language.trim()) {
       return NextResponse.json({
         success: false,
-        error: 'Missing required fields: code, language, problemTitle'
+        error: 'Missing required fields: code and language are required'
       }, { status: 400 });
     }
+
+    // Use default problem title if not provided
+    const finalProblemTitle = problemTitle && problemTitle.trim() ? problemTitle.trim() : 'Code Review';
 
     const apiKey = process.env.OPENAI_API_KEY;
     if (!apiKey) {
@@ -152,7 +191,7 @@ export async function POST(request: NextRequest) {
 You are an expert code reviewer specializing in algorithm and data structure problems. 
 Please review the following solution and provide detailed feedback in JSON format.
 
-Problem: ${problemTitle}
+Problem: ${finalProblemTitle}
 ${problemDescription ? `Description: ${problemDescription}` : ''}
 Language: ${language}
 
