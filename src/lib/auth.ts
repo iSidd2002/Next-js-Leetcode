@@ -51,7 +51,7 @@ export async function authenticateRequest(request: NextRequest): Promise<JWTPayl
       const testMode = request.headers.get('x-test-mode');
       if (testMode === 'true' || !request.headers.get('authorization')) {
         return {
-          id: 'dev-user-123',
+          id: '507f1f77bcf86cd799439011', // Valid MongoDB ObjectId for development
           email: 'developer@example.com',
           username: 'developer'
         };
