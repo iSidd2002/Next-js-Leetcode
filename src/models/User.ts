@@ -5,6 +5,11 @@ export interface IUser extends Document {
   email: string;
   username: string;
   password: string;
+  settings?: {
+    theme?: 'light' | 'dark';
+    notifications?: boolean;
+    emailUpdates?: boolean;
+  };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -29,6 +34,21 @@ const UserSchema = new Schema<IUser>({
     type: String,
     required: true,
     minlength: 6,
+  },
+  settings: {
+    theme: {
+      type: String,
+      enum: ['light', 'dark'],
+      default: 'light'
+    },
+    notifications: {
+      type: Boolean,
+      default: true
+    },
+    emailUpdates: {
+      type: Boolean,
+      default: false
+    }
   },
 }, {
   timestamps: true,

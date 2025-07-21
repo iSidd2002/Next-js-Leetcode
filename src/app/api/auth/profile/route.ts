@@ -16,7 +16,26 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Get user profile
+    // Handle development mode with mock user
+    if (process.env.NODE_ENV === 'development' && authUser.id === '507f1f77bcf86cd799439011') {
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: authUser.id,
+          email: authUser.email,
+          username: authUser.username,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          settings: {
+            theme: 'light',
+            notifications: true,
+            emailUpdates: false
+          }
+        }
+      });
+    }
+
+    // Get user profile from database
     const userProfile = await User.findById(authUser.id);
 
     if (!userProfile) {
@@ -34,7 +53,11 @@ export async function GET(request: NextRequest) {
         username: userProfile.username,
         createdAt: userProfile.createdAt.toISOString(),
         updatedAt: userProfile.updatedAt.toISOString(),
-        settings: userProfile.settings
+        settings: userProfile.settings || {
+          theme: 'light',
+          notifications: true,
+          emailUpdates: false
+        }
       }
     });
 
