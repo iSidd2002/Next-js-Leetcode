@@ -58,21 +58,21 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // Wait for cookies to be available in browser, then trigger success
+      // Wait longer for cookies to be available in browser, then trigger success
       setTimeout(async () => {
         console.log('🍪 Checking cookie availability after login...');
 
-        // Check if cookies are available
+        // Check if cookies are available with more attempts and longer delays
         let cookiesAvailable = false;
         let attempts = 0;
-        const maxAttempts = 10;
+        const maxAttempts = 20; // Increased attempts
 
         while (!cookiesAvailable && attempts < maxAttempts) {
           cookiesAvailable = ApiService.isAuthenticated();
           console.log(`🍪 Cookie check attempt ${attempts + 1}: ${cookiesAvailable}`);
 
           if (!cookiesAvailable) {
-            await new Promise(resolve => setTimeout(resolve, 100));
+            await new Promise(resolve => setTimeout(resolve, 200)); // Longer delay
           }
           attempts++;
         }
@@ -84,7 +84,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
           console.log('⚠️  Cookies not available after multiple attempts, triggering anyway');
           onAuthSuccess();
         }
-      }, 100);
+      }, 500); // Increased initial delay
 
     } catch (error) {
       console.error('❌ Login failed:', error);

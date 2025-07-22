@@ -68,17 +68,29 @@ class ApiService {
   static async checkAuthStatusWithRetry(maxRetries: number = 3, delay: number = 100): Promise<boolean> {
     for (let i = 0; i < maxRetries; i++) {
       try {
+        // First check if cookies are present
+        if (!this.isAuthenticated()) {
+          console.log(`🍪 No cookies found on attempt ${i + 1}`);
+          if (i < maxRetries - 1) {
+            await new Promise(resolve => setTimeout(resolve, delay * (i + 1))); // Exponential backoff
+            continue;
+          }
+          return false;
+        }
+
+        // Then verify with API call
         const isAuth = await this.checkAuthStatus();
         if (isAuth) return true;
 
         // If not authenticated and we have more retries, wait and try again
         if (i < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, delay));
+          console.log(`🔄 Auth check failed, retrying in ${delay * (i + 1)}ms...`);
+          await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
         }
       } catch (error) {
         console.log(`Auth check attempt ${i + 1} failed:`, error);
         if (i < maxRetries - 1) {
-          await new Promise(resolve => setTimeout(resolve, delay));
+          await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
         }
       }
     }

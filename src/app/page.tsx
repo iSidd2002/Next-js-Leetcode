@@ -50,6 +50,81 @@ export default function HomePage() {
     loadData();
   }, []);
 
+  // Load data after successful authentication (doesn't change auth state)
+  const loadDataAfterAuth = async (maxRetries = 5) => {
+    console.log('🔄 Loading data after authentication...');
+
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`📊 Data loading attempt ${attempt}/${maxRetries}`);
+
+        // Load all data without checking auth status (we know user is authenticated)
+        let problemsData: Problem[] = [];
+        let potdData: Problem[] = [];
+        let contestsData: Contest[] = [];
+        let todosData: Todo[] = [];
+
+        try {
+          [problemsData, potdData, contestsData, todosData] = await Promise.all([
+            StorageService.getProblems(),
+            StorageService.getPotdProblems(),
+            StorageService.getContests(),
+            StorageService.getTodos()
+          ]);
+
+          console.log('✅ Post-auth data loaded successfully:', {
+            problems: problemsData.length,
+            potd: potdData.length,
+            contests: contestsData.length,
+            todos: todosData.length
+          });
+
+        } catch (error) {
+          console.error('❌ Error loading post-auth data:', error);
+
+          // If it's an auth error and we have more retries, continue
+          if (error instanceof Error && error.message.includes('Access token required') && attempt < maxRetries) {
+            console.log(`⏳ Access token error, retrying in ${attempt * 1000}ms...`);
+            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+            continue;
+          }
+
+          // Use empty arrays as fallback
+          problemsData = [];
+          potdData = [];
+          contestsData = [];
+          todosData = [];
+        }
+
+        // Set the data
+        setProblems(problemsData);
+        setPotdProblems(potdData);
+        setContests(contestsData);
+        setTodos(todosData);
+        setIsLoaded(true);
+
+        console.log('🎉 Post-auth data loading completed successfully');
+        return; // Success, exit retry loop
+
+      } catch (error) {
+        console.error(`❌ Post-auth data load attempt ${attempt} failed:`, error);
+
+        if (attempt === maxRetries) {
+          console.error('💥 All post-auth retry attempts failed');
+          // Set empty data as fallback
+          setProblems([]);
+          setPotdProblems([]);
+          setContests([]);
+          setTodos([]);
+          setIsLoaded(true);
+        } else {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        }
+      }
+    }
+  };
+
   // Load data with retry logic for post-authentication scenarios
   const loadDataWithRetry = async (maxRetries = 3) => {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -57,9 +132,19 @@ export default function HomePage() {
         console.log(`🔄 Loading data attempt ${attempt}/${maxRetries}`);
 
         // Check authentication status with retry
-        const authenticated = await ApiService.checkAuthStatusWithRetry(2, 100);
+        const authenticated = await ApiService.checkAuthStatusWithRetry(3, 200);
         console.log('🔐 Authentication status:', authenticated);
-        setIsAuthenticated(authenticated);
+
+        // Don't set authentication to false during post-login retry attempts
+        // Only set to true if authenticated, or false on final attempt
+        if (authenticated) {
+          setIsAuthenticated(true);
+        } else if (attempt === maxRetries) {
+          console.log('❌ Authentication failed after all retries');
+          setIsAuthenticated(false);
+          setShowAuthModal(true);
+          return;
+        }
 
         if (authenticated) {
           try {
@@ -115,9 +200,17 @@ export default function HomePage() {
 
           // If it's an auth error and we have more retries, continue
           if (error instanceof Error && error.message.includes('Access token required') && attempt < maxRetries) {
-            console.log(`⏳ Access token error, retrying in ${attempt * 300}ms...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 300));
+            console.log(`⏳ Access token error, retrying in ${attempt * 500}ms...`);
+            await new Promise(resolve => setTimeout(resolve, attempt * 500));
             continue;
+          }
+
+          // If it's an auth error on final attempt, show login modal
+          if (error instanceof Error && error.message.includes('Access token required') && attempt === maxRetries) {
+            console.log('❌ Authentication failed after all retries, showing login modal');
+            setIsAuthenticated(false);
+            setShowAuthModal(true);
+            return;
           }
 
           // For other errors or final attempt, use empty arrays
@@ -1011,9 +1104,12 @@ export default function HomePage() {
           // Set authenticated state immediately
           setIsAuthenticated(true);
 
-          // Wait for cookies and then load data with comprehensive retry logic
+          // Wait for cookies and then load data without interfering with auth state
           setTimeout(async () => {
             console.log('🍪 Starting post-auth data loading...');
+
+            // Wait for cookies to be fully available
+            await new Promise(resolve => setTimeout(resolve, 1000));
 
             try {
               // First, try to get user profile to verify authentication
@@ -1022,17 +1118,17 @@ export default function HomePage() {
               setCurrentUser(userProfile);
               console.log('✅ User profile loaded:', userProfile.email);
 
-              // If profile loads successfully, load all data
-              await loadDataWithRetry(5); // More retries for post-auth scenario
+              // Load all data without changing authentication state
+              await loadDataAfterAuth(5);
 
             } catch (error: any) {
               console.error('❌ Post-auth profile fetch failed:', error);
 
-              // If profile fails, try the comprehensive retry approach
-              console.log('🔄 Falling back to comprehensive retry...');
-              await loadDataWithRetry(5);
+              // If profile fails, try loading data anyway (with retries)
+              console.log('🔄 Profile failed, but continuing with data load...');
+              await loadDataAfterAuth(5);
             }
-          }, 300); // Longer delay to ensure cookies are fully available
+          }, 500); // Initial delay to ensure cookies are available
         }}
       />
 
