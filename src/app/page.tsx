@@ -70,6 +70,7 @@ export default function HomePage() {
             setIsAuthenticated(false);
             setCurrentUser(null);
             ApiService.clearAuthState();
+            return; // Exit early if user not found
           }
         }
       }
@@ -898,9 +899,25 @@ export default function HomePage() {
       <AuthModal
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
-        onAuthSuccess={() => {
+        onAuthSuccess={async () => {
+          // Set authenticated state immediately
           setIsAuthenticated(true);
-          loadData(); // Reload data after authentication
+
+          // Wait a brief moment for cookies to be set, then reload data
+          setTimeout(async () => {
+            try {
+              // Get user profile first
+              const userProfile = await ApiService.getProfile();
+              setCurrentUser(userProfile);
+
+              // Then load all data
+              await loadData();
+            } catch (error) {
+              console.error('Failed to load data after authentication:', error);
+              // If there's an error, try a full reload
+              await loadData();
+            }
+          }, 100); // Small delay to ensure cookies are set
         }}
       />
 

@@ -50,11 +50,18 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       }
 
       toast.success('Login successful!');
-      onAuthSuccess();
+
+      // Close modal first
       onOpenChange(false);
 
       // Reset form
       setLoginForm({ email: '', password: '' });
+
+      // Call success callback after a brief delay to ensure cookies are set
+      setTimeout(() => {
+        onAuthSuccess();
+      }, 50);
+
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
@@ -88,11 +95,18 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       }
 
       toast.success('Registration successful!');
-      onAuthSuccess();
+
+      // Close modal first
       onOpenChange(false);
 
       // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
+
+      // Call success callback after a brief delay to ensure cookies are set
+      setTimeout(() => {
+        onAuthSuccess();
+      }, 50);
+
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
     } finally {

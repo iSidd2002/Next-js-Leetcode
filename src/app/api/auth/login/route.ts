@@ -8,10 +8,14 @@ const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
 
+// Export for debugging purposes
+export { loginAttempts };
+
 function getRateLimitKey(request: NextRequest): string {
   // Use IP address for rate limiting
   const forwarded = request.headers.get('x-forwarded-for');
-  const ip = forwarded ? forwarded.split(',')[0] : request.ip || 'unknown';
+  const realIp = request.headers.get('x-real-ip');
+  const ip = forwarded ? forwarded.split(',')[0].trim() : realIp || 'localhost';
   return ip;
 }
 
@@ -132,7 +136,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Enhanced security
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });
@@ -141,7 +145,7 @@ export async function POST(request: NextRequest) {
     response.cookies.set('user-id', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Enhanced security
+      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });

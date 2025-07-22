@@ -17,6 +17,11 @@ class ApiService {
   // More reliable authentication check by making an API call
   static async checkAuthStatus(): Promise<boolean> {
     try {
+      // First check if we have cookies
+      if (!this.isAuthenticated()) {
+        return false;
+      }
+
       await this.getProfile();
       return true;
     } catch (error: any) {
@@ -38,6 +43,27 @@ class ApiService {
 
       return false;
     }
+  }
+
+  // Check authentication with retry logic for post-login scenarios
+  static async checkAuthStatusWithRetry(maxRetries: number = 3, delay: number = 100): Promise<boolean> {
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        const isAuth = await this.checkAuthStatus();
+        if (isAuth) return true;
+
+        // If not authenticated and we have more retries, wait and try again
+        if (i < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      } catch (error) {
+        console.log(`Auth check attempt ${i + 1} failed:`, error);
+        if (i < maxRetries - 1) {
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
+      }
+    }
+    return false;
   }
 
   private static async request<T>(
