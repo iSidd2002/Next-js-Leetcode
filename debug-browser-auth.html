@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Browser Authentication Debug</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .section { margin: 20px 0; padding: 15px; border: 1px solid #ccc; border-radius: 5px; }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        button { padding: 10px 15px; margin: 5px; cursor: pointer; }
+        #results { white-space: pre-wrap; font-family: monospace; background: #f5f5f5; padding: 10px; max-height: 400px; overflow-y: auto; }
+        input { padding: 8px; margin: 5px; width: 200px; }
+    </style>
+</head>
+<body>
+    <h1>Browser Authentication Debug Tool</h1>
+    
+    <div class="section">
+        <h2>1. Cookie Status</h2>
+        <button onclick="checkCookies()">Check Current Cookies</button>
+        <button onclick="clearAllCookies()">Clear All Cookies</button>
+    </div>
+
+    <div class="section">
+        <h2>2. Login Test</h2>
+        <input type="email" id="email" placeholder="Email" value="test@example.com">
+        <input type="password" id="password" placeholder="Password" value="password123">
+        <button onclick="testLogin()">Test Login</button>
+        <button onclick="resetRateLimit()">Reset Rate Limit</button>
+    </div>
+
+    <div class="section">
+        <h2>3. API Tests</h2>
+        <button onclick="testProfile()">Test Profile API</button>
+        <button onclick="testProblems()">Test Problems API</button>
+        <button onclick="testTodos()">Test Todos API</button>
+        <button onclick="testContests()">Test Contests API</button>
+    </div>
+
+    <div class="section">
+        <h2>4. Complete Flow Test</h2>
+        <button onclick="testCompleteFlow()">Test Complete Auth Flow</button>
+    </div>
+
+    <div class="section">
+        <h2>Results</h2>
+        <button onclick="clearResults()">Clear Results</button>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : 'info';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function getCookies() {
+            const cookies = {};
+            document.cookie.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name && value) {
+                    cookies[name] = value;
+                }
+            });
+            return cookies;
+        }
+
+        function checkCookies() {
+            log('🍪 Checking current cookies...');
+            const cookies = getCookies();
+            
+            if (Object.keys(cookies).length === 0) {
+                log('❌ No cookies found', 'error');
+                return;
+            }
+            
+            log(`✅ Found ${Object.keys(cookies).length} cookies:`, 'success');
+            Object.keys(cookies).forEach(name => {
+                const value = cookies[name];
+                const displayValue = value.length > 50 ? value.substring(0, 50) + '...' : value;
+                log(`  ${name}: ${displayValue}`);
+            });
+            
+            // Check specifically for auth cookies
+            const hasAuthToken = 'auth-token' in cookies;
+            const hasUserId = 'user-id' in cookies;
+            
+            log(`\n🔐 Authentication cookies:`);
+            log(`  auth-token: ${hasAuthToken ? '✅ Present' : '❌ Missing'}`, hasAuthToken ? 'success' : 'error');
+            log(`  user-id: ${hasUserId ? '✅ Present' : '❌ Missing'}`, hasUserId ? 'success' : 'error');
+        }
+
+        function clearAllCookies() {
+            log('🧹 Clearing all cookies...');
+            const cookies = getCookies();
+            Object.keys(cookies).forEach(name => {
+                document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+                log(`  Cleared: ${name}`);
+            });
+            log('✅ All cookies cleared', 'success');
+        }
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                credentials: 'include',
+                ...options,
+            };
+
+            try {
+                log(`📡 Making request: ${options.method || 'GET'} ${endpoint}`);
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    log(`✅ ${endpoint} - Success (${response.status})`, 'success');
+                    return { success: true, data, status: response.status };
+                } else {
+                    log(`❌ ${endpoint} - Failed (${response.status}): ${data.error}`, 'error');
+                    return { success: false, data, status: response.status };
+                }
+            } catch (error) {
+                log(`❌ ${endpoint} - Network error: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function resetRateLimit() {
+            log('⏱️  Resetting rate limit...');
+            const result = await makeRequest('/debug/reset-rate-limit', { method: 'POST' });
+            if (result.success) {
+                log('✅ Rate limit reset successfully', 'success');
+            }
+        }
+
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`\n🔐 Testing login with ${email}...`);
+            
+            // First reset rate limit
+            await resetRateLimit();
+            
+            // Check cookies before login
+            log('\n📋 Cookies before login:');
+            checkCookies();
+            
+            // Attempt login
+            const result = await makeRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+            
+            if (result.success) {
+                log(`✅ Login successful for ${result.data.user.email}`, 'success');
+                
+                // Check cookies after login
+                log('\n📋 Cookies after login:');
+                setTimeout(() => {
+                    checkCookies();
+                }, 100);
+                
+            } else {
+                log(`❌ Login failed: ${result.data?.error || result.error}`, 'error');
+            }
+        }
+
+        async function testProfile() {
+            log('\n👤 Testing profile API...');
+            const result = await makeRequest('/auth/profile');
+            
+            if (result.success) {
+                log(`✅ Profile: ${result.data.data.email} (${result.data.data.username})`, 'success');
+            }
+        }
+
+        async function testProblems() {
+            log('\n📚 Testing problems API...');
+            const result = await makeRequest('/problems');
+            
+            if (result.success) {
+                log(`✅ Problems: ${result.data.data.length} found`, 'success');
+            }
+        }
+
+        async function testTodos() {
+            log('\n✅ Testing todos API...');
+            const result = await makeRequest('/todos');
+            
+            if (result.success) {
+                log(`✅ Todos: ${result.data.data.length} found`, 'success');
+            }
+        }
+
+        async function testContests() {
+            log('\n🏆 Testing contests API...');
+            const result = await makeRequest('/contests');
+            
+            if (result.success) {
+                log(`✅ Contests: ${result.data.data.length} found`, 'success');
+            }
+        }
+
+        async function testCompleteFlow() {
+            log('🚀 Starting complete authentication flow test...\n');
+            
+            // Step 1: Clear everything
+            clearAllCookies();
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
+            // Step 2: Verify logged out
+            log('1️⃣ Verifying logged out state...');
+            const loggedOutProfile = await makeRequest('/auth/profile');
+            if (!loggedOutProfile.success) {
+                log('✅ Confirmed logged out', 'success');
+            } else {
+                log('⚠️  Still appears logged in', 'error');
+            }
+            
+            // Step 3: Login
+            log('\n2️⃣ Performing login...');
+            await testLogin();
+            
+            // Step 4: Wait a moment for cookies to settle
+            await new Promise(resolve => setTimeout(resolve, 200));
+            
+            // Step 5: Test all APIs
+            log('\n3️⃣ Testing all APIs after login...');
+            await testProfile();
+            await testProblems();
+            await testTodos();
+            await testContests();
+            
+            log('\n🎉 Complete flow test finished!');
+        }
+
+        // Auto-check cookies on page load
+        window.addEventListener('load', () => {
+            setTimeout(checkCookies, 500);
+        });
+    </script>
+</body>
+</html>

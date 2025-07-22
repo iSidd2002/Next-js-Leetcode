@@ -42,7 +42,8 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     setError('');
 
     try {
-      await ApiService.login(loginForm.email, loginForm.password);
+      const loginResult = await ApiService.login(loginForm.email, loginForm.password);
+      console.log('🔐 Login API success:', loginResult);
 
       // Clean up old localStorage token if it exists
       if (typeof window !== 'undefined') {
@@ -57,12 +58,36 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // Call success callback after a brief delay to ensure cookies are set
-      setTimeout(() => {
-        onAuthSuccess();
-      }, 50);
+      // Wait for cookies to be available in browser, then trigger success
+      setTimeout(async () => {
+        console.log('🍪 Checking cookie availability after login...');
+
+        // Check if cookies are available
+        let cookiesAvailable = false;
+        let attempts = 0;
+        const maxAttempts = 10;
+
+        while (!cookiesAvailable && attempts < maxAttempts) {
+          cookiesAvailable = ApiService.isAuthenticated();
+          console.log(`🍪 Cookie check attempt ${attempts + 1}: ${cookiesAvailable}`);
+
+          if (!cookiesAvailable) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+          }
+          attempts++;
+        }
+
+        if (cookiesAvailable) {
+          console.log('✅ Cookies available, triggering auth success');
+          onAuthSuccess();
+        } else {
+          console.log('⚠️  Cookies not available after multiple attempts, triggering anyway');
+          onAuthSuccess();
+        }
+      }, 100);
 
     } catch (error) {
+      console.error('❌ Login failed:', error);
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
       setIsLoading(false);

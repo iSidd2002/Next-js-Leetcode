@@ -50,6 +50,112 @@ export default function HomePage() {
     loadData();
   }, []);
 
+  // Load data with retry logic for post-authentication scenarios
+  const loadDataWithRetry = async (maxRetries = 3) => {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 Loading data attempt ${attempt}/${maxRetries}`);
+
+        // Check authentication status with retry
+        const authenticated = await ApiService.checkAuthStatusWithRetry(2, 100);
+        console.log('🔐 Authentication status:', authenticated);
+        setIsAuthenticated(authenticated);
+
+        if (authenticated) {
+          try {
+            // Get user profile first
+            console.log('👤 Fetching user profile...');
+            const userProfile = await ApiService.getProfile();
+            setCurrentUser(userProfile);
+            console.log('✅ User profile loaded:', userProfile.email);
+          } catch (error: any) {
+            console.error('❌ Failed to get user profile:', error);
+
+            if (error.message === 'User not found' || error.status === 404) {
+              console.log('🧹 User not found, clearing auth state');
+              setIsAuthenticated(false);
+              setCurrentUser(null);
+              ApiService.clearAuthState();
+              return;
+            }
+
+            // If it's an auth error and we have more retries, continue
+            if (error.status === 401 && attempt < maxRetries) {
+              console.log(`⏳ Auth error, retrying in ${attempt * 200}ms...`);
+              await new Promise(resolve => setTimeout(resolve, attempt * 200));
+              continue;
+            }
+          }
+        }
+
+        // Load all data
+        console.log('📊 Loading application data...');
+        let problemsData: Problem[] = [];
+        let potdData: Problem[] = [];
+        let contestsData: Contest[] = [];
+        let todosData: Todo[] = [];
+
+        try {
+          [problemsData, potdData, contestsData, todosData] = await Promise.all([
+            StorageService.getProblems(),
+            StorageService.getPotdProblems(),
+            StorageService.getContests(),
+            StorageService.getTodos()
+          ]);
+
+          console.log('✅ Data loaded successfully:', {
+            problems: problemsData.length,
+            potd: potdData.length,
+            contests: contestsData.length,
+            todos: todosData.length
+          });
+
+        } catch (error) {
+          console.error('❌ Error loading data:', error);
+
+          // If it's an auth error and we have more retries, continue
+          if (error instanceof Error && error.message.includes('Access token required') && attempt < maxRetries) {
+            console.log(`⏳ Access token error, retrying in ${attempt * 300}ms...`);
+            await new Promise(resolve => setTimeout(resolve, attempt * 300));
+            continue;
+          }
+
+          // For other errors or final attempt, use empty arrays
+          problemsData = [];
+          potdData = [];
+          contestsData = [];
+          todosData = [];
+        }
+
+        // Set the data
+        setProblems(problemsData);
+        setPotdProblems(potdData);
+        setContests(contestsData);
+        setTodos(todosData);
+        setIsLoaded(true);
+
+        console.log('🎉 Data loading completed successfully');
+        return; // Success, exit retry loop
+
+      } catch (error) {
+        console.error(`❌ Load data attempt ${attempt} failed:`, error);
+
+        if (attempt === maxRetries) {
+          console.error('💥 All retry attempts failed');
+          // Set empty data as fallback
+          setProblems([]);
+          setPotdProblems([]);
+          setContests([]);
+          setTodos([]);
+          setIsLoaded(true);
+        } else {
+          // Wait before retrying
+          await new Promise(resolve => setTimeout(resolve, attempt * 500));
+        }
+      }
+    }
+  };
+
   const loadData = async () => {
     try {
       // Check authentication status more reliably
@@ -900,24 +1006,33 @@ export default function HomePage() {
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
         onAuthSuccess={async () => {
+          console.log('🔐 Auth success callback triggered');
+
           // Set authenticated state immediately
           setIsAuthenticated(true);
 
-          // Wait a brief moment for cookies to be set, then reload data
+          // Wait for cookies and then load data with comprehensive retry logic
           setTimeout(async () => {
+            console.log('🍪 Starting post-auth data loading...');
+
             try {
-              // Get user profile first
+              // First, try to get user profile to verify authentication
+              console.log('👤 Attempting to fetch user profile...');
               const userProfile = await ApiService.getProfile();
               setCurrentUser(userProfile);
+              console.log('✅ User profile loaded:', userProfile.email);
 
-              // Then load all data
-              await loadData();
-            } catch (error) {
-              console.error('Failed to load data after authentication:', error);
-              // If there's an error, try a full reload
-              await loadData();
+              // If profile loads successfully, load all data
+              await loadDataWithRetry(5); // More retries for post-auth scenario
+
+            } catch (error: any) {
+              console.error('❌ Post-auth profile fetch failed:', error);
+
+              // If profile fails, try the comprehensive retry approach
+              console.log('🔄 Falling back to comprehensive retry...');
+              await loadDataWithRetry(5);
             }
-          }, 100); // Small delay to ensure cookies are set
+          }, 300); // Longer delay to ensure cookies are fully available
         }}
       />
 
