@@ -6,10 +6,16 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
 
 class ApiService {
   static isAuthenticated(): boolean {
-    // IMPORTANT: HttpOnly cookies cannot be read by JavaScript
-    // This method is kept for backward compatibility but should not be relied upon
-    // Use checkAuthStatus() for reliable authentication checking
-    return false; // Always return false to force API-based auth check
+    // Check the auth-status cookie (readable by JavaScript)
+    if (typeof window !== 'undefined') {
+      const cookies = document.cookie.split(';');
+      const authStatus = cookies.find(cookie => {
+        const trimmed = cookie.trim();
+        return trimmed.startsWith('auth-status=authenticated');
+      });
+      return !!authStatus;
+    }
+    return false;
   }
 
   // Reliable authentication check using API call
@@ -160,8 +166,10 @@ class ApiService {
     // Only run in browser environment
     if (typeof window === 'undefined') return;
 
-    // Clear auth cookie
+    // Clear all auth cookies
     document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    document.cookie = 'auth-status=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
     // Clear any localStorage auth data if present
     localStorage.removeItem('auth-token');

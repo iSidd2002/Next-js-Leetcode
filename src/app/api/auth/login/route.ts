@@ -132,20 +132,29 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    // Set HTTP-only cookie with the token
+    // Set HTTP-only cookie with the token (secure, server-side only)
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });
 
-    // Also set userId cookie for easy access
+    // Set userId cookie (secure, server-side only)
     response.cookies.set('user-id', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax', // Changed from 'strict' to 'lax' for better compatibility
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      path: '/'
+    });
+
+    // Set authentication indicator cookie (readable by JavaScript for client-side checks)
+    response.cookies.set('auth-status', 'authenticated', {
+      httpOnly: false, // JavaScript can read this
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });

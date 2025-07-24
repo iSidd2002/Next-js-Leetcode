@@ -249,27 +249,27 @@ export default function HomePage() {
     }
   };
 
-  // Simple, reliable app initialization using API-based authentication check
+  // Reliable app initialization with hybrid authentication check
   const initializeApp = async () => {
     console.log('🚀 App initialization started');
 
     try {
-      // Use API call to check authentication (works with HttpOnly cookies)
-      console.log('🔍 Checking authentication status...');
-      const isAuthenticated = await ApiService.checkAuthStatus();
-      console.log('🔍 Authentication status:', isAuthenticated);
+      // First, check if auth-status cookie indicates authentication
+      console.log('🔍 Checking client-side authentication indicator...');
+      const hasAuthCookie = ApiService.isAuthenticated();
+      console.log('🔍 Auth cookie present:', hasAuthCookie);
 
-      if (!isAuthenticated) {
-        // User is not authenticated
-        console.log('❌ User not authenticated, showing login modal');
+      if (!hasAuthCookie) {
+        // No auth indicator cookie, user is not authenticated
+        console.log('❌ No auth indicator, showing login modal');
         setIsAuthenticated(false);
         setShowAuthModal(true);
         setIsLoaded(true);
         return;
       }
 
-      // User is authenticated, get profile and load data
-      console.log('✅ User authenticated, loading profile and data');
+      // Auth cookie present, verify with server
+      console.log('✅ Auth indicator found, verifying with server...');
       try {
         const userProfile = await ApiService.getProfile();
         console.log('👤 User profile loaded:', userProfile.email);
@@ -281,8 +281,8 @@ export default function HomePage() {
         console.log('📊 User data loaded successfully');
 
       } catch (error: any) {
-        // Profile loading failed, clear state and show login
-        console.error('❌ Profile loading failed:', error);
+        // Server verification failed, clear state and show login
+        console.error('❌ Server verification failed:', error);
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowAuthModal(true);
