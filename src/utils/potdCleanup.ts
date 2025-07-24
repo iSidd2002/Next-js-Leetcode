@@ -25,6 +25,7 @@ export function isPotdExpired(problem: Problem): boolean {
 
 /**
  * Clean up expired POTD problems from a list
+ * IMPORTANT: Preserves POTD problems that are marked for review
  */
 export function cleanupExpiredPotdProblems(problems: Problem[]): {
   cleanedProblems: Problem[];
@@ -35,9 +36,11 @@ export function cleanupExpiredPotdProblems(problems: Problem[]): {
   const removedProblems: Problem[] = [];
 
   for (const problem of problems) {
-    if (isPotdExpired(problem)) {
+    if (isPotdExpired(problem) && !problem.isReview) {
+      // Only remove expired POTD problems that are NOT marked for review
       removedProblems.push(problem);
     } else {
+      // Keep the problem if it's not expired OR if it's marked for review
       cleanedProblems.push(problem);
     }
   }
@@ -74,7 +77,8 @@ export function getPotdStatistics(problems: Problem[]): {
   }
 
   const active = potdProblems.filter(p => !isPotdExpired(p)).length;
-  const expired = potdProblems.filter(p => isPotdExpired(p)).length;
+  const expired = potdProblems.filter(p => isPotdExpired(p) && !p.isReview).length; // Don't count review problems as expired
+  const reviewProblems = potdProblems.filter(p => p.isReview).length;
 
   // Find oldest and newest dates
   const dates = potdProblems.map(p => new Date(p.dateSolved || p.createdAt));
@@ -85,6 +89,7 @@ export function getPotdStatistics(problems: Problem[]): {
     total: potdProblems.length,
     active,
     expired,
+    reviewProblems,
     oldestDate,
     newestDate
   };

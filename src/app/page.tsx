@@ -387,8 +387,15 @@ export default function HomePage() {
   };
   const handleUpdateProblem = async (id: string, updates: Partial<Problem>) => {
     try {
-      // Find the existing problem
-      const existingProblem = problems.find(p => p.id === id);
+      // Find the existing problem in both regular problems and POTD problems
+      let existingProblem = problems.find(p => p.id === id);
+      let isPotdProblem = false;
+
+      if (!existingProblem) {
+        existingProblem = potdProblems.find(p => p.id === id);
+        isPotdProblem = true;
+      }
+
       if (!existingProblem) {
         toast.error('Problem not found');
         return;
@@ -400,8 +407,12 @@ export default function HomePage() {
       // Use the API to update the problem (which handles user association)
       await StorageService.updateProblem(id, updates);
 
-      // Update local state
-      setProblems(problems.map(p => p.id === id ? updatedProblem : p));
+      // Update local state based on problem type
+      if (isPotdProblem) {
+        setPotdProblems(potdProblems.map(p => p.id === id ? updatedProblem : p));
+      } else {
+        setProblems(problems.map(p => p.id === id ? updatedProblem : p));
+      }
 
       toast.success('Problem updated successfully!');
     } catch (error) {
@@ -412,8 +423,16 @@ export default function HomePage() {
 
   const handleToggleReview = async (id: string, updates: Partial<Problem>) => {
     try {
-      const problem = problems.find(p => p.id === id);
-      if (!problem) return;
+      // Find the problem in both regular problems and POTD problems
+      let problem = problems.find(p => p.id === id);
+      if (!problem) {
+        problem = potdProblems.find(p => p.id === id);
+      }
+
+      if (!problem) {
+        toast.error('Problem not found');
+        return;
+      }
 
       let updatedProblem: Problem;
 
@@ -447,12 +466,21 @@ export default function HomePage() {
 
   const handleDeleteProblem = async (id: string) => {
     try {
+      // Check if it's a POTD problem first
+      const isPotdProblem = potdProblems.some(p => p.id === id);
+
       // Use the API to delete the problem (which handles user association)
       await StorageService.deleteProblem(id);
 
-      // Refresh the problems list from the server to get the latest data
-      const refreshedProblems = await StorageService.getProblems();
-      setProblems(refreshedProblems);
+      if (isPotdProblem) {
+        // Refresh the POTD problems list from the server
+        const refreshedPotdProblems = await StorageService.getPotdProblems();
+        setPotdProblems(refreshedPotdProblems);
+      } else {
+        // Refresh the regular problems list from the server
+        const refreshedProblems = await StorageService.getProblems();
+        setProblems(refreshedProblems);
+      }
 
       toast.success('Problem deleted successfully!');
     } catch (error) {
@@ -478,8 +506,16 @@ export default function HomePage() {
 
   const handleProblemReviewed = async (id: string, quality: number = 4) => {
     try {
-      const problem = problems.find(p => p.id === id);
-      if (!problem) return;
+      // Find the problem in both regular problems and POTD problems
+      let problem = problems.find(p => p.id === id);
+      if (!problem) {
+        problem = potdProblems.find(p => p.id === id);
+      }
+
+      if (!problem) {
+        toast.error('Problem not found');
+        return;
+      }
 
       // Use the proper spaced repetition algorithm
       const updatedProblem = markAsReviewed(problem, quality);
@@ -758,9 +794,10 @@ export default function HomePage() {
   const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source); // Include legacy problems without source
   const activeProblems = manualProblems.filter(p => p.status === 'active');
 
-  // CRITICAL FIX: Show ALL problems marked for review, not just due ones
+  // CRITICAL FIX: Show ALL problems marked for review from both regular and POTD problems
   // Users should see all review problems and identify which are due
-  const reviewProblems = manualProblems.filter(p => p.isReview);
+  const allProblemsForReview = [...problems, ...potdProblems];
+  const reviewProblems = allProblemsForReview.filter(p => p.isReview);
 
   // Separate calculation for due problems (for badges and highlighting)
   const dueReviewProblems = reviewProblems.filter(p =>
