@@ -203,7 +203,8 @@ export default function HomePage() {
         updatedProblem = { ...problem, ...updates };
       }
 
-      await handleUpdateProblem(problem.id, updates);
+      // Persist the full updated problem so spaced repetition data is saved
+      await handleUpdateProblem(problem.id, updatedProblem);
     } catch (error) {
       console.error('Failed to toggle review:', error);
       toast.error('Failed to update review status');
