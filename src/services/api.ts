@@ -19,13 +19,7 @@ class ApiService {
         return trimmed.startsWith('user-id=') && trimmed.length > 'user-id='.length;
       });
 
-      console.log('🍪 Cookie check:', {
-        totalCookies: cookies.length,
-        hasAuthToken,
-        hasUserId,
-        bothPresent: hasAuthToken && hasUserId,
-        cookieString: document.cookie.substring(0, 150) + (document.cookie.length > 150 ? '...' : '')
-      });
+
 
       // Both cookies should be present for proper authentication
       return hasAuthToken && hasUserId;
@@ -113,22 +107,18 @@ class ApiService {
     };
 
     try {
-      console.log(`📡 API Request: ${config.method || 'GET'} ${endpoint}`);
       const response = await fetch(url, config);
       const data = await response.json();
 
       if (!response.ok) {
-        console.error(`❌ API Error: ${endpoint} - ${response.status} ${data.error}`);
         const error = new Error(data.error || `HTTP error! status: ${response.status}`);
         (error as any).status = response.status;
         (error as any).statusText = response.statusText;
         throw error;
       }
 
-      console.log(`✅ API Success: ${endpoint} - ${response.status}`);
       return data;
     } catch (error) {
-      console.error(`💥 API Request Failed: ${endpoint}`, error);
       throw error;
     }
   }

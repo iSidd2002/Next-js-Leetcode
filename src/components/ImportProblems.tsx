@@ -116,8 +116,6 @@ const ImportProblems = ({ open, onOpenChange, onImport }: ImportProblemsProps) =
       const dataSource = result.data.source || 'unknown';
       const totalProblems = result.data.total || result.data.problems.length;
 
-      console.log(`Importing ${totalProblems} problems for ${selectedCompany} from ${dataSource} source`);
-
       if (dataSource === 'github') {
         toast.success(`Found ${totalProblems} real problems from GitHub repository!`);
       } else {

@@ -28,7 +28,6 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
   const handleFetchContests = async () => {
     setIsFetching(true);
     try {
-      console.log('🔄 Starting contest fetch...');
       const fetchedContests = await fetchContests();
 
       if (fetchedContests.length === 0) {
@@ -49,7 +48,6 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
       newContests.forEach(c => onAddContest(c as Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>));
 
       toast.success(`Successfully fetched ${newContests.length} new contests!`);
-      console.log(`✅ Added ${newContests.length} new contests`);
 
     } catch (error) {
       console.error("❌ Failed to fetch contests:", error);

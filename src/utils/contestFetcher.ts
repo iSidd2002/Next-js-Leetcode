@@ -141,10 +141,8 @@ const fetchLeetCodeContests = async (): Promise<Contest[]> => {
   try {
     // LeetCode doesn't have a public API for contests, but we can try to scrape or use a proxy
     // For now, return empty array - this would need a more sophisticated implementation
-    console.log('LeetCode contest fetching not implemented yet');
     return [];
   } catch (error) {
-    console.error('Error fetching LeetCode contests:', error);
     return [];
   }
 };
@@ -251,15 +249,11 @@ export const fetchContests = async (): Promise<Contest[]> => {
     return await fetchFromContestHive();
 
   } catch (error) {
-    console.error('Contest-Hive API failed, falling back to CodeForces only:', error);
-
     // Fallback: Use CodeForces API directly
     try {
       const codeforcesContests = await fetchCodeforcesContests();
-      console.log('🔄 Fallback: Using CodeForces contests only');
       return codeforcesContests;
     } catch (fallbackError) {
-      console.error('❌ All contest APIs failed:', fallbackError);
       return [];
     }
   }

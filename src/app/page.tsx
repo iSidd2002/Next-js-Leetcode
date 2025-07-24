@@ -428,7 +428,13 @@ export default function HomePage() {
         updatedProblem = { ...problem, ...updates };
       }
 
-      await handleUpdateProblem(problem.id, updates);
+      // CRITICAL FIX: Send the complete updatedProblem data, not just the updates
+      await handleUpdateProblem(problem.id, {
+        isReview: updatedProblem.isReview,
+        repetition: updatedProblem.repetition,
+        interval: updatedProblem.interval,
+        nextReviewDate: updatedProblem.nextReviewDate
+      });
     } catch (error) {
       console.error('Failed to toggle review:', error);
       toast.error('Failed to update review status');
@@ -747,11 +753,17 @@ export default function HomePage() {
   // Manual problems (for Problems tab) - exclude company-imported problems
   const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source); // Include legacy problems without source
   const activeProblems = manualProblems.filter(p => p.status === 'active');
-  const reviewProblems = manualProblems.filter(p =>
-    p.isReview &&
+
+  // CRITICAL FIX: Show ALL problems marked for review, not just due ones
+  // Users should see all review problems and identify which are due
+  const reviewProblems = manualProblems.filter(p => p.isReview);
+
+  // Separate calculation for due problems (for badges and highlighting)
+  const dueReviewProblems = reviewProblems.filter(p =>
     p.nextReviewDate &&
     (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
   );
+
   const learnedProblems = manualProblems.filter(p => p.status === 'learned');
 
   // Company problems (for Companies tab) - only company-imported problems
@@ -935,9 +947,9 @@ export default function HomePage() {
               <TabsTrigger value="review" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
                 <History className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-orange-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Review</span>
-                {reviewProblems.length > 0 && (
+                {dueReviewProblems.length > 0 && (
                   <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {reviewProblems.length}
+                    {dueReviewProblems.length}
                   </Badge>
                 )}
               </TabsTrigger>

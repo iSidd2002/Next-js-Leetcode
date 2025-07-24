@@ -93,7 +93,6 @@ class StorageService {
       const potdProblems = await this.getPotdProblems();
 
       if (!isCleanupNeeded(potdProblems)) {
-        console.log('🧹 POTD Cleanup: No expired POTD problems found');
         return {
           removedCount: 0,
           summary: 'No expired POTD problems found'
@@ -106,7 +105,6 @@ class StorageService {
       await this.savePotdProblems(cleanedProblems);
 
       const summary = getCleanupSummary(removedCount, removedProblems);
-      console.log(`🧹 POTD Cleanup: ${summary}`);
 
       return {
         removedCount,
@@ -551,15 +549,11 @@ class StorageService {
 
   private static async syncTodosWithServer(): Promise<void> {
     try {
-      console.log('🔄 Syncing todos with server...');
-
       // Get server todos
       const serverTodos = await ApiService.getTodos();
 
       // Update local cache
       localStorage.setItem(TODOS_KEY, JSON.stringify(serverTodos));
-
-      console.log(`✅ Synced ${serverTodos.length} todos from server`);
 
     } catch (error) {
       console.error('Failed to sync todos with server:', error);

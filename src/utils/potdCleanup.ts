@@ -7,7 +7,6 @@ import type { Problem } from '@/types';
 
 // Configuration
 const POTD_RETENTION_DAYS = 7; // Keep POTD problems for 7 days
-const CLEANUP_LOG_PREFIX = '🧹 POTD Cleanup:';
 
 /**
  * Check if a POTD problem is expired (older than retention period)
@@ -38,19 +37,12 @@ export function cleanupExpiredPotdProblems(problems: Problem[]): {
   for (const problem of problems) {
     if (isPotdExpired(problem)) {
       removedProblems.push(problem);
-      console.log(`${CLEANUP_LOG_PREFIX} Removing expired POTD: "${problem.title}" (${problem.dateSolved})`);
     } else {
       cleanedProblems.push(problem);
     }
   }
 
   const removedCount = removedProblems.length;
-
-  if (removedCount > 0) {
-    console.log(`${CLEANUP_LOG_PREFIX} Removed ${removedCount} expired POTD problems`);
-  } else {
-    console.log(`${CLEANUP_LOG_PREFIX} No expired POTD problems found`);
-  }
 
   return {
     cleanedProblems,

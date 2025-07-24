@@ -5,7 +5,7 @@ import { authenticateRequest } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -20,7 +20,7 @@ export async function PUT(
     }
 
     const problemData = await request.json();
-    const { id } = params;
+    const { id } = await params;
 
     // Check if problem exists and belongs to user
     const existingProblem = await Problem.findOne({
@@ -89,7 +89,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
@@ -103,7 +103,7 @@ export async function DELETE(
       }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     // Check if problem exists and belongs to user
     const existingProblem = await Problem.findOne({

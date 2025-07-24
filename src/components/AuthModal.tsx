@@ -43,7 +43,6 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
     try {
       const { user } = await ApiService.login(loginForm.email, loginForm.password);
-      console.log('🔐 Login API success:', user);
 
       // Clean up old localStorage token if it exists
       if (typeof window !== 'undefined') {
@@ -58,10 +57,8 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // CRITICAL FIX: Wait for cookies to be available before triggering auth success
+      // Wait for cookies to be available before triggering auth success
       setTimeout(async () => {
-        console.log('🍪 Waiting for browser cookie availability...');
-
         // Use a more reliable cookie checking approach
         let cookiesAvailable = false;
         let attempts = 0;
@@ -78,31 +75,21 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                 credentials: 'include'
               });
               cookiesAvailable = testResponse.ok;
-              console.log(`🍪 Cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=${testResponse.ok}`);
             } catch (error) {
-              console.log(`🍪 Cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=error`);
+              // Continue trying on error
             }
-          } else {
-            console.log(`🍪 Cookie check attempt ${attempts + 1}: no cookies in document`);
           }
 
           if (!cookiesAvailable) {
-            await new Promise(resolve => setTimeout(resolve, 300)); // Longer delay
+            await new Promise(resolve => setTimeout(resolve, 300));
           }
           attempts++;
         }
 
-        if (cookiesAvailable) {
-          console.log('✅ Cookies verified and working, triggering auth success');
-        } else {
-          console.log('⚠️  Cookies not fully verified, but proceeding with auth success');
-        }
-
         onAuthSuccess();
-      }, 1000); // Longer initial delay
+      }, 1000);
 
     } catch (error) {
-      console.error('❌ Login failed:', error);
       setError(error instanceof Error ? error.message : 'Login failed');
     } finally {
       setIsLoading(false);
@@ -142,9 +129,8 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
-      // CRITICAL FIX: Wait for cookies to be available before triggering auth success
+      // Wait for cookies to be available before triggering auth success
       setTimeout(async () => {
-        console.log('🍪 Waiting for browser cookie availability after registration...');
 
         // Use the same reliable cookie checking approach as login
         let cookiesAvailable = false;
@@ -160,24 +146,15 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                 credentials: 'include'
               });
               cookiesAvailable = testResponse.ok;
-              console.log(`🍪 Registration cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=${testResponse.ok}`);
             } catch (error) {
-              console.log(`🍪 Registration cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=error`);
+              // Continue trying on error
             }
-          } else {
-            console.log(`🍪 Registration cookie check attempt ${attempts + 1}: no cookies in document`);
           }
 
           if (!cookiesAvailable) {
             await new Promise(resolve => setTimeout(resolve, 300));
           }
           attempts++;
-        }
-
-        if (cookiesAvailable) {
-          console.log('✅ Registration cookies verified and working, triggering auth success');
-        } else {
-          console.log('⚠️  Registration cookies not fully verified, but proceeding with auth success');
         }
 
         onAuthSuccess();
@@ -257,6 +234,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={loginForm.email}
                       onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                       required
+                      autoComplete="email"
                       className="h-10 sm:h-11"
                     />
                   </div>
@@ -270,6 +248,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         required
+                        autoComplete="current-password"
                         className="h-10 sm:h-11 pr-10"
                       />
                       <Button
@@ -322,6 +301,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                       required
+                      autoComplete="email"
                       className="h-10 sm:h-11"
                     />
                   </div>
@@ -334,6 +314,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.username}
                       onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
                       required
+                      autoComplete="username"
                       className="h-10 sm:h-11"
                     />
                   </div>
@@ -347,6 +328,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                         required
+                        autoComplete="new-password"
                         className="h-10 sm:h-11 pr-10"
                       />
                       <Button
@@ -369,6 +351,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       value={registerForm.confirmPassword}
                       onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
                       required
+                      autoComplete="new-password"
                       className="h-10 sm:h-11"
                     />
                   </div>

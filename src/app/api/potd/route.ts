@@ -59,17 +59,11 @@ const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<gl
       });
 
       if (response.ok) {
-        console.log(`POTD API success on attempt ${attempt}`);
         return response;
       }
 
-      // Log the error but continue retrying for certain status codes
+      // Continue retrying for certain status codes
       const errorText = await response.text();
-      console.warn(`POTD API attempt ${attempt} failed:`, {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText.substring(0, 200)
-      });
 
       // Don't retry for client errors (4xx) except 429 (rate limit)
       if (response.status >= 400 && response.status < 500 && response.status !== 429) {
@@ -152,20 +146,16 @@ export async function POST(request: NextRequest) {
 
   try {
     // Try to get real data from LeetCode
-    console.log('POTD API: Attempting to fetch from LeetCode...');
     const response = await fetchWithRetry(query);
     const data = await response.json() as unknown as LeetCodeGraphQLResponse;
 
     // Check if we got valid data
     if (data.data && data.data.activeDailyCodingChallengeQuestion) {
-      console.log('POTD API: ✅ Successfully fetched real daily problem:', data.data.activeDailyCodingChallengeQuestion.question?.title);
       return NextResponse.json(data);
-    } else {
-      console.warn('POTD API: ⚠️ No daily problem found in LeetCode response, using fallback');
     }
 
   } catch (error) {
-    console.error('POTD API: ❌ LeetCode API failed, using fallback:', error);
+    // Fall back to mock data
   }
 
   // Always return fallback data with 200 status if real data fails
