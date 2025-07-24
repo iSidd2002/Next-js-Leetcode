@@ -61,10 +61,12 @@ function handleAPIRoute(request: NextRequest) {
 
   // For protected routes, verify authentication
   try {
+    console.log(`🔍 Middleware: Processing protected route ${pathname}`);
     const token = getTokenFromRequest(request);
-    
+    console.log(`🔍 Middleware: Token found: ${token ? 'YES' : 'NO'}`);
+
     if (!token) {
-      console.log(`🔒 No token found for protected route: ${pathname}`);
+      console.log(`🔒 Middleware: No token found for protected route: ${pathname}`);
       return NextResponse.json(
         { success: false, error: 'Access token required' },
         { status: 401 }
@@ -72,10 +74,12 @@ function handleAPIRoute(request: NextRequest) {
     }
 
     // Verify the token
+    console.log(`🔍 Middleware: Verifying token...`);
     const payload = verifyToken(token);
-    
+    console.log(`🔍 Middleware: Token payload:`, payload);
+
     if (!payload || !payload.id || !payload.email) {
-      console.log(`🔒 Invalid token payload for route: ${pathname}`);
+      console.log(`🔒 Middleware: Invalid token payload for route: ${pathname}`);
       return NextResponse.json(
         { success: false, error: 'Invalid access token' },
         { status: 401 }
@@ -87,8 +91,8 @@ function handleAPIRoute(request: NextRequest) {
     response.headers.set('x-user-id', payload.id);
     response.headers.set('x-user-email', payload.email);
     response.headers.set('x-user-username', payload.username);
-    
-    console.log(`✅ Authenticated request for ${pathname} by user ${payload.email}`);
+
+    console.log(`✅ Middleware: Authenticated request for ${pathname} by user ${payload.email}`);
     return response;
 
   } catch (error) {

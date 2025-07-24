@@ -15,9 +15,12 @@ class ApiService {
   // Reliable authentication check using API call
   static async checkAuthStatus(): Promise<boolean> {
     try {
-      await this.request('/auth/profile');
+      console.log('🔍 ApiService.checkAuthStatus: Making profile request...');
+      const response = await this.request('/auth/profile');
+      console.log('✅ ApiService.checkAuthStatus: Profile request successful');
       return true; // If profile call succeeds, user is authenticated
-    } catch (error) {
+    } catch (error: any) {
+      console.log('❌ ApiService.checkAuthStatus: Profile request failed:', error.message);
       return false; // If profile call fails, user is not authenticated
     }
   }

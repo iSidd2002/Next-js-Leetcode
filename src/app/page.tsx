@@ -251,12 +251,17 @@ export default function HomePage() {
 
   // Simple, reliable app initialization using API-based authentication check
   const initializeApp = async () => {
+    console.log('🚀 App initialization started');
+
     try {
       // Use API call to check authentication (works with HttpOnly cookies)
+      console.log('🔍 Checking authentication status...');
       const isAuthenticated = await ApiService.checkAuthStatus();
+      console.log('🔍 Authentication status:', isAuthenticated);
 
       if (!isAuthenticated) {
         // User is not authenticated
+        console.log('❌ User not authenticated, showing login modal');
         setIsAuthenticated(false);
         setShowAuthModal(true);
         setIsLoaded(true);
@@ -264,17 +269,20 @@ export default function HomePage() {
       }
 
       // User is authenticated, get profile and load data
+      console.log('✅ User authenticated, loading profile and data');
       try {
         const userProfile = await ApiService.getProfile();
+        console.log('👤 User profile loaded:', userProfile.email);
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
 
         // Load user data
         await loadUserData();
+        console.log('📊 User data loaded successfully');
 
       } catch (error: any) {
         // Profile loading failed, clear state and show login
-        console.error('Profile loading failed:', error);
+        console.error('❌ Profile loading failed:', error);
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowAuthModal(true);
@@ -282,11 +290,12 @@ export default function HomePage() {
       }
 
     } catch (error) {
-      console.error('App initialization failed:', error);
+      console.error('❌ App initialization failed:', error);
       setIsAuthenticated(false);
       setShowAuthModal(true);
     } finally {
       setIsLoaded(true);
+      console.log('🏁 App initialization completed');
     }
   };
 
