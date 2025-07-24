@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Authentication Verification</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; }
+        .warning { color: #ffc107; }
+        button { padding: 12px 20px; margin: 8px; cursor: pointer; border: none; border-radius: 4px; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        input { padding: 10px; margin: 5px; width: 200px; border: 1px solid #ddd; border-radius: 4px; }
+        #results { white-space: pre-wrap; font-family: 'Courier New', monospace; background: #f8f9fa; padding: 15px; border-radius: 4px; max-height: 400px; overflow-y: auto; border: 1px solid #dee2e6; }
+        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 8px; }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-warning { background: #ffc107; }
+        .header { text-align: center; margin-bottom: 30px; }
+        .test-result { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .test-pass { background: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .test-fail { background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Final Authentication Verification</h1>
+            <p>Testing the complete resolution of the 1-second logout issue</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>🧪 Authentication Flow Test</h2>
+            <p>This test verifies that users stay logged in after successful authentication</p>
+            
+            <div>
+                <input type="email" id="email" placeholder="Email" value="test@example.com">
+                <input type="password" id="password" placeholder="Password" value="password123">
+            </div>
+            
+            <div>
+                <button class="btn-primary" onclick="testCompleteAuthFlow()">🚀 Test Complete Auth Flow</button>
+                <button class="btn-success" onclick="testLoginPersistence()">⏱️ Test Login Persistence</button>
+                <button class="btn-warning" onclick="resetTest()">🔄 Reset Test</button>
+                <button class="btn-danger" onclick="clearResults()">🧹 Clear Results</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Test Results</h2>
+            <div id="testSummary"></div>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        let testResults = {
+            login: false,
+            immediate: false,
+            delayed: false,
+            persistence: false
+        };
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('testSummary').innerHTML = '';
+            testResults = { login: false, immediate: false, delayed: false, persistence: false };
+        }
+
+        function updateSummary() {
+            const summary = document.getElementById('testSummary');
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(Boolean).length;
+            
+            let html = `<h3>Test Summary: ${passed}/${total} Tests Passed</h3>`;
+            
+            Object.entries(testResults).forEach(([test, passed]) => {
+                const status = passed ? 'status-success' : 'status-error';
+                const result = passed ? 'PASS' : 'FAIL';
+                html += `<div class="test-result ${passed ? 'test-pass' : 'test-fail'}">
+                    <span class="status-indicator ${status}"></span>
+                    ${test.toUpperCase()}: ${result}
+                </div>`;
+            });
+            
+            summary.innerHTML = html;
+        }
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                credentials: 'include',
+                ...options,
+            };
+
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                return { success: response.ok, data, status: response.status };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function resetTest() {
+            log('🔄 Resetting test environment...', 'info');
+            
+            // Reset rate limiting
+            await makeRequest('/debug/reset-rate-limit', { method: 'POST' });
+            
+            // Clear any existing authentication
+            document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            document.cookie = 'user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            
+            log('✅ Test environment reset', 'success');
+        }
+
+        async function testCompleteAuthFlow() {
+            clearResults();
+            log('🚀 Starting Complete Authentication Flow Test\n', 'info');
+            log('=' .repeat(60), 'info');
+
+            try {
+                // Step 1: Reset
+                await resetTest();
+                
+                // Step 2: Login
+                log('\n1️⃣ Testing Login...', 'info');
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                
+                const loginResult = await makeRequest('/auth/login', {
+                    method: 'POST',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                if (loginResult.success) {
+                    log('✅ LOGIN: SUCCESS', 'success');
+                    testResults.login = true;
+                } else {
+                    log(`❌ LOGIN: FAILED - ${loginResult.data?.error}`, 'error');
+                    testResults.login = false;
+                    updateSummary();
+                    return;
+                }
+
+                // Step 3: Immediate API calls (this was the main issue)
+                log('\n2️⃣ Testing Immediate API Calls (Critical Test)...', 'info');
+                
+                const immediateTests = [
+                    { name: 'Profile', endpoint: '/auth/profile' },
+                    { name: 'Problems', endpoint: '/problems' }
+                ];
+
+                let immediateSuccess = true;
+                
+                for (const test of immediateTests) {
+                    const result = await makeRequest(test.endpoint);
+                    
+                    if (result.success) {
+                        log(`  ✅ ${test.name}: SUCCESS`, 'success');
+                    } else {
+                        log(`  ❌ ${test.name}: FAILED - ${result.data?.error}`, 'error');
+                        immediateSuccess = false;
+                    }
+                }
+                
+                testResults.immediate = immediateSuccess;
+                
+                if (immediateSuccess) {
+                    log('✅ IMMEDIATE CALLS: SUCCESS (1-second logout issue RESOLVED!)', 'success');
+                } else {
+                    log('❌ IMMEDIATE CALLS: FAILED (1-second logout issue still exists)', 'error');
+                }
+
+                // Step 4: Delayed API calls
+                log('\n3️⃣ Testing Delayed API Calls...', 'info');
+                
+                await new Promise(resolve => setTimeout(resolve, 2000));
+                
+                let delayedSuccess = true;
+                
+                for (const test of immediateTests) {
+                    const result = await makeRequest(test.endpoint);
+                    
+                    if (result.success) {
+                        log(`  ✅ ${test.name} (delayed): SUCCESS`, 'success');
+                    } else {
+                        log(`  ❌ ${test.name} (delayed): FAILED - ${result.data?.error}`, 'error');
+                        delayedSuccess = false;
+                    }
+                }
+                
+                testResults.delayed = delayedSuccess;
+
+                updateSummary();
+
+            } catch (error) {
+                log(`❌ Test failed: ${error.message}`, 'error');
+                updateSummary();
+            }
+        }
+
+        async function testLoginPersistence() {
+            log('\n4️⃣ Testing Login Persistence Over Time...', 'info');
+            
+            const durations = [1000, 5000, 10000]; // 1s, 5s, 10s
+            let persistenceSuccess = true;
+            
+            for (const duration of durations) {
+                log(`\n⏱️  Testing after ${duration/1000}s...`, 'info');
+                
+                await new Promise(resolve => setTimeout(resolve, duration));
+                
+                const result = await makeRequest('/auth/profile');
+                
+                if (result.success) {
+                    log(`  ✅ Authentication persisted after ${duration/1000}s`, 'success');
+                } else {
+                    log(`  ❌ Authentication lost after ${duration/1000}s - ${result.data?.error}`, 'error');
+                    persistenceSuccess = false;
+                    break;
+                }
+            }
+            
+            testResults.persistence = persistenceSuccess;
+            
+            if (persistenceSuccess) {
+                log('✅ PERSISTENCE: SUCCESS (Authentication maintained over time)', 'success');
+            } else {
+                log('❌ PERSISTENCE: FAILED (Authentication lost over time)', 'error');
+            }
+            
+            updateSummary();
+        }
+
+        // Auto-run test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🔐 Authentication Verification Tool Loaded', 'info');
+                log('Click "Test Complete Auth Flow" to verify the 1-second logout fix', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

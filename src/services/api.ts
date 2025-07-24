@@ -143,13 +143,17 @@ class ApiService {
     return response.data!;
   }
 
-  static async login(email: string, password: string): Promise<AuthResponse> {
-    const response = await this.request<AuthResponse>('/auth/login', {
+  static async login(email: string, password: string): Promise<{ user: User }> {
+    const response = await this.request<{ user: User }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
 
-    return response.data!;
+    if (!response.data) {
+      throw new Error('Login failed: no user data returned');
+    }
+
+    return response.data;
   }
 
   static async getProfile(): Promise<User> {

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Login Comprehensive Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; }
+        .warning { color: #ffc107; }
+        button { padding: 12px 20px; margin: 8px; cursor: pointer; border: none; border-radius: 4px; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        input { padding: 10px; margin: 5px; width: 200px; border: 1px solid #ddd; border-radius: 4px; }
+        #results { white-space: pre-wrap; font-family: 'Courier New', monospace; background: #f8f9fa; padding: 15px; border-radius: 4px; max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; }
+        .step { margin: 20px 0; padding: 15px; border-left: 4px solid #007bff; background: #f8f9fa; }
+        .step-title { font-weight: bold; color: #007bff; margin-bottom: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Frontend Login Comprehensive Test</h1>
+        <p>This test diagnoses frontend authentication issues step by step</p>
+        
+        <div class="test-section">
+            <h2>🧪 Test Configuration</h2>
+            <div>
+                <input type="email" id="email" placeholder="Email" value="test@example.com">
+                <input type="password" id="password" placeholder="Password" value="password123">
+            </div>
+            <div>
+                <button class="btn-primary" onclick="runComprehensiveTest()">🚀 Run Complete Test</button>
+                <button class="btn-success" onclick="testLoginOnly()">🔐 Test Login Only</button>
+                <button class="btn-warning" onclick="testCookieHandling()">🍪 Test Cookie Handling</button>
+                <button class="btn-danger" onclick="clearResults()">🧹 Clear Results</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Test Results</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                credentials: 'include',
+                ...options,
+            };
+
+            try {
+                log(`📡 Making request: ${config.method || 'GET'} ${endpoint}`, 'info');
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                log(`📡 Response: ${response.status} ${response.statusText}`, response.ok ? 'success' : 'error');
+                
+                return { 
+                    success: response.ok, 
+                    data, 
+                    status: response.status,
+                    headers: response.headers,
+                    response 
+                };
+            } catch (error) {
+                log(`❌ Network error: ${error.message}`, 'error');
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testServerConnectivity() {
+            log('\n🔍 STEP 1: Testing Server Connectivity', 'info');
+            log('=' .repeat(50), 'info');
+            
+            try {
+                const response = await fetch(`${API_BASE}/health`);
+                if (response.ok) {
+                    log('✅ Server is responding', 'success');
+                    return true;
+                } else {
+                    log(`⚠️  Server responded with ${response.status}`, 'warning');
+                    return true; // Still reachable
+                }
+            } catch (error) {
+                log(`❌ Server not reachable: ${error.message}`, 'error');
+                return false;
+            }
+        }
+
+        async function testLoginRequest() {
+            log('\n🔍 STEP 2: Testing Login Request', 'info');
+            log('=' .repeat(50), 'info');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            log(`Login credentials: ${email} / ${'*'.repeat(password.length)}`, 'info');
+            
+            // Reset rate limiting first
+            await makeRequest('/debug/reset-rate-limit', { method: 'POST' });
+            
+            const result = await makeRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+            
+            if (result.success) {
+                log('✅ Login request successful', 'success');
+                log(`Response data: ${JSON.stringify(result.data, null, 2)}`, 'info');
+                return result;
+            } else {
+                log(`❌ Login request failed: ${result.data?.error || result.error}`, 'error');
+                return null;
+            }
+        }
+
+        async function testCookieAvailability() {
+            log('\n🔍 STEP 3: Testing Cookie Availability', 'info');
+            log('=' .repeat(50), 'info');
+            
+            const cookies = document.cookie;
+            log(`Raw cookies: ${cookies || 'No cookies found'}`, 'info');
+            
+            if (!cookies) {
+                log('❌ No cookies available', 'error');
+                return false;
+            }
+            
+            // Parse cookies
+            const cookieObj = {};
+            cookies.split(';').forEach(cookie => {
+                const [name, value] = cookie.trim().split('=');
+                if (name && value) {
+                    cookieObj[name] = value;
+                }
+            });
+            
+            log(`Parsed cookies: ${JSON.stringify(cookieObj, null, 2)}`, 'info');
+            
+            const hasAuthToken = 'auth-token' in cookieObj;
+            const hasUserId = 'user-id' in cookieObj;
+            
+            log(`Auth token present: ${hasAuthToken}`, hasAuthToken ? 'success' : 'error');
+            log(`User ID present: ${hasUserId}`, hasUserId ? 'success' : 'error');
+            
+            return hasAuthToken && hasUserId;
+        }
+
+        async function testImmediateAPICall() {
+            log('\n🔍 STEP 4: Testing Immediate API Call', 'info');
+            log('=' .repeat(50), 'info');
+            
+            const result = await makeRequest('/auth/profile');
+            
+            if (result.success) {
+                log('✅ Immediate API call successful', 'success');
+                log(`Profile data: ${JSON.stringify(result.data, null, 2)}`, 'info');
+                return true;
+            } else {
+                log(`❌ Immediate API call failed: ${result.data?.error || result.error}`, 'error');
+                return false;
+            }
+        }
+
+        async function testDelayedAPICall() {
+            log('\n🔍 STEP 5: Testing Delayed API Call', 'info');
+            log('=' .repeat(50), 'info');
+            
+            log('Waiting 2 seconds...', 'info');
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            
+            const result = await makeRequest('/auth/profile');
+            
+            if (result.success) {
+                log('✅ Delayed API call successful', 'success');
+                log(`Profile data: ${JSON.stringify(result.data, null, 2)}`, 'info');
+                return true;
+            } else {
+                log(`❌ Delayed API call failed: ${result.data?.error || result.error}`, 'error');
+                return false;
+            }
+        }
+
+        async function testMultipleAPIEndpoints() {
+            log('\n🔍 STEP 6: Testing Multiple API Endpoints', 'info');
+            log('=' .repeat(50), 'info');
+            
+            const endpoints = [
+                { name: 'Profile', endpoint: '/auth/profile' },
+                { name: 'Problems', endpoint: '/problems' },
+                { name: 'Todos', endpoint: '/todos' },
+                { name: 'Contests', endpoint: '/contests' }
+            ];
+            
+            let successCount = 0;
+            
+            for (const test of endpoints) {
+                const result = await makeRequest(test.endpoint);
+                
+                if (result.success) {
+                    log(`✅ ${test.name}: SUCCESS`, 'success');
+                    successCount++;
+                } else {
+                    log(`❌ ${test.name}: FAILED - ${result.data?.error || result.error}`, 'error');
+                }
+            }
+            
+            log(`\nAPI Endpoints Summary: ${successCount}/${endpoints.length} successful`, 
+                successCount === endpoints.length ? 'success' : 'warning');
+            
+            return successCount === endpoints.length;
+        }
+
+        async function testLoginOnly() {
+            clearResults();
+            log('🔐 TESTING LOGIN ONLY\n', 'info');
+            
+            const serverOk = await testServerConnectivity();
+            if (!serverOk) return;
+            
+            const loginResult = await testLoginRequest();
+            if (!loginResult) return;
+            
+            // Wait a moment for cookies to be set
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            const cookiesOk = await testCookieAvailability();
+            
+            log('\n📊 LOGIN TEST SUMMARY:', 'info');
+            log(`Server Connectivity: ${serverOk ? 'PASS' : 'FAIL'}`, serverOk ? 'success' : 'error');
+            log(`Login Request: ${loginResult ? 'PASS' : 'FAIL'}`, loginResult ? 'success' : 'error');
+            log(`Cookie Availability: ${cookiesOk ? 'PASS' : 'FAIL'}`, cookiesOk ? 'success' : 'error');
+        }
+
+        async function testCookieHandling() {
+            clearResults();
+            log('🍪 TESTING COOKIE HANDLING\n', 'info');
+            
+            // First login
+            const loginResult = await testLoginRequest();
+            if (!loginResult) return;
+            
+            // Test cookie availability at different intervals
+            const intervals = [100, 500, 1000, 2000];
+            
+            for (const interval of intervals) {
+                log(`\n⏱️  Testing after ${interval}ms:`, 'info');
+                await new Promise(resolve => setTimeout(resolve, interval));
+                
+                const cookiesOk = await testCookieAvailability();
+                const apiOk = await testImmediateAPICall();
+                
+                log(`Cookies available: ${cookiesOk}`, cookiesOk ? 'success' : 'error');
+                log(`API call works: ${apiOk}`, apiOk ? 'success' : 'error');
+                
+                if (cookiesOk && apiOk) {
+                    log(`✅ Authentication working after ${interval}ms`, 'success');
+                    break;
+                }
+            }
+        }
+
+        async function runComprehensiveTest() {
+            clearResults();
+            log('🚀 COMPREHENSIVE FRONTEND LOGIN TEST\n', 'info');
+            log('=' .repeat(60), 'info');
+            
+            const results = {
+                server: false,
+                login: false,
+                cookies: false,
+                immediate: false,
+                delayed: false,
+                multiple: false
+            };
+            
+            // Run all tests
+            results.server = await testServerConnectivity();
+            if (!results.server) return;
+            
+            const loginResult = await testLoginRequest();
+            results.login = !!loginResult;
+            if (!results.login) return;
+            
+            // Wait for cookies to be available
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            results.cookies = await testCookieAvailability();
+            results.immediate = await testImmediateAPICall();
+            results.delayed = await testDelayedAPICall();
+            results.multiple = await testMultipleAPIEndpoints();
+            
+            // Final summary
+            log('\n' + '=' .repeat(60), 'info');
+            log('📊 COMPREHENSIVE TEST SUMMARY:', 'info');
+            log('=' .repeat(60), 'info');
+            
+            Object.entries(results).forEach(([test, passed]) => {
+                log(`${test.toUpperCase()}: ${passed ? 'PASS' : 'FAIL'}`, passed ? 'success' : 'error');
+            });
+            
+            const totalPassed = Object.values(results).filter(Boolean).length;
+            const totalTests = Object.keys(results).length;
+            
+            log(`\nOVERALL: ${totalPassed}/${totalTests} tests passed`, 
+                totalPassed === totalTests ? 'success' : 'error');
+            
+            if (totalPassed === totalTests) {
+                log('🎉 All tests passed! Authentication is working correctly.', 'success');
+            } else {
+                log('❌ Some tests failed. Check the issues above.', 'error');
+            }
+        }
+
+        // Auto-run basic connectivity test on page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                log('🔍 Frontend Login Test Tool Loaded', 'info');
+                log('Click "Run Complete Test" to diagnose login issues', 'info');
+            }, 500);
+        });
+    </script>
+</body>
+</html>

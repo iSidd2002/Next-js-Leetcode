@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Rate limiting check
-    const rateLimitKey = getRateLimitKey(request);
+    const       rateLimitKey = getRateLimitKey(request);
     if (isRateLimited(rateLimitKey)) {
       return NextResponse.json({
         success: false,

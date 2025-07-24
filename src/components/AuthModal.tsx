@@ -42,8 +42,8 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     setError('');
 
     try {
-      const loginResult = await ApiService.login(loginForm.email, loginForm.password);
-      console.log('🔐 Login API success:', loginResult);
+      const { user } = await ApiService.login(loginForm.email, loginForm.password);
+      console.log('🔐 Login API success:', user);
 
       // Clean up old localStorage token if it exists
       if (typeof window !== 'undefined') {
@@ -58,33 +58,48 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // Wait longer for cookies to be available in browser, then trigger success
+      // CRITICAL FIX: Wait for cookies to be available before triggering auth success
       setTimeout(async () => {
-        console.log('🍪 Checking cookie availability after login...');
+        console.log('🍪 Waiting for browser cookie availability...');
 
-        // Check if cookies are available with more attempts and longer delays
+        // Use a more reliable cookie checking approach
         let cookiesAvailable = false;
         let attempts = 0;
-        const maxAttempts = 20; // Increased attempts
+        const maxAttempts = 30; // More attempts
 
         while (!cookiesAvailable && attempts < maxAttempts) {
-          cookiesAvailable = ApiService.isAuthenticated();
-          console.log(`🍪 Cookie check attempt ${attempts + 1}: ${cookiesAvailable}`);
+          // Check both document.cookie and make a test API call
+          const hasCookiesInDocument = ApiService.isAuthenticated();
+
+          if (hasCookiesInDocument) {
+            // Double-check with a quick API call
+            try {
+              const testResponse = await fetch('/api/auth/profile', {
+                credentials: 'include'
+              });
+              cookiesAvailable = testResponse.ok;
+              console.log(`🍪 Cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=${testResponse.ok}`);
+            } catch (error) {
+              console.log(`🍪 Cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=error`);
+            }
+          } else {
+            console.log(`🍪 Cookie check attempt ${attempts + 1}: no cookies in document`);
+          }
 
           if (!cookiesAvailable) {
-            await new Promise(resolve => setTimeout(resolve, 200)); // Longer delay
+            await new Promise(resolve => setTimeout(resolve, 300)); // Longer delay
           }
           attempts++;
         }
 
         if (cookiesAvailable) {
-          console.log('✅ Cookies available, triggering auth success');
-          onAuthSuccess();
+          console.log('✅ Cookies verified and working, triggering auth success');
         } else {
-          console.log('⚠️  Cookies not available after multiple attempts, triggering anyway');
-          onAuthSuccess();
+          console.log('⚠️  Cookies not fully verified, but proceeding with auth success');
         }
-      }, 500); // Increased initial delay
+
+        onAuthSuccess();
+      }, 1000); // Longer initial delay
 
     } catch (error) {
       console.error('❌ Login failed:', error);
@@ -127,10 +142,46 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
-      // Call success callback after a brief delay to ensure cookies are set
-      setTimeout(() => {
+      // CRITICAL FIX: Wait for cookies to be available before triggering auth success
+      setTimeout(async () => {
+        console.log('🍪 Waiting for browser cookie availability after registration...');
+
+        // Use the same reliable cookie checking approach as login
+        let cookiesAvailable = false;
+        let attempts = 0;
+        const maxAttempts = 30;
+
+        while (!cookiesAvailable && attempts < maxAttempts) {
+          const hasCookiesInDocument = ApiService.isAuthenticated();
+
+          if (hasCookiesInDocument) {
+            try {
+              const testResponse = await fetch('/api/auth/profile', {
+                credentials: 'include'
+              });
+              cookiesAvailable = testResponse.ok;
+              console.log(`🍪 Registration cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=${testResponse.ok}`);
+            } catch (error) {
+              console.log(`🍪 Registration cookie verification attempt ${attempts + 1}: document=${hasCookiesInDocument}, api=error`);
+            }
+          } else {
+            console.log(`🍪 Registration cookie check attempt ${attempts + 1}: no cookies in document`);
+          }
+
+          if (!cookiesAvailable) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+          }
+          attempts++;
+        }
+
+        if (cookiesAvailable) {
+          console.log('✅ Registration cookies verified and working, triggering auth success');
+        } else {
+          console.log('⚠️  Registration cookies not fully verified, but proceeding with auth success');
+        }
+
         onAuthSuccess();
-      }, 50);
+      }, 1000);
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
