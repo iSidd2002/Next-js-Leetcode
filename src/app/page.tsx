@@ -47,7 +47,7 @@ export default function HomePage() {
 
   // Load data on component mount
   useEffect(() => {
-    loadData();
+    initializeApp();
   }, []);
 
   // Load data after successful authentication (doesn't change auth state)
@@ -249,58 +249,56 @@ export default function HomePage() {
     }
   };
 
-  const loadData = async () => {
+  // Simple, reliable app initialization
+  const initializeApp = async () => {
     try {
-      // Check authentication status more reliably
-      const authenticated = await ApiService.checkAuthStatus();
-      setIsAuthenticated(authenticated);
+      // Check if user has authentication cookies
+      const hasAuthCookies = ApiService.isAuthenticated();
 
-      // If authenticated, try to get user profile
-      if (authenticated) {
-        try {
-          const userProfile = await ApiService.getProfile();
-          setCurrentUser(userProfile);
-        } catch (error: any) {
-          console.error('Failed to get user profile:', error);
-
-          // If user not found, clear auth state and set as unauthenticated
-          if (error.message === 'User not found' || error.status === 404) {
-            console.log('User profile not found, clearing authentication state');
-            setIsAuthenticated(false);
-            setCurrentUser(null);
-            ApiService.clearAuthState();
-            return; // Exit early if user not found
-          }
-        }
+      if (!hasAuthCookies) {
+        // No cookies, user is not authenticated
+        setIsAuthenticated(false);
+        setShowAuthModal(true);
+        setIsLoaded(true);
+        return;
       }
 
-      // Load data (will use API if authenticated, localStorage if offline)
-      let problemsData: Problem[] = [];
-      let potdData: Problem[] = [];
-      let contestsData: Contest[] = [];
-      let todosData: Todo[] = [];
-
+      // Try to get user profile to verify authentication
       try {
-        [problemsData, potdData, contestsData, todosData] = await Promise.all([
-          StorageService.getProblems(),
-          StorageService.getPotdProblems(),
-          StorageService.getContests(),
-          StorageService.getTodos()
-        ]);
-      } catch (error) {
-        console.error('Error loading data:', error);
-        // If API calls fail due to authentication, show login modal
-        if (error instanceof Error && error.message.includes('Access token required')) {
-          setIsAuthenticated(false);
-          setShowAuthModal(true);
-          toast.error('Please log in to access your data');
-        }
-        // Use empty arrays as fallback
-        problemsData = [];
-        potdData = [];
-        contestsData = [];
-        todosData = [];
+        const userProfile = await ApiService.getProfile();
+        setCurrentUser(userProfile);
+        setIsAuthenticated(true);
+
+        // Load user data
+        await loadUserData();
+
+      } catch (error: any) {
+        // Authentication failed, clear state and show login
+        console.error('Authentication verification failed:', error);
+        setIsAuthenticated(false);
+        setCurrentUser(null);
+        setShowAuthModal(true);
+        ApiService.clearAuthState();
       }
+
+    } catch (error) {
+      console.error('App initialization failed:', error);
+      setIsAuthenticated(false);
+      setShowAuthModal(true);
+    } finally {
+      setIsLoaded(true);
+    }
+  };
+
+  // Load user data after authentication is verified
+  const loadUserData = async () => {
+    try {
+      const [problemsData, potdData, contestsData, todosData] = await Promise.all([
+        StorageService.getProblems(),
+        StorageService.getPotdProblems(),
+        StorageService.getContests(),
+        StorageService.getTodos()
+      ]);
 
       // Clean up any invalid dates before setting state
       const cleanedProblems = cleanupInvalidDates(problemsData);
@@ -325,28 +323,30 @@ export default function HomePage() {
       try {
         const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
         if (cleanupResult.removedCount > 0) {
-          console.log('🧹 POTD Auto-cleanup:', cleanupResult.summary);
+          console.log('POTD Auto-cleanup:', cleanupResult.summary);
           // Reload POTD problems after cleanup
           const updatedPotdProblems = await StorageService.getPotdProblems();
           setPotdProblems(updatedPotdProblems);
           toast.info(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
         }
       } catch (error) {
-        console.error('🧹 POTD Auto-cleanup failed:', error);
+        console.error('POTD Auto-cleanup failed:', error);
       }
 
-      // Auto-sync with server if authenticated and online
-      if (authenticated && !StorageService.getOfflineMode()) {
+      // Auto-sync with server if online
+      if (!StorageService.getOfflineMode()) {
         StorageService.syncWithServer().catch(error => {
           console.warn('Auto-sync failed:', error);
         });
       }
 
-      setIsLoaded(true);
     } catch (error) {
-      console.error('Failed to load data:', error);
-      toast.error('Failed to load data');
-      setIsLoaded(true);
+      console.error('Failed to load user data:', error);
+      // Use empty arrays as fallback
+      setProblems([]);
+      setPotdProblems([]);
+      setContests([]);
+      setTodos([]);
     }
   };
 
@@ -1106,36 +1106,25 @@ export default function HomePage() {
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
         onAuthSuccess={async () => {
-          console.log('🔐 Auth success callback triggered');
-
           // Set authenticated state immediately
           setIsAuthenticated(true);
 
-          // Wait for cookies and then load data without interfering with auth state
+          // Wait for cookies to be available, then load user profile and data
           setTimeout(async () => {
-            console.log('🍪 Starting post-auth data loading...');
-
-            // Wait for cookies to be fully available
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
             try {
-              // First, try to get user profile to verify authentication
-              console.log('👤 Attempting to fetch user profile...');
+              // Get user profile
               const userProfile = await ApiService.getProfile();
               setCurrentUser(userProfile);
-              console.log('✅ User profile loaded:', userProfile.email);
 
-              // Load all data without changing authentication state
-              await loadDataAfterAuth(5);
+              // Load user data
+              await loadUserData();
 
             } catch (error: any) {
-              console.error('❌ Post-auth profile fetch failed:', error);
-
-              // If profile fails, try loading data anyway (with retries)
-              console.log('🔄 Profile failed, but continuing with data load...');
-              await loadDataAfterAuth(5);
+              console.error('Post-auth data loading failed:', error);
+              // If something fails, re-initialize the app
+              await initializeApp();
             }
-          }, 500); // Initial delay to ensure cookies are available
+          }, 1000); // Wait for cookies to be available
         }}
       />
 

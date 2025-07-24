@@ -19,8 +19,6 @@ class ApiService {
         return trimmed.startsWith('user-id=') && trimmed.length > 'user-id='.length;
       });
 
-
-
       // Both cookies should be present for proper authentication
       return hasAuthToken && hasUserId;
     }

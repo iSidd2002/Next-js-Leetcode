@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Persistence Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; border-radius: 5px; background: #fafafa; }
+        .success { color: #28a745; font-weight: bold; }
+        .error { color: #dc3545; font-weight: bold; }
+        .info { color: #007bff; }
+        .warning { color: #ffc107; }
+        button { padding: 12px 20px; margin: 8px; cursor: pointer; border: none; border-radius: 4px; font-size: 14px; }
+        .btn-primary { background: #007bff; color: white; }
+        .btn-success { background: #28a745; color: white; }
+        .btn-warning { background: #ffc107; color: black; }
+        .btn-danger { background: #dc3545; color: white; }
+        input { padding: 10px; margin: 5px; width: 200px; border: 1px solid #ddd; border-radius: 4px; }
+        #results { white-space: pre-wrap; font-family: 'Courier New', monospace; background: #f8f9fa; padding: 15px; border-radius: 4px; max-height: 500px; overflow-y: auto; border: 1px solid #dee2e6; }
+        .cookie-info { background: #e9ecef; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Authentication Persistence Test</h1>
+        <p>This test diagnoses why users get logged out on page refresh</p>
+        
+        <div class="test-section">
+            <h2>🧪 Test Controls</h2>
+            <div>
+                <input type="email" id="email" placeholder="Email" value="test@example.com">
+                <input type="password" id="password" placeholder="Password" value="password123">
+            </div>
+            <div>
+                <button class="btn-primary" onclick="testAuthPersistence()">🚀 Test Auth Persistence</button>
+                <button class="btn-success" onclick="testLogin()">🔐 Test Login</button>
+                <button class="btn-warning" onclick="checkCookies()">🍪 Check Cookies</button>
+                <button class="btn-danger" onclick="clearResults()">🧹 Clear Results</button>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🍪 Current Cookies</h2>
+            <div id="cookies" class="cookie-info"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Test Results</h2>
+            <div id="results"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = '/api';
+        
+        function log(message, type = 'info') {
+            const results = document.getElementById('results');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type === 'success' ? 'success' : type === 'error' ? 'error' : type === 'warning' ? 'warning' : 'info';
+            results.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            results.scrollTop = results.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+        }
+
+        function displayCookies() {
+            const cookiesDiv = document.getElementById('cookies');
+            const cookies = document.cookie;
+            
+            if (!cookies) {
+                cookiesDiv.innerHTML = '<span style="color: #dc3545;">No cookies found</span>';
+                return;
+            }
+            
+            const cookieArray = cookies.split(';').map(c => c.trim());
+            const authToken = cookieArray.find(c => c.startsWith('auth-token='));
+            const userId = cookieArray.find(c => c.startsWith('user-id='));
+            
+            cookiesDiv.innerHTML = `
+                <strong>Total cookies:</strong> ${cookieArray.length}<br>
+                <strong>Auth token:</strong> ${authToken ? '✅ Present' : '❌ Missing'}<br>
+                <strong>User ID:</strong> ${userId ? '✅ Present' : '❌ Missing'}<br>
+                <strong>Raw cookies:</strong> ${cookies.substring(0, 200)}${cookies.length > 200 ? '...' : ''}
+            `;
+        }
+
+        async function makeRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers,
+                },
+                credentials: 'include',
+                ...options,
+            };
+
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                return { 
+                    success: response.ok, 
+                    data, 
+                    status: response.status,
+                    headers: response.headers,
+                    response 
+                };
+            } catch (error) {
+                return { success: false, error: error.message };
+            }
+        }
+
+        async function testLogin() {
+            log('🔐 Testing login process...', 'info');
+            
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            
+            const result = await makeRequest('/auth/login', {
+                method: 'POST',
+                body: JSON.stringify({ email, password })
+            });
+            
+            if (result.success) {
+                log('✅ Login successful', 'success');
+                log(`User data: ${JSON.stringify(result.data, null, 2)}`, 'info');
+                
+                // Wait for cookies to be set
+                setTimeout(() => {
+                    displayCookies();
+                    checkCookies();
+                }, 1000);
+            } else {
+                log(`❌ Login failed: ${result.data?.error || result.error}`, 'error');
+            }
+        }
+
+        async function checkCookies() {
+            log('🍪 Checking cookie availability...', 'info');
+            
+            displayCookies();
+            
+            const cookies = document.cookie;
+            const hasAuthToken = cookies.includes('auth-token=');
+            const hasUserId = cookies.includes('user-id=');
+            
+            log(`Auth token in cookies: ${hasAuthToken}`, hasAuthToken ? 'success' : 'error');
+            log(`User ID in cookies: ${hasUserId}`, hasUserId ? 'success' : 'error');
+            
+            if (hasAuthToken && hasUserId) {
+                log('✅ All required cookies present', 'success');
+                
+                // Test API call with cookies
+                log('🔍 Testing API call with cookies...', 'info');
+                const profileResult = await makeRequest('/auth/profile');
+                
+                if (profileResult.success) {
+                    log('✅ API call with cookies successful', 'success');
+                    log(`Profile: ${JSON.stringify(profileResult.data, null, 2)}`, 'info');
+                } else {
+                    log(`❌ API call with cookies failed: ${profileResult.data?.error || profileResult.error}`, 'error');
+                }
+            } else {
+                log('❌ Missing required cookies', 'error');
+            }
+        }
+
+        async function testAuthPersistence() {
+            clearResults();
+            log('🚀 COMPREHENSIVE AUTHENTICATION PERSISTENCE TEST\n', 'info');
+            log('=' .repeat(60), 'info');
+            
+            // Step 1: Check initial state
+            log('1️⃣ Checking initial authentication state...', 'info');
+            displayCookies();
+            
+            const initialAuth = await makeRequest('/auth/profile');
+            if (initialAuth.success) {
+                log('✅ Already authenticated', 'success');
+                log(`Current user: ${JSON.stringify(initialAuth.data, null, 2)}`, 'info');
+            } else {
+                log('❌ Not authenticated initially', 'warning');
+                
+                // Step 2: Login
+                log('\n2️⃣ Performing login...', 'info');
+                await testLogin();
+                
+                // Wait for cookies
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+            
+            // Step 3: Test immediate API calls
+            log('\n3️⃣ Testing immediate API calls after login...', 'info');
+            const tests = [
+                { name: 'Profile', endpoint: '/auth/profile' },
+                { name: 'Problems', endpoint: '/problems' },
+                { name: 'Todos', endpoint: '/todos' }
+            ];
+            
+            for (const test of tests) {
+                const result = await makeRequest(test.endpoint);
+                log(`${test.name}: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
+                if (!result.success) {
+                    log(`  Error: ${result.data?.error || result.error}`, 'error');
+                }
+            }
+            
+            // Step 4: Simulate page refresh scenario
+            log('\n4️⃣ Simulating page refresh scenario...', 'info');
+            log('This simulates what happens when user refreshes the page', 'info');
+            
+            // Clear any in-memory state (simulate page refresh)
+            log('Clearing in-memory state...', 'info');
+            
+            // Check if cookies persist
+            displayCookies();
+            
+            // Test API calls after "refresh"
+            log('Testing API calls after simulated refresh...', 'info');
+            for (const test of tests) {
+                const result = await makeRequest(test.endpoint);
+                log(`Post-refresh ${test.name}: ${result.success ? 'SUCCESS' : 'FAILED'}`, result.success ? 'success' : 'error');
+                if (!result.success) {
+                    log(`  Error: ${result.data?.error || result.error}`, 'error');
+                }
+            }
+            
+            // Step 5: Analysis
+            log('\n5️⃣ ANALYSIS:', 'info');
+            log('=' .repeat(40), 'info');
+            
+            const finalCookies = document.cookie;
+            const hasAuthCookie = finalCookies.includes('auth-token=');
+            const hasUserCookie = finalCookies.includes('user-id=');
+            
+            if (hasAuthCookie && hasUserCookie) {
+                log('✅ Cookies are persistent across refresh', 'success');
+                
+                const finalAuth = await makeRequest('/auth/profile');
+                if (finalAuth.success) {
+                    log('✅ Authentication works after refresh', 'success');
+                    log('🎉 AUTH PERSISTENCE IS WORKING CORRECTLY!', 'success');
+                } else {
+                    log('❌ Authentication fails despite cookies being present', 'error');
+                    log('🔍 ISSUE: Cookie-based auth not working properly', 'error');
+                    log('Possible causes:', 'warning');
+                    log('- Cookie attributes (HttpOnly, SameSite, Domain)', 'warning');
+                    log('- Server-side cookie reading issues', 'warning');
+                    log('- JWT token validation problems', 'warning');
+                }
+            } else {
+                log('❌ Cookies are not persistent', 'error');
+                log('🔍 ISSUE: Cookies are being cleared on refresh', 'error');
+                log('Possible causes:', 'warning');
+                log('- Incorrect cookie attributes', 'warning');
+                log('- Browser security policies', 'warning');
+                log('- Cookie expiration issues', 'warning');
+            }
+            
+            log('\n📋 RECOMMENDATIONS:', 'info');
+            log('1. Check cookie attributes in login response', 'info');
+            log('2. Verify server-side cookie reading logic', 'info');
+            log('3. Test in different browsers', 'info');
+            log('4. Check browser developer tools Network tab', 'info');
+        }
+
+        // Auto-update cookies display
+        setInterval(displayCookies, 2000);
+        
+        // Initial display
+        window.addEventListener('load', () => {
+            displayCookies();
+        });
+    </script>
+</body>
+</html>
