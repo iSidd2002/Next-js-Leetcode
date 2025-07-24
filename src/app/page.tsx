@@ -428,13 +428,8 @@ export default function HomePage() {
         updatedProblem = { ...problem, ...updates };
       }
 
-      // CRITICAL FIX: Send the complete updatedProblem data, not just the updates
-      await handleUpdateProblem(problem.id, {
-        isReview: updatedProblem.isReview,
-        repetition: updatedProblem.repetition,
-        interval: updatedProblem.interval,
-        nextReviewDate: updatedProblem.nextReviewDate
-      });
+      // Persist the full updated problem so spaced repetition data is saved
+      await handleUpdateProblem(problem.id, updatedProblem);
     } catch (error) {
       console.error('Failed to toggle review:', error);
       toast.error('Failed to update review status');
