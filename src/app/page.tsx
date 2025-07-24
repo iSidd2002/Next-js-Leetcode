@@ -249,21 +249,21 @@ export default function HomePage() {
     }
   };
 
-  // Simple, reliable app initialization
+  // Simple, reliable app initialization using API-based authentication check
   const initializeApp = async () => {
     try {
-      // Check if user has authentication cookies
-      const hasAuthCookies = ApiService.isAuthenticated();
+      // Use API call to check authentication (works with HttpOnly cookies)
+      const isAuthenticated = await ApiService.checkAuthStatus();
 
-      if (!hasAuthCookies) {
-        // No cookies, user is not authenticated
+      if (!isAuthenticated) {
+        // User is not authenticated
         setIsAuthenticated(false);
         setShowAuthModal(true);
         setIsLoaded(true);
         return;
       }
 
-      // Try to get user profile to verify authentication
+      // User is authenticated, get profile and load data
       try {
         const userProfile = await ApiService.getProfile();
         setCurrentUser(userProfile);
@@ -273,8 +273,8 @@ export default function HomePage() {
         await loadUserData();
 
       } catch (error: any) {
-        // Authentication failed, clear state and show login
-        console.error('Authentication verification failed:', error);
+        // Profile loading failed, clear state and show login
+        console.error('Profile loading failed:', error);
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowAuthModal(true);

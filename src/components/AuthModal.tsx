@@ -57,31 +57,26 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // Wait for cookies to be available before triggering auth success
+      // Wait for HttpOnly cookies to be available on server-side
       setTimeout(async () => {
-        // Use a more reliable cookie checking approach
-        let cookiesAvailable = false;
+        // Since cookies are HttpOnly, we can't read them in JavaScript
+        // Instead, we test authentication with an API call
+        let authenticationWorking = false;
         let attempts = 0;
-        const maxAttempts = 30; // More attempts
+        const maxAttempts = 10; // Reduced attempts since we're only testing API
 
-        while (!cookiesAvailable && attempts < maxAttempts) {
-          // Check both document.cookie and make a test API call
-          const hasCookiesInDocument = ApiService.isAuthenticated();
+        while (!authenticationWorking && attempts < maxAttempts) {
+          try {
+            const testResponse = await fetch('/api/auth/profile', {
+              credentials: 'include'
+            });
+            authenticationWorking = testResponse.ok;
 
-          if (hasCookiesInDocument) {
-            // Double-check with a quick API call
-            try {
-              const testResponse = await fetch('/api/auth/profile', {
-                credentials: 'include'
-              });
-              cookiesAvailable = testResponse.ok;
-            } catch (error) {
-              // Continue trying on error
+            if (!authenticationWorking) {
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
-          }
-
-          if (!cookiesAvailable) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (error) {
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
           attempts++;
         }
@@ -129,30 +124,26 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
-      // Wait for cookies to be available before triggering auth success
+      // Wait for HttpOnly cookies to be available on server-side
       setTimeout(async () => {
 
-        // Use the same reliable cookie checking approach as login
-        let cookiesAvailable = false;
+        // Test authentication with API call (same as login)
+        let authenticationWorking = false;
         let attempts = 0;
-        const maxAttempts = 30;
+        const maxAttempts = 10;
 
-        while (!cookiesAvailable && attempts < maxAttempts) {
-          const hasCookiesInDocument = ApiService.isAuthenticated();
+        while (!authenticationWorking && attempts < maxAttempts) {
+          try {
+            const testResponse = await fetch('/api/auth/profile', {
+              credentials: 'include'
+            });
+            authenticationWorking = testResponse.ok;
 
-          if (hasCookiesInDocument) {
-            try {
-              const testResponse = await fetch('/api/auth/profile', {
-                credentials: 'include'
-              });
-              cookiesAvailable = testResponse.ok;
-            } catch (error) {
-              // Continue trying on error
+            if (!authenticationWorking) {
+              await new Promise(resolve => setTimeout(resolve, 500));
             }
-          }
-
-          if (!cookiesAvailable) {
-            await new Promise(resolve => setTimeout(resolve, 300));
+          } catch (error) {
+            await new Promise(resolve => setTimeout(resolve, 500));
           }
           attempts++;
         }

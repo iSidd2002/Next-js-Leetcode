@@ -6,23 +6,20 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
 
 class ApiService {
   static isAuthenticated(): boolean {
-    // Check if we have auth cookies
-    if (typeof window !== 'undefined') {
-      const cookies = document.cookie.split(';');
-      const hasAuthToken = cookies.some(cookie => {
-        const trimmed = cookie.trim();
-        return trimmed.startsWith('auth-token=') && trimmed.length > 'auth-token='.length;
-      });
+    // IMPORTANT: HttpOnly cookies cannot be read by JavaScript
+    // This method is kept for backward compatibility but should not be relied upon
+    // Use checkAuthStatus() for reliable authentication checking
+    return false; // Always return false to force API-based auth check
+  }
 
-      const hasUserId = cookies.some(cookie => {
-        const trimmed = cookie.trim();
-        return trimmed.startsWith('user-id=') && trimmed.length > 'user-id='.length;
-      });
-
-      // Both cookies should be present for proper authentication
-      return hasAuthToken && hasUserId;
+  // Reliable authentication check using API call
+  static async checkAuthStatus(): Promise<boolean> {
+    try {
+      await this.request('/auth/profile');
+      return true; // If profile call succeeds, user is authenticated
+    } catch (error) {
+      return false; // If profile call fails, user is not authenticated
     }
-    return false;
   }
 
   // More reliable authentication check by making an API call
