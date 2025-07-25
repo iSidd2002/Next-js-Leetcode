@@ -24,7 +24,8 @@ import {
   CheckCircle, 
   Undo2, 
   Plus,
-  Calendar
+  Calendar,
+  ChevronDown as ChevronDownIcon
 } from 'lucide-react';
 
 interface MonthlyPotdListProps {
@@ -34,8 +35,8 @@ interface MonthlyPotdListProps {
   onDeleteProblem: (id: string) => void;
   onEditProblem: (problem: Problem) => void;
   onProblemReviewed: (id: string, quality?: number) => void;
-  onAddToProblem?: (id: string) => void;
-  isPotdInProblems?: (problem: Problem) => boolean;
+  onAddToProblem?: (id: string, targetStatus?: 'active' | 'learned') => void;
+  isPotdInProblems?: (problem: Problem) => { inProblems: boolean; inLearned: boolean; status: string };
 }
 
 interface GroupedProblems {
@@ -152,7 +153,7 @@ const MonthlyPotdList = ({
                 <CardContent className="pt-0">
                   <div className="space-y-3">
                     {monthProblems.map(problem => {
-                      const alreadyInProblems = isPotdInProblems ? isPotdInProblems(problem) : false;
+                      const problemStatus = isPotdInProblems ? isPotdInProblems(problem) : { inProblems: false, inLearned: false, status: '' };
                       
                       return (
                         <div
@@ -196,9 +197,9 @@ const MonthlyPotdList = ({
                                 <Badge variant={problem.status === 'learned' ? 'default' : 'secondary'} className="text-xs">
                                   {problem.status === 'learned' ? 'Learned' : 'Active'}
                                 </Badge>
-                                {alreadyInProblems && (
+                                {problemStatus.status && (
                                   <Badge variant="default" className="text-xs bg-green-100 text-green-800">
-                                    In Problems
+                                    {problemStatus.status}
                                   </Badge>
                                 )}
                               </div>
@@ -223,16 +224,35 @@ const MonthlyPotdList = ({
 
                             <div className="flex items-center gap-2 ml-4">
                               {onAddToProblem && (
-                                <Button
-                                  variant={alreadyInProblems ? "outline" : "default"}
-                                  size="sm"
-                                  onClick={() => onAddToProblem(problem.id)}
-                                  disabled={alreadyInProblems}
-                                  className="text-xs"
-                                >
-                                  <Plus className="h-3 w-3 mr-1" />
-                                  {alreadyInProblems ? 'In Problems' : 'Add to Problems'}
-                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button
+                                      variant={problemStatus.inProblems || problemStatus.inLearned ? "outline" : "default"}
+                                      size="sm"
+                                      className="text-xs"
+                                    >
+                                      <Plus className="h-3 w-3 mr-1" />
+                                      {problemStatus.status || 'Add to Problems'}
+                                      <ChevronDownIcon className="h-3 w-3 ml-1" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => onAddToProblem(problem.id, 'active')}
+                                      disabled={problemStatus.inProblems}
+                                    >
+                                      <Plus className="mr-2 h-4 w-4" />
+                                      Add as Active Problem
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => onAddToProblem(problem.id, 'learned')}
+                                      disabled={problemStatus.inLearned}
+                                    >
+                                      <CheckCircle className="mr-2 h-4 w-4" />
+                                      Add as Learned Problem
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               )}
                               
                               <DropdownMenu>

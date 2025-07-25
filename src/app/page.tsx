@@ -678,6 +678,48 @@ export default function HomePage() {
     toast.success('Problem of the day added to your list!');
   };
 
+  const handleAddDailyChallengeToPotd = async (dailyProblem: any) => {
+    try {
+      // Check for duplicates by URL
+      const isDuplicate = potdProblems.some(p => p.url === dailyProblem.url);
+      if (isDuplicate) {
+        toast.info('Daily challenge already exists in your POTD archive.');
+        return;
+      }
+
+      const newProblem: Problem = {
+        id: generateId(),
+        platform: dailyProblem.platform,
+        title: dailyProblem.title,
+        problemId: dailyProblem.id,
+        difficulty: dailyProblem.difficulty,
+        url: dailyProblem.url,
+        dateSolved: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        notes: '',
+        isReview: false,
+        repetition: 0,
+        interval: 0,
+        nextReviewDate: null,
+        topics: dailyProblem.topics || [],
+        status: 'active',
+        companies: [],
+        source: 'potd', // Mark as Problem of the Day
+      };
+
+      const updatedPotdProblems = [...potdProblems, newProblem];
+      setPotdProblems(updatedPotdProblems);
+      await StorageService.savePotdProblems(updatedPotdProblems);
+
+      // Also save to database
+      await StorageService.addProblem(newProblem);
+
+    } catch (error) {
+      console.error('Failed to add daily challenge to POTD:', error);
+      throw error; // Re-throw so the component can handle it
+    }
+  };
+
   const handleCleanupPotd = async () => {
     try {
       const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
@@ -696,11 +738,23 @@ export default function HomePage() {
   };
 
   // Helper function to check if POTD problem already exists in Problems section
-  const isPotdInProblems = (potdProblem: Problem): boolean => {
-    return problems.some(p => p.url === potdProblem.url);
+  const isPotdInProblems = (potdProblem: Problem): { inProblems: boolean; inLearned: boolean; status: string } => {
+    const inProblems = problems.some(p => p.url === potdProblem.url && p.status === 'active');
+    const inLearned = problems.some(p => p.url === potdProblem.url && p.status === 'learned');
+
+    let status = '';
+    if (inProblems && inLearned) {
+      status = 'In Both';
+    } else if (inProblems) {
+      status = 'In Problems';
+    } else if (inLearned) {
+      status = 'In Learned';
+    }
+
+    return { inProblems, inLearned, status };
   };
 
-  const handleAddPotdToProblem = async (id: string) => {
+  const handleAddPotdToProblem = async (id: string, targetStatus: 'active' | 'learned' = 'active') => {
     try {
       // Find the POTD problem
       const potdProblem = potdProblems.find(p => p.id === id);
@@ -709,19 +763,21 @@ export default function HomePage() {
         return;
       }
 
-      // Check if problem already exists in Problems section
-      const existsInProblems = problems.some(p => p.url === potdProblem.url);
-      if (existsInProblems) {
-        toast.info('Problem already exists in Problems section');
+      // Check if problem already exists with the target status
+      const existsWithTargetStatus = problems.some(p => p.url === potdProblem.url && p.status === targetStatus);
+      if (existsWithTargetStatus) {
+        const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
+        toast.info(`Problem already exists in ${sectionName} section`);
         return;
       }
 
-      // Create a new problem with a new ID for the Problems section
+      // Create a new problem with a new ID for the target section
       const newProblemForProblems: Problem = {
         ...potdProblem,
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate new unique ID
         source: 'manual', // Change source from 'potd' to 'manual'
-        createdAt: new Date().toISOString() // Update creation time for Problems section
+        status: targetStatus, // Set the target status (active or learned)
+        createdAt: new Date().toISOString() // Update creation time for target section
       };
 
       // Add the new problem to the database
@@ -734,10 +790,12 @@ export default function HomePage() {
       // Update storage for problems (POTD storage remains unchanged)
       await StorageService.saveProblems(updatedProblems);
 
-      toast.success('Problem added to Problems section successfully!');
+      const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
+      toast.success(`Problem added to ${sectionName} section successfully!`);
     } catch (error) {
       console.error('Failed to add POTD problem to Problems:', error);
-      toast.error('Failed to add problem to Problems section');
+      const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
+      toast.error(`Failed to add problem to ${sectionName} section`);
     }
   };
 
@@ -1067,6 +1125,7 @@ export default function HomePage() {
               onAddPotd={handleAddPotdProblem}
               onImportProblems={handleImportProblems}
               onCleanupPotd={handleCleanupPotd}
+              onAddDailyChallenge={handleAddDailyChallengeToPotd}
             />
           </TabsContent>
 

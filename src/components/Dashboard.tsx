@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2 } from 'lucide-react';
 import { isToday, isPast } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
+import DailyChallenge from './DailyChallenge';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
 import { useState } from 'react';
@@ -19,9 +20,10 @@ interface DashboardProps {
   onAddPotd: (potd: ActiveDailyCodingChallengeQuestion) => void;
   onImportProblems: (companyName: string, problemsToImport: any[]) => void;
   onCleanupPotd?: () => Promise<void>;
+  onAddDailyChallenge?: (dailyProblem: any) => Promise<void>;
 }
 
-const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems, onCleanupPotd }: DashboardProps) => {
+const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems, onCleanupPotd, onAddDailyChallenge }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
   const [isCleaningPotd, setIsCleaningPotd] = useState(false);
 
@@ -199,6 +201,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
     <div className="space-y-6 sm:space-y-8">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ProblemOfTheDay onAddPotd={onAddPotd} />
+        <DailyChallenge onAddToPotd={onAddDailyChallenge} />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
