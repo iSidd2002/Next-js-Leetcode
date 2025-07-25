@@ -694,6 +694,43 @@ export default function HomePage() {
     }
   };
 
+  const handleMovePotdToProblem = async (id: string) => {
+    try {
+      // Find the POTD problem
+      const potdProblem = potdProblems.find(p => p.id === id);
+      if (!potdProblem) {
+        toast.error('POTD problem not found');
+        return;
+      }
+
+      // Create the updated problem with source changed to 'manual'
+      const updatedProblem: Problem = {
+        ...potdProblem,
+        source: 'manual' // Change source from 'potd' to 'manual'
+      };
+
+      // Update the problem in the database
+      await StorageService.updateProblem(id, { source: 'manual' });
+
+      // Add to regular problems list
+      const updatedProblems = [...problems, updatedProblem];
+      setProblems(updatedProblems);
+
+      // Remove from POTD problems list
+      const updatedPotdProblems = potdProblems.filter(p => p.id !== id);
+      setPotdProblems(updatedPotdProblems);
+
+      // Update storage to reflect the changes
+      await StorageService.saveProblems(updatedProblems);
+      await StorageService.savePotdProblems(updatedPotdProblems);
+
+      toast.success('Problem moved to Problems section successfully!');
+    } catch (error) {
+      console.error('Failed to move POTD problem to Problems:', error);
+      toast.error('Failed to move problem to Problems section');
+    }
+  };
+
   const handleImportProblems = async (companyName: string, problemsToImport: any[]) => {
     try {
       const newProblems: Problem[] = [];
@@ -1049,6 +1086,7 @@ export default function HomePage() {
                 onDeleteProblem={handleDeleteProblem}
                 onEditProblem={handleEditProblem}
                 onProblemReviewed={handleProblemReviewed}
+                onMoveToProblem={handleMovePotdToProblem}
                 isReviewList={false}
               />
             </div>

@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,9 +62,10 @@ interface ProblemListProps {
   onProblemReviewed: (id: string, quality?: number) => void;
   onClearAll?: () => void;
   isReviewList?: boolean;
+  onMoveToProblem?: (id: string) => void; // New handler for moving POTD to Problems
 }
 
-const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false }: ProblemListProps) => {
+const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onMoveToProblem }: ProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -254,6 +255,11 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                     <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
                       <Edit className="h-3 w-3" />
                     </Button>
+                    {problem.source === 'potd' && onMoveToProblem && (
+                      <Button variant="ghost" size="icon" onClick={() => onMoveToProblem(problem.id)} className="h-8 w-8 text-blue-600" title="Move to Problems">
+                        <ArrowRight className="h-3 w-3" />
+                      </Button>
+                    )}
                     <Button variant="ghost" size="icon" onClick={() => onDeleteProblem(problem.id)} className="h-8 w-8 text-destructive">
                       <Trash2 className="h-3 w-3" />
                     </Button>
@@ -374,7 +380,14 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                                 <Pencil className="mr-2 h-5 w-5" />
                                 Edit
                               </DropdownMenuItem>
-                              
+
+                              {problem.source === 'potd' && onMoveToProblem && (
+                                <DropdownMenuItem onClick={() => onMoveToProblem(problem.id)}>
+                                  <ArrowRight className="mr-2 h-5 w-5 text-blue-600" />
+                                  Move to Problems
+                                </DropdownMenuItem>
+                              )}
+
                               {problem.status === 'active' && (
                                 <>
                                   <DropdownMenuItem onClick={() => (onToggleReview || onUpdateProblem)(problem.id, { isReview: !problem.isReview })}>
