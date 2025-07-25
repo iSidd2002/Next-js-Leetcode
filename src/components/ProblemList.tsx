@@ -62,10 +62,11 @@ interface ProblemListProps {
   onProblemReviewed: (id: string, quality?: number) => void;
   onClearAll?: () => void;
   isReviewList?: boolean;
-  onMoveToProblem?: (id: string) => void; // New handler for moving POTD to Problems
+  onAddToProblem?: (id: string) => void; // New handler for adding POTD to Problems
+  isPotdInProblems?: (problem: Problem) => boolean; // Check if POTD problem exists in Problems
 }
 
-const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onMoveToProblem }: ProblemListProps) => {
+const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems }: ProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -255,8 +256,15 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                     <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
                       <Edit className="h-3 w-3" />
                     </Button>
-                    {problem.source === 'potd' && onMoveToProblem && (
-                      <Button variant="ghost" size="icon" onClick={() => onMoveToProblem(problem.id)} className="h-8 w-8 text-blue-600" title="Move to Problems">
+                    {problem.source === 'potd' && onAddToProblem && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onAddToProblem(problem.id)}
+                        className="h-8 w-8 text-blue-600"
+                        title={isPotdInProblems && isPotdInProblems(problem) ? "Already in Problems" : "Add to Problems"}
+                        disabled={isPotdInProblems && isPotdInProblems(problem)}
+                      >
                         <ArrowRight className="h-3 w-3" />
                       </Button>
                     )}
@@ -381,10 +389,13 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                                 Edit
                               </DropdownMenuItem>
 
-                              {problem.source === 'potd' && onMoveToProblem && (
-                                <DropdownMenuItem onClick={() => onMoveToProblem(problem.id)}>
+                              {problem.source === 'potd' && onAddToProblem && (
+                                <DropdownMenuItem
+                                  onClick={() => onAddToProblem(problem.id)}
+                                  disabled={isPotdInProblems && isPotdInProblems(problem)}
+                                >
                                   <ArrowRight className="mr-2 h-5 w-5 text-blue-600" />
-                                  Move to Problems
+                                  {isPotdInProblems && isPotdInProblems(problem) ? 'Already in Problems' : 'Add to Problems'}
                                 </DropdownMenuItem>
                               )}
 

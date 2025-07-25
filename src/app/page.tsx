@@ -30,6 +30,7 @@ import Sheets from '@/components/Sheets';
 import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
 import StudyHub from '@/components/StudyHub';
+import MonthlyPotdList from '@/components/MonthlyPotdList';
 
 export default function HomePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -694,7 +695,12 @@ export default function HomePage() {
     }
   };
 
-  const handleMovePotdToProblem = async (id: string) => {
+  // Helper function to check if POTD problem already exists in Problems section
+  const isPotdInProblems = (potdProblem: Problem): boolean => {
+    return problems.some(p => p.url === potdProblem.url);
+  };
+
+  const handleAddPotdToProblem = async (id: string) => {
     try {
       // Find the POTD problem
       const potdProblem = potdProblems.find(p => p.id === id);
@@ -703,31 +709,35 @@ export default function HomePage() {
         return;
       }
 
-      // Create the updated problem with source changed to 'manual'
-      const updatedProblem: Problem = {
+      // Check if problem already exists in Problems section
+      const existsInProblems = problems.some(p => p.url === potdProblem.url);
+      if (existsInProblems) {
+        toast.info('Problem already exists in Problems section');
+        return;
+      }
+
+      // Create a new problem with a new ID for the Problems section
+      const newProblemForProblems: Problem = {
         ...potdProblem,
-        source: 'manual' // Change source from 'potd' to 'manual'
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate new unique ID
+        source: 'manual', // Change source from 'potd' to 'manual'
+        createdAt: new Date().toISOString() // Update creation time for Problems section
       };
 
-      // Update the problem in the database
-      await StorageService.updateProblem(id, { source: 'manual' });
+      // Add the new problem to the database
+      await StorageService.addProblem(newProblemForProblems);
 
-      // Add to regular problems list
-      const updatedProblems = [...problems, updatedProblem];
+      // Add to regular problems list (POTD problem remains in POTD list)
+      const updatedProblems = [...problems, newProblemForProblems];
       setProblems(updatedProblems);
 
-      // Remove from POTD problems list
-      const updatedPotdProblems = potdProblems.filter(p => p.id !== id);
-      setPotdProblems(updatedPotdProblems);
-
-      // Update storage to reflect the changes
+      // Update storage for problems (POTD storage remains unchanged)
       await StorageService.saveProblems(updatedProblems);
-      await StorageService.savePotdProblems(updatedPotdProblems);
 
-      toast.success('Problem moved to Problems section successfully!');
+      toast.success('Problem added to Problems section successfully!');
     } catch (error) {
-      console.error('Failed to move POTD problem to Problems:', error);
-      toast.error('Failed to move problem to Problems section');
+      console.error('Failed to add POTD problem to Problems:', error);
+      toast.error('Failed to add problem to Problems section');
     }
   };
 
@@ -1078,18 +1088,16 @@ export default function HomePage() {
 
 
           <TabsContent value="potd" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <ProblemList
-                problems={potdProblems}
-                onUpdateProblem={handleUpdateProblem}
-                onToggleReview={handleToggleReview}
-                onDeleteProblem={handleDeleteProblem}
-                onEditProblem={handleEditProblem}
-                onProblemReviewed={handleProblemReviewed}
-                onMoveToProblem={handleMovePotdToProblem}
-                isReviewList={false}
-              />
-            </div>
+            <MonthlyPotdList
+              problems={potdProblems}
+              onUpdateProblem={handleUpdateProblem}
+              onToggleReview={handleToggleReview}
+              onDeleteProblem={handleDeleteProblem}
+              onEditProblem={handleEditProblem}
+              onProblemReviewed={handleProblemReviewed}
+              onAddToProblem={handleAddPotdToProblem}
+              isPotdInProblems={isPotdInProblems}
+            />
           </TabsContent>
 
           <TabsContent value="contests" className="space-y-6">
