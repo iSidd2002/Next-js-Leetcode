@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+// Supported platforms
+type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'hackerrank' | 'atcoder';
+
 interface LeetCodeProblem {
   acRate: number;
   difficulty: string;
@@ -19,27 +22,45 @@ interface LeetCodeProblem {
   }>;
 }
 
+interface CodeForcesProblem {
+  contestId: number;
+  index: string;
+  name: string;
+  type: string;
+  rating?: number;
+  tags: string[];
+}
+
+interface UnifiedProblem {
+  id: string;
+  platform: Platform;
+  title: string;
+  difficulty: string;
+  url: string;
+  topics: string[];
+  acRate?: number;
+  date: string;
+  platformMetadata?: {
+    contestId?: number;
+    problemIndex?: string;
+    rating?: number;
+    originalDifficulty?: string;
+  };
+}
+
 interface DailyChallengeResponse {
   success: boolean;
-  problem?: {
-    id: string;
-    platform: 'leetcode';
-    title: string;
-    difficulty: string;
-    url: string;
-    topics: string[];
-    acRate: number;
-    date: string;
-  };
+  problem?: UnifiedProblem;
   error?: string;
   isCached?: boolean;
 }
 
-// Fallback problems for when API fails
-const FALLBACK_PROBLEMS = [
+// Enhanced fallback problems from multiple platforms
+const FALLBACK_PROBLEMS: UnifiedProblem[] = [
+  // LeetCode Problems
   {
-    id: 'fallback-1',
-    platform: 'leetcode' as const,
+    id: 'fallback-leetcode-1',
+    platform: 'leetcode',
     title: 'Two Sum',
     difficulty: 'Easy',
     url: 'https://leetcode.com/problems/two-sum/',
@@ -48,18 +69,8 @@ const FALLBACK_PROBLEMS = [
     date: new Date().toISOString().split('T')[0]
   },
   {
-    id: 'fallback-2',
-    platform: 'leetcode' as const,
-    title: 'Add Two Numbers',
-    difficulty: 'Medium',
-    url: 'https://leetcode.com/problems/add-two-numbers/',
-    topics: ['Linked List', 'Math', 'Recursion'],
-    acRate: 42.1,
-    date: new Date().toISOString().split('T')[0]
-  },
-  {
-    id: 'fallback-3',
-    platform: 'leetcode' as const,
+    id: 'fallback-leetcode-2',
+    platform: 'leetcode',
     title: 'Longest Substring Without Repeating Characters',
     difficulty: 'Medium',
     url: 'https://leetcode.com/problems/longest-substring-without-repeating-characters/',
@@ -67,38 +78,108 @@ const FALLBACK_PROBLEMS = [
     acRate: 35.2,
     date: new Date().toISOString().split('T')[0]
   },
+  // CodeForces Problems
   {
-    id: 'fallback-4',
-    platform: 'leetcode' as const,
-    title: 'Median of Two Sorted Arrays',
-    difficulty: 'Hard',
-    url: 'https://leetcode.com/problems/median-of-two-sorted-arrays/',
-    topics: ['Array', 'Binary Search', 'Divide and Conquer'],
-    acRate: 38.9,
+    id: 'fallback-codeforces-1',
+    platform: 'codeforces',
+    title: 'Watermelon',
+    difficulty: 'Easy',
+    url: 'https://codeforces.com/problemset/problem/4/A',
+    topics: ['Math', 'Brute Force'],
+    date: new Date().toISOString().split('T')[0],
+    platformMetadata: {
+      contestId: 4,
+      problemIndex: 'A',
+      rating: 800
+    }
+  },
+  {
+    id: 'fallback-codeforces-2',
+    platform: 'codeforces',
+    title: 'Next Round',
+    difficulty: 'Easy',
+    url: 'https://codeforces.com/problemset/problem/158/A',
+    topics: ['Implementation'],
+    date: new Date().toISOString().split('T')[0],
+    platformMetadata: {
+      contestId: 158,
+      problemIndex: 'A',
+      rating: 800
+    }
+  },
+  // GeeksforGeeks Problems
+  {
+    id: 'fallback-gfg-1',
+    platform: 'geeksforgeeks',
+    title: 'Array Rotation',
+    difficulty: 'Medium',
+    url: 'https://www.geeksforgeeks.org/problems/rotate-array-by-n-elements-1587115621/1',
+    topics: ['Array', 'Rotation'],
     date: new Date().toISOString().split('T')[0]
   },
   {
-    id: 'fallback-5',
-    platform: 'leetcode' as const,
-    title: 'Longest Palindromic Substring',
-    difficulty: 'Medium',
-    url: 'https://leetcode.com/problems/longest-palindromic-substring/',
-    topics: ['String', 'Dynamic Programming'],
-    acRate: 33.8,
+    id: 'fallback-gfg-2',
+    platform: 'geeksforgeeks',
+    title: 'Missing Number',
+    difficulty: 'Easy',
+    url: 'https://www.geeksforgeeks.org/problems/missing-number-in-array1416/1',
+    topics: ['Array', 'Math'],
+    date: new Date().toISOString().split('T')[0]
+  },
+  // HackerRank Problems
+  {
+    id: 'fallback-hackerrank-1',
+    platform: 'hackerrank',
+    title: 'Simple Array Sum',
+    difficulty: 'Easy',
+    url: 'https://www.hackerrank.com/challenges/simple-array-sum/problem',
+    topics: ['Array', 'Implementation'],
+    date: new Date().toISOString().split('T')[0]
+  },
+  {
+    id: 'fallback-hackerrank-2',
+    platform: 'hackerrank',
+    title: 'Compare the Triplets',
+    difficulty: 'Easy',
+    url: 'https://www.hackerrank.com/challenges/compare-the-triplets/problem',
+    topics: ['Implementation'],
+    date: new Date().toISOString().split('T')[0]
+  },
+  // AtCoder Problems
+  {
+    id: 'fallback-atcoder-1',
+    platform: 'atcoder',
+    title: 'Welcome to AtCoder',
+    difficulty: 'Easy',
+    url: 'https://atcoder.jp/contests/practice/tasks/practice_1',
+    topics: ['Implementation'],
+    date: new Date().toISOString().split('T')[0]
+  },
+  {
+    id: 'fallback-atcoder-2',
+    platform: 'atcoder',
+    title: 'Product',
+    difficulty: 'Easy',
+    url: 'https://atcoder.jp/contests/abc086/tasks/abc086_a',
+    topics: ['Math'],
     date: new Date().toISOString().split('T')[0]
   }
 ];
 
+
+
 // Simple in-memory cache for daily problems
-let dailyCache: { date: string; problem: any } | null = null;
+let dailyCache: { date: string; problem: UnifiedProblem } | null = null;
 
 // Get today's date as a string
 const getTodayString = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
-// Get a deterministic random problem based on date
-const getDeterministicRandomProblem = (date: string) => {
+// Platform rotation logic - determines which platform to use for a given date
+const getPlatformForDate = (date: string): Platform => {
+  const platforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'hackerrank', 'atcoder'];
+
   // Create a simple hash from the date
   let hash = 0;
   for (let i = 0; i < date.length; i++) {
@@ -106,21 +187,111 @@ const getDeterministicRandomProblem = (date: string) => {
     hash = ((hash << 5) - hash) + char;
     hash = hash & hash; // Convert to 32-bit integer
   }
-  
-  // Use absolute value and modulo to get index
-  const index = Math.abs(hash) % FALLBACK_PROBLEMS.length;
-  return FALLBACK_PROBLEMS[index];
+
+  // Use absolute value and modulo to get platform index
+  const index = Math.abs(hash) % platforms.length;
+  return platforms[index];
 };
 
-// Fetch random problem from LeetCode (simplified approach)
-const fetchRandomLeetCodeProblem = async (): Promise<LeetCodeProblem | null> => {
+// Get a deterministic random problem based on date
+const getDeterministicRandomProblem = (date: string): UnifiedProblem => {
+  // Create a simple hash from the date
+  let hash = 0;
+  for (let i = 0; i < date.length; i++) {
+    const char = date.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+
+  // Use absolute value and modulo to get index
+  const index = Math.abs(hash) % FALLBACK_PROBLEMS.length;
+  const problem = FALLBACK_PROBLEMS[index];
+  return {
+    ...problem,
+    date
+  };
+};
+
+// Normalize difficulty levels across platforms
+const normalizeDifficulty = (difficulty: string | number, platform: Platform): string => {
+  if (platform === 'codeforces') {
+    const rating = typeof difficulty === 'number' ? difficulty : parseInt(difficulty.toString());
+    if (rating <= 1200) return 'Easy';
+    if (rating <= 1600) return 'Medium';
+    return 'Hard';
+  }
+
+  if (typeof difficulty === 'string') {
+    const lower = difficulty.toLowerCase();
+    if (lower.includes('easy') || lower.includes('beginner')) return 'Easy';
+    if (lower.includes('medium') || lower.includes('intermediate')) return 'Medium';
+    if (lower.includes('hard') || lower.includes('advanced') || lower.includes('expert')) return 'Hard';
+  }
+
+  return 'Medium'; // Default fallback
+};
+
+// Fetch random problem from CodeForces
+const fetchCodeForcesProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    // This is a simplified approach - in a real implementation, you might want to:
-    // 1. Fetch a list of problems first
-    // 2. Select a random one
-    // 3. Get its details
-    
-    // For now, we'll use the POTD endpoint and modify it
+    console.log('Daily Challenge: 🔄 Fetching from CodeForces API');
+
+    // Fetch recent problems from CodeForces API
+    const response = await fetch('https://codeforces.com/api/problemset.problems?tags=implementation', {
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (compatible; DailyChallengeBot/1.0)',
+      },
+      signal: AbortSignal.timeout(8000)
+    });
+
+    if (!response.ok) {
+      throw new Error(`CodeForces API error: ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (data.status === 'OK' && data.result && data.result.problems && data.result.problems.length > 0) {
+      // Filter problems with reasonable difficulty (800-1600 rating)
+      const suitableProblems = data.result.problems.filter((p: CodeForcesProblem) =>
+        p.rating && p.rating >= 800 && p.rating <= 1600
+      );
+
+      if (suitableProblems.length > 0) {
+        // Select a random problem from suitable ones
+        const randomIndex = Math.floor(Math.random() * Math.min(suitableProblems.length, 50));
+        const problem = suitableProblems[randomIndex];
+
+        return {
+          id: `codeforces-${problem.contestId}-${problem.index}`,
+          platform: 'codeforces',
+          title: problem.name,
+          difficulty: normalizeDifficulty(problem.rating || 1000, 'codeforces'),
+          url: `https://codeforces.com/problemset/problem/${problem.contestId}/${problem.index}`,
+          topics: problem.tags || [],
+          date: getTodayString(),
+          platformMetadata: {
+            contestId: problem.contestId,
+            problemIndex: problem.index,
+            rating: problem.rating,
+            originalDifficulty: problem.rating?.toString()
+          }
+        };
+      }
+    }
+
+    return null;
+  } catch (error) {
+    console.error('CodeForces API error:', error);
+    return null;
+  }
+};
+
+// Fetch random problem from LeetCode
+const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
+  try {
+    console.log('Daily Challenge: 🔄 Fetching from LeetCode API');
+
     const query = `
       query randomQuestion {
         randomQuestion {
@@ -161,22 +332,125 @@ const fetchRandomLeetCodeProblem = async (): Promise<LeetCodeProblem | null> => 
         'Pragma': 'no-cache'
       },
       body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(10000) // 10 second timeout
+      signal: AbortSignal.timeout(8000)
     });
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      throw new Error(`LeetCode API error: ${response.status}`);
     }
 
     const data = await response.json();
-    
+
     if (data.data && data.data.randomQuestion) {
-      return data.data.randomQuestion;
+      const leetcodeProblem = data.data.randomQuestion;
+      return {
+        id: `leetcode-${leetcodeProblem.titleSlug}`,
+        platform: 'leetcode',
+        title: leetcodeProblem.title,
+        difficulty: leetcodeProblem.difficulty,
+        url: `https://leetcode.com/problems/${leetcodeProblem.titleSlug}/`,
+        topics: leetcodeProblem.topicTags.map((tag: any) => tag.name),
+        acRate: leetcodeProblem.acRate,
+        date: getTodayString()
+      };
     }
-    
+
     return null;
   } catch (error) {
-    console.error('Failed to fetch random LeetCode problem:', error);
+    console.error('LeetCode API error:', error);
+    return null;
+  }
+};
+
+// Fetch problem from GeeksforGeeks (using fallback approach due to limited API)
+const fetchGeeksforGeeksProblem = async (): Promise<UnifiedProblem | null> => {
+  try {
+    console.log('Daily Challenge: 🔄 Using GeeksforGeeks fallback problems');
+
+    // GeeksforGeeks doesn't have a public API, so we use curated problems
+    const gfgProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'geeksforgeeks');
+    if (gfgProblems.length > 0) {
+      const randomIndex = Math.floor(Math.random() * gfgProblems.length);
+      return {
+        ...gfgProblems[randomIndex],
+        date: getTodayString()
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('GeeksforGeeks error:', error);
+    return null;
+  }
+};
+
+// Fetch problem from HackerRank (using fallback approach)
+const fetchHackerRankProblem = async (): Promise<UnifiedProblem | null> => {
+  try {
+    console.log('Daily Challenge: 🔄 Using HackerRank fallback problems');
+
+    // HackerRank API requires authentication, so we use curated problems
+    const hackerRankProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'hackerrank');
+    if (hackerRankProblems.length > 0) {
+      const randomIndex = Math.floor(Math.random() * hackerRankProblems.length);
+      return {
+        ...hackerRankProblems[randomIndex],
+        date: getTodayString()
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('HackerRank error:', error);
+    return null;
+  }
+};
+
+// Fetch problem from AtCoder (using fallback approach)
+const fetchAtCoderProblem = async (): Promise<UnifiedProblem | null> => {
+  try {
+    console.log('Daily Challenge: 🔄 Using AtCoder fallback problems');
+
+    // AtCoder API is complex, so we use curated problems
+    const atCoderProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'atcoder');
+    if (atCoderProblems.length > 0) {
+      const randomIndex = Math.floor(Math.random() * atCoderProblems.length);
+      return {
+        ...atCoderProblems[randomIndex],
+        date: getTodayString()
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('AtCoder error:', error);
+    return null;
+  }
+};
+};
+
+// Main function to fetch problem from the designated platform
+const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProblem | null> => {
+  console.log(`Daily Challenge: 🎯 Attempting to fetch from ${platform}`);
+
+  try {
+    switch (platform) {
+      case 'leetcode':
+        return await fetchLeetCodeProblem();
+      case 'codeforces':
+        return await fetchCodeForcesProblem();
+      case 'geeksforgeeks':
+        return await fetchGeeksforGeeksProblem();
+      case 'hackerrank':
+        return await fetchHackerRankProblem();
+      case 'atcoder':
+        return await fetchAtCoderProblem();
+      default:
+        console.warn(`Daily Challenge: ⚠️ Unknown platform: ${platform}`);
+        return null;
+    }
+  } catch (error) {
+    console.error(`Daily Challenge: ❌ Error fetching from ${platform}:`, error);
     return null;
   }
 };
@@ -196,32 +470,46 @@ export async function GET(request: NextRequest) {
     }
 
     console.log('Daily Challenge: 🔄 Fetching new problem for', today);
-    
-    // Try to fetch a random problem from LeetCode
-    let problem: any = null;
-    
+
+    // Determine which platform to use for today
+    const targetPlatform = getPlatformForDate(today);
+    console.log(`Daily Challenge: 🎯 Target platform for ${today}: ${targetPlatform}`);
+
+    let problem: UnifiedProblem | null = null;
+
+    // Try to fetch from the target platform first
     try {
-      const leetcodeProblem = await fetchRandomLeetCodeProblem();
-      
-      if (leetcodeProblem) {
-        problem = {
-          id: `daily-${today}-${leetcodeProblem.titleSlug}`,
-          platform: 'leetcode' as const,
-          title: leetcodeProblem.title,
-          difficulty: leetcodeProblem.difficulty,
-          url: `https://leetcode.com/problems/${leetcodeProblem.titleSlug}/`,
-          topics: leetcodeProblem.topicTags.map(tag => tag.name),
-          acRate: leetcodeProblem.acRate,
-          date: today
-        };
-        
-        console.log('Daily Challenge: ✅ Fetched from LeetCode:', problem.title);
+      problem = await fetchProblemFromPlatform(targetPlatform);
+
+      if (problem) {
+        console.log(`Daily Challenge: ✅ Fetched from ${targetPlatform}:`, problem.title);
       }
     } catch (error) {
-      console.warn('Daily Challenge: ⚠️ LeetCode API failed, using fallback');
+      console.warn(`Daily Challenge: ⚠️ ${targetPlatform} failed, trying fallback platforms`);
     }
-    
-    // If LeetCode API failed, use deterministic fallback
+
+    // If target platform failed, try other platforms as fallback
+    if (!problem) {
+      const fallbackPlatforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'hackerrank', 'atcoder']
+        .filter(p => p !== targetPlatform);
+
+      for (const fallbackPlatform of fallbackPlatforms) {
+        try {
+          console.log(`Daily Challenge: 🔄 Trying fallback platform: ${fallbackPlatform}`);
+          problem = await fetchProblemFromPlatform(fallbackPlatform);
+
+          if (problem) {
+            console.log(`Daily Challenge: ✅ Fetched from fallback ${fallbackPlatform}:`, problem.title);
+            break;
+          }
+        } catch (error) {
+          console.warn(`Daily Challenge: ⚠️ Fallback ${fallbackPlatform} also failed`);
+          continue;
+        }
+      }
+    }
+
+    // If all APIs failed, use deterministic fallback
     if (!problem) {
       problem = getDeterministicRandomProblem(today);
       console.log('Daily Challenge: 🔄 Using deterministic fallback:', problem.title);

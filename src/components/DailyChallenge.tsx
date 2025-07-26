@@ -7,15 +7,23 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Plus, RefreshCw, Zap, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
+type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'hackerrank' | 'atcoder';
+
 interface DailyProblem {
   id: string;
-  platform: 'leetcode';
+  platform: Platform;
   title: string;
   difficulty: string;
   url: string;
   topics: string[];
-  acRate: number;
+  acRate?: number;
   date: string;
+  platformMetadata?: {
+    contestId?: number;
+    problemIndex?: string;
+    rating?: number;
+    originalDifficulty?: string;
+  };
 }
 
 interface DailyChallengeProps {
@@ -81,16 +89,50 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
     }
   };
 
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty.toLowerCase()) {
-      case 'easy':
-        return 'bg-green-500 hover:bg-green-600 text-white';
-      case 'medium':
-        return 'bg-yellow-500 hover:bg-yellow-600 text-white';
-      case 'hard':
-        return 'bg-red-500 hover:bg-red-600 text-white';
+  const getPlatformInfo = (platform: Platform) => {
+    switch (platform) {
+      case 'leetcode':
+        return {
+          name: 'LeetCode',
+          color: 'bg-orange-500 text-white',
+          bgGradient: 'from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20',
+          borderColor: 'border-orange-200'
+        };
+      case 'codeforces':
+        return {
+          name: 'CodeForces',
+          color: 'bg-blue-500 text-white',
+          bgGradient: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20',
+          borderColor: 'border-blue-200'
+        };
+      case 'geeksforgeeks':
+        return {
+          name: 'GeeksforGeeks',
+          color: 'bg-green-600 text-white',
+          bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20',
+          borderColor: 'border-green-200'
+        };
+      case 'hackerrank':
+        return {
+          name: 'HackerRank',
+          color: 'bg-emerald-500 text-white',
+          bgGradient: 'from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20',
+          borderColor: 'border-emerald-200'
+        };
+      case 'atcoder':
+        return {
+          name: 'AtCoder',
+          color: 'bg-purple-500 text-white',
+          bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20',
+          borderColor: 'border-purple-200'
+        };
       default:
-        return 'bg-gray-500 hover:bg-gray-600 text-white';
+        return {
+          name: platform,
+          color: 'bg-gray-500 text-white',
+          bgGradient: 'from-gray-50 to-slate-50 dark:from-gray-950/20 dark:to-slate-950/20',
+          borderColor: 'border-gray-200'
+        };
     }
   };
 
@@ -157,13 +199,18 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
     return null;
   }
 
+  const platformInfo = getPlatformInfo(problem.platform);
+
   return (
-    <Card className="border-purple-200 bg-gradient-to-br from-purple-50 to-blue-50 dark:from-purple-950/20 dark:to-blue-950/20">
+    <Card className={`${platformInfo.borderColor} bg-gradient-to-br ${platformInfo.bgGradient}`}>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center">
             <Zap className="h-5 w-5 mr-2 text-purple-600" />
             Daily Challenge
+            <Badge className={`ml-2 ${platformInfo.color} text-xs`}>
+              {platformInfo.name}
+            </Badge>
           </div>
           <div className="flex items-center text-sm text-muted-foreground">
             <Calendar className="h-4 w-4 mr-1" />
@@ -188,15 +235,28 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
 
           {/* Badges */}
           <div className="flex flex-wrap gap-2">
-            <Badge variant="outline" className="text-xs">
-              {problem.platform === 'leetcode' ? 'LeetCode' : problem.platform}
-            </Badge>
             <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
               {problem.difficulty}
             </Badge>
-            <Badge variant="secondary" className="text-xs">
-              {problem.acRate.toFixed(1)}% Acceptance
-            </Badge>
+
+            {/* Platform-specific metadata */}
+            {problem.platform === 'codeforces' && problem.platformMetadata?.rating && (
+              <Badge variant="secondary" className="text-xs">
+                Rating: {problem.platformMetadata.rating}
+              </Badge>
+            )}
+
+            {problem.platform === 'codeforces' && problem.platformMetadata?.contestId && (
+              <Badge variant="outline" className="text-xs">
+                Contest {problem.platformMetadata.contestId}{problem.platformMetadata.problemIndex}
+              </Badge>
+            )}
+
+            {problem.acRate && (
+              <Badge variant="secondary" className="text-xs">
+                {problem.acRate.toFixed(1)}% Acceptance
+              </Badge>
+            )}
           </div>
 
           {/* Topics */}
