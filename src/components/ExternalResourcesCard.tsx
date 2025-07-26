@@ -51,6 +51,15 @@ const QUICK_RESOURCES: QuickResource[] = [
     category: 'Practice',
     icon: <Code className="h-4 w-4" />,
     color: 'text-red-600'
+  },
+  {
+    id: 'algoexpert',
+    name: 'AlgoExpert',
+    shortDescription: 'Advanced algorithm problems',
+    url: 'https://algo.theffox.workers.dev/',
+    category: 'Algorithms',
+    icon: <Code className="h-4 w-4" />,
+    color: 'text-orange-600'
   }
 ];
 
