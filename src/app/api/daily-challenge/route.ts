@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 // Supported platforms
-type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'hackerrank' | 'atcoder';
+type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'codingninjas' | 'atcoder';
 
 interface LeetCodeProblem {
   acRate: number;
@@ -126,23 +126,23 @@ const FALLBACK_PROBLEMS: UnifiedProblem[] = [
     topics: ['Array', 'Math'],
     date: new Date().toISOString().split('T')[0]
   },
-  // HackerRank Problems
+  // Coding Ninjas Problems
   {
-    id: 'fallback-hackerrank-1',
-    platform: 'hackerrank',
-    title: 'Simple Array Sum',
+    id: 'fallback-codingninjas-1',
+    platform: 'codingninjas',
+    title: 'Reverse The Array',
     difficulty: 'Easy',
-    url: 'https://www.hackerrank.com/challenges/simple-array-sum/problem',
-    topics: ['Array', 'Implementation'],
+    url: 'https://www.codingninjas.com/studio/problems/reverse-the-array_1262298',
+    topics: ['Array', 'Two Pointers'],
     date: new Date().toISOString().split('T')[0]
   },
   {
-    id: 'fallback-hackerrank-2',
-    platform: 'hackerrank',
-    title: 'Compare the Triplets',
-    difficulty: 'Easy',
-    url: 'https://www.hackerrank.com/challenges/compare-the-triplets/problem',
-    topics: ['Implementation'],
+    id: 'fallback-codingninjas-2',
+    platform: 'codingninjas',
+    title: 'Maximum Subarray Sum',
+    difficulty: 'Medium',
+    url: 'https://www.codingninjas.com/studio/problems/maximum-subarray-sum_630526',
+    topics: ['Array', 'Dynamic Programming', 'Kadane Algorithm'],
     date: new Date().toISOString().split('T')[0]
   },
   // AtCoder Problems
@@ -178,7 +178,7 @@ const getTodayString = (): string => {
 
 // Platform rotation logic - determines which platform to use for a given date
 const getPlatformForDate = (date: string): Platform => {
-  const platforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'hackerrank', 'atcoder'];
+  const platforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'codingninjas', 'atcoder'];
 
   // Create a simple hash from the date
   let hash = 0;
@@ -384,24 +384,24 @@ const fetchGeeksforGeeksProblem = async (): Promise<UnifiedProblem | null> => {
   }
 };
 
-// Fetch problem from HackerRank (using fallback approach)
-const fetchHackerRankProblem = async (): Promise<UnifiedProblem | null> => {
+// Fetch problem from Coding Ninjas (using fallback approach)
+const fetchCodingNinjasProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Using HackerRank fallback problems');
+    console.log('Daily Challenge: 🔄 Using Coding Ninjas fallback problems');
 
-    // HackerRank API requires authentication, so we use curated problems
-    const hackerRankProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'hackerrank');
-    if (hackerRankProblems.length > 0) {
-      const randomIndex = Math.floor(Math.random() * hackerRankProblems.length);
+    // Coding Ninjas API requires authentication, so we use curated problems
+    const codingNinjasProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'codingninjas');
+    if (codingNinjasProblems.length > 0) {
+      const randomIndex = Math.floor(Math.random() * codingNinjasProblems.length);
       return {
-        ...hackerRankProblems[randomIndex],
+        ...codingNinjasProblems[randomIndex],
         date: getTodayString()
       };
     }
 
     return null;
   } catch (error) {
-    console.error('HackerRank error:', error);
+    console.error('Coding Ninjas error:', error);
     return null;
   }
 };
@@ -440,8 +440,8 @@ const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProb
         return await fetchCodeForcesProblem();
       case 'geeksforgeeks':
         return await fetchGeeksforGeeksProblem();
-      case 'hackerrank':
-        return await fetchHackerRankProblem();
+      case 'codingninjas':
+        return await fetchCodingNinjasProblem();
       case 'atcoder':
         return await fetchAtCoderProblem();
       default:
@@ -489,7 +489,7 @@ export async function GET(request: NextRequest) {
 
     // If target platform failed, try other platforms as fallback
     if (!problem) {
-      const fallbackPlatforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'hackerrank', 'atcoder']
+      const fallbackPlatforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'codingninjas', 'atcoder']
         .filter(p => p !== targetPlatform);
 
       for (const fallbackPlatform of fallbackPlatforms) {

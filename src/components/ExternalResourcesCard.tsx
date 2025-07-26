@@ -44,13 +44,13 @@ const QUICK_RESOURCES: QuickResource[] = [
     color: 'text-purple-600'
   },
   {
-    id: 'algoexpert',
-    name: 'AlgoExpert',
-    shortDescription: 'Advanced algorithm problems',
-    url: 'https://algo.theffox.workers.dev/',
-    category: 'Algorithms',
+    id: 'codingninjas',
+    name: 'Coding Ninjas',
+    shortDescription: 'Structured coding practice',
+    url: 'https://www.codingninjas.com/studio/problems',
+    category: 'Practice',
     icon: <Code className="h-4 w-4" />,
-    color: 'text-orange-600'
+    color: 'text-red-600'
   }
 ];
 

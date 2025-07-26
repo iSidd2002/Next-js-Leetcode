@@ -56,16 +56,16 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     features: ['Interactive Practice', 'Multiple Topics', 'Progress Tracking', 'Concept Building']
   },
   {
-    id: 'algoexpert',
-    name: 'AlgoExpert Problems',
-    description: 'Algorithm practice problems with detailed explanations and multiple solution approaches',
-    url: 'https://algo.theffox.workers.dev/',
-    category: 'algorithms',
-    difficulty: 'Advanced',
+    id: 'codingninjas',
+    name: 'Coding Ninjas',
+    description: 'Comprehensive coding practice platform with structured courses and interview preparation',
+    url: 'https://www.codingninjas.com/studio/problems',
+    category: 'practice',
+    difficulty: 'All Levels',
     icon: <Code className="h-5 w-5" />,
-    color: 'text-orange-600',
-    bgGradient: 'from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20',
-    features: ['Algorithm Focus', 'Multiple Solutions', 'Time Complexity', 'Space Complexity']
+    color: 'text-red-600',
+    bgGradient: 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20',
+    features: ['Structured Learning', 'Interview Prep', 'Multiple Languages', 'Guided Practice']
   }
 ];
 

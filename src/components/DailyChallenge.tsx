@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink, Plus, RefreshCw, Zap, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
-type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'hackerrank' | 'atcoder';
+type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'codingninjas' | 'atcoder';
 
 interface DailyProblem {
   id: string;
@@ -112,12 +112,12 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
           bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20',
           borderColor: 'border-green-200'
         };
-      case 'hackerrank':
+      case 'codingninjas':
         return {
-          name: 'HackerRank',
-          color: 'bg-emerald-500 text-white',
-          bgGradient: 'from-emerald-50 to-teal-50 dark:from-emerald-950/20 dark:to-teal-950/20',
-          borderColor: 'border-emerald-200'
+          name: 'Coding Ninjas',
+          color: 'bg-red-500 text-white',
+          bgGradient: 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20',
+          borderColor: 'border-red-200'
         };
       case 'atcoder':
         return {
