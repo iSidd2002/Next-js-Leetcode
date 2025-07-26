@@ -427,7 +427,6 @@ const fetchAtCoderProblem = async (): Promise<UnifiedProblem | null> => {
     return null;
   }
 };
-};
 
 // Main function to fetch problem from the designated platform
 const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProblem | null> => {
