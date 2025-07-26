@@ -8,6 +8,7 @@ import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, Ale
 import { isToday, isPast } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
 import DailyChallenge from './DailyChallenge';
+import ExternalResourcesCard from './ExternalResourcesCard';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
 import { useState } from 'react';
@@ -202,6 +203,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ProblemOfTheDay onAddPotd={onAddPotd} />
         <DailyChallenge onAddToPotd={onAddDailyChallenge} />
+        <ExternalResourcesCard />
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
             <CardTitle className="text-sm font-medium">
