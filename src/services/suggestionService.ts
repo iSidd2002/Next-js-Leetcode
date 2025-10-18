@@ -42,6 +42,10 @@ export class SuggestionService {
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
+    console.log('SuggestionService initialized. API Key configured:', !!this.apiKey);
+    if (!this.apiKey) {
+      console.warn('⚠️ GEMINI_API_KEY environment variable is not set!');
+    }
   }
 
   /**
@@ -58,7 +62,7 @@ export class SuggestionService {
     const maxTokens = isFailureDetection ? 1500 : 2500;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${this.apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
       {
         method: 'POST',
         headers: {
@@ -86,13 +90,16 @@ export class SuggestionService {
 
     if (!response.ok) {
       const error = await response.json();
+      console.error('Gemini API Error Response:', error);
       throw new Error(`Gemini API error: ${error.error?.message || response.statusText}`);
     }
 
     const data = await response.json();
+    console.log('Gemini API Response:', data);
     const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
     if (!content) {
+      console.error('No content in Gemini response. Full response:', data);
       throw new Error('No content in Gemini response');
     }
 
