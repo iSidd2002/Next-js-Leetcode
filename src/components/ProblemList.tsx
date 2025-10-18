@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight, Lightbulb, Loader2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,9 +64,12 @@ interface ProblemListProps {
   isReviewList?: boolean;
   onAddToProblem?: (id: string) => void; // New handler for adding POTD to Problems
   isPotdInProblems?: (problem: Problem) => boolean; // Check if POTD problem exists in Problems
+  onGenerateSuggestions?: (problem: Problem) => void; // LLM feature handler
+  isLoadingSuggestions?: boolean; // Loading state for suggestions
+  selectedProblemForSuggestions?: Problem | null; // Currently selected problem for suggestions
 }
 
-const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems }: ProblemListProps) => {
+const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems, onGenerateSuggestions, isLoadingSuggestions = false, selectedProblemForSuggestions }: ProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -110,8 +113,25 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
     }
   };
 
+  const getPlatformLabel = (platform: string): string => {
+    switch (platform?.toLowerCase()) {
+      case 'leetcode':
+        return 'LeetCode';
+      case 'codeforces':
+        return 'CodeForces';
+      case 'atcoder':
+        return 'AtCoder';
+      case 'geeksforgeeks':
+        return 'GeeksforGeeks';
+      case 'codingninjas':
+        return 'CodingNinjas';
+      default:
+        return platform || 'Unknown';
+    }
+  };
+
   const getDifficultyBadgeVariant = (difficulty: string, platform: string): "default" | "destructive" | "secondary" | "outline" | "success" | "warning" => {
-    if (platform === 'codeforces') return 'default';
+    if (platform === 'codeforces' || platform === 'atcoder') return 'default';
     switch (difficulty) {
       case 'Easy':
         return 'success';
@@ -224,7 +244,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
 
                     <div className="flex flex-wrap gap-2 mb-2">
                       <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'} className="text-xs">
-                        {problem.platform === 'leetcode' ? 'LeetCode' : 'CodeForces'}
+                        {getPlatformLabel(problem.platform)}
                       </Badge>
                       <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
                         {problem.difficulty}
@@ -256,6 +276,22 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                     <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
                       <Edit className="h-3 w-3" />
                     </Button>
+                    {onGenerateSuggestions && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => onGenerateSuggestions(problem)}
+                        className="h-8 w-8 text-blue-600"
+                        title="Get AI suggestions"
+                        disabled={isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id}
+                      >
+                        {isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Lightbulb className="h-3 w-3" />
+                        )}
+                      </Button>
+                    )}
                     {problem.source === 'potd' && onAddToProblem && (
                       <Button
                         variant="ghost"
@@ -353,7 +389,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       </TableCell>
                       <TableCell>
                         <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'}>
-                          {problem.platform === 'leetcode' ? 'LeetCode' : 'CodeForces'}
+                          {getPlatformLabel(problem.platform)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -372,9 +408,27 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       </TableCell>
                       <TableCell className="text-right">
                         {isReviewList ? (
-                           <Button size="sm" onClick={() => onProblemReviewed(problem.id, 4)} disabled={!isDueForReview(problem)}>
+                          <div className="flex items-center justify-end gap-2">
+                            {onGenerateSuggestions && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onGenerateSuggestions(problem)}
+                                className="h-8 w-8 text-blue-600"
+                                title="Get AI suggestions"
+                                disabled={isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id}
+                              >
+                                {isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Lightbulb className="h-4 w-4" />
+                                )}
+                              </Button>
+                            )}
+                            <Button size="sm" onClick={() => onProblemReviewed(problem.id, 4)} disabled={!isDueForReview(problem)}>
                               Reviewed &amp; Advance
                             </Button>
+                          </div>
                         ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
