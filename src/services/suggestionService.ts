@@ -38,6 +38,9 @@ interface SuggestionsResult {
 }
 
 export class SuggestionService {
+  private isValidObjectId(str: string | undefined): boolean {
+    return !!str && /^[0-9a-fA-F]{24}$/.test(str);
+  }
   private apiKey: string;
 
   constructor() {
@@ -79,12 +82,24 @@ export class SuggestionService {
       },
     };
 
-    const endpoints = [
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
-      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
-    ];
+    const configuredModel = (process.env.GEMINI_MODEL || '').trim();
+    const candidateModels = configuredModel
+      ? [configuredModel]
+      : [
+          'gemini-1.5-flash-latest',
+          'gemini-1.5-flash',
+          'gemini-1.5-flash-8b',
+          'gemini-1.5-pro-latest',
+          'gemini-1.5-pro',
+          'gemini-pro',
+        ];
+    const versions = ['v1', 'v1beta'];
+    const endpoints: string[] = [];
+    for (const v of versions) {
+      for (const m of candidateModels) {
+        endpoints.push(`https://generativelanguage.googleapis.com/${v}/models/${m}:generateContent`);
+      }
+    }
 
     let lastError: string | undefined;
 
@@ -435,8 +450,8 @@ export class SuggestionService {
     userId: string,
     problemId: string,
     _suggestions: SuggestionsResult,
-    failureReason: string,
-    confidence: number
+    _failureReason: string,
+    _confidence: number
   ): Promise<void> {
     try {
       // Caching disabled - MongoDB requires replica set for Prisma operations
@@ -455,6 +470,10 @@ export class SuggestionService {
    */
   async getSuggestions(userId: string, problemId: string): Promise<SuggestionsResult | null> {
     try {
+      if (!this.isValidObjectId(userId) || !this.isValidObjectId(problemId)) {
+        console.warn('Skipping cache lookup for non-ObjectId ids', { userId, problemId });
+        return null;
+      }
       const suggestion = await prisma.userProblemSuggestion.findUnique({
         where: {
           userId_problemId: {
