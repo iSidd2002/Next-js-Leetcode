@@ -82,8 +82,6 @@ export class SuggestionService {
     });
   }
   private apiKey: string;
-  private lastWorking: { version: 'v1' | 'v1beta'; model: string } | null = null;
-
 
   constructor() {
     this.apiKey = process.env.GEMINI_API_KEY || '';
@@ -127,7 +125,6 @@ export class SuggestionService {
     const candidateModels = configuredModel
       ? [configuredModel]
       : [
-          'gemini-2.5-flash',
           'gemini-1.5-flash-latest',
           'gemini-1.5-flash',
           'gemini-1.5-flash-8b',
@@ -144,40 +141,6 @@ export class SuggestionService {
     }
 
     let lastError: string | undefined;
-
-
-    // Try last known working model first (if any) to avoid repeated 404s
-    if (this.lastWorking) {
-      const { version, model } = this.lastWorking;
-      const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${this.apiKey}`;
-      try {
-        console.log('Trying last known working Gemini model', this.lastWorking);
-        const response = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-        if (response.ok) {
-          const data = await response.json();
-          console.log('Gemini API success via last known model', this.lastWorking);
-          const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-          if (content) {
-            return content;
-          }
-          console.warn('No content in Gemini response via last known model', this.lastWorking, data);
-        } else {
-          let errorBody: any = {};
-          try { errorBody = await response.json(); } catch {}
-          const message = errorBody?.error?.message || response.statusText;
-          console.warn('Last known model attempt failed', { ...this.lastWorking, status: response.status, message });
-          lastError = message;
-        }
-      } catch (e: any) {
-        console.warn('Gemini API fetch error via last known model', { ...this.lastWorking, error: e?.message || e });
-        lastError = e?.message || String(e);
-      }
-    }
-
 
     // First, try our known-good endpoint/model combinations
     for (const base of endpoints) {
@@ -205,11 +168,6 @@ export class SuggestionService {
           console.warn('No content in Gemini response for endpoint', base, data);
           lastError = 'No content in Gemini response';
           continue;
-        }
-        // Persist last working endpoint for future calls
-        const m = base.match(/\/(v1|v1beta)\/models\/([^:]+):generateContent$/);
-        if (m) {
-          this.lastWorking = { version: m[1] as 'v1' | 'v1beta', model: m[2] };
         }
         return content;
       } catch (e: any) {
@@ -244,8 +202,6 @@ export class SuggestionService {
           lastError = 'No content in Gemini response';
           continue;
         }
-        // Persist last working endpoint
-        this.lastWorking = { version, model };
         return content;
       } catch (e: any) {
         console.warn('Gemini API fetch error via discovered model', { version, model, error: e?.message || e });
