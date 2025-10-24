@@ -59,17 +59,22 @@ export async function POST(
       });
     }
 
-    // Get problem from database
-    const problem = await prisma.problem.findUnique({
-      where: { id },
-    });
-
-    if (!problem) {
-      return NextResponse.json(
-        { success: false, error: 'Problem not found' },
-        { status: 404 }
-      );
+    // Get problem from database (gracefully handle non-ObjectId ids)
+    let problem: any = null;
+    try {
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(id);
+      if (isValidObjectId) {
+        problem = await prisma.problem.findUnique({ where: { id } });
+      } else {
+        console.warn('Skipping DB lookup for non-ObjectId problem id:', id);
+      }
+    } catch (lookupError) {
+      console.error('Problem lookup error:', lookupError);
     }
+
+    // Derive safe defaults when problem not found
+    const problemTitle = problem?.title || problemDescription || `Problem ${id}`;
+    const problemDifficulty = problem?.difficulty || 'Medium';
 
     // Check if suggestions already cached
     const cached = await suggestionService.getSuggestions(user.id, id);
@@ -83,13 +88,13 @@ export async function POST(
     }
 
     // Detect failure
-    console.log('Detecting failure for problem:', problem.title);
+    console.log('Detecting failure for problem:', problemTitle);
     const failureDetection = await suggestionService.detectFailure(
-      problem.title,
-      problemDescription || problem.title,
+      problemTitle,
+      problemDescription || problemTitle,
       transcript,
       code,
-      problem.difficulty
+      problemDifficulty
     );
 
     console.log('Failure detection result:', failureDetection);
@@ -108,10 +113,10 @@ export async function POST(
 
     // Generate suggestions with platform-specific context
     // Use request body data if provided, otherwise use database data
-    const finalPlatform = platform || problem.platform;
-    const finalUrl = url || problem.url;
-    const finalCompanies = companies || problem.companies || [];
-    const finalTopics = topics || problem.topics || [];
+    const finalPlatform = platform || problem?.platform;
+    const finalUrl = url || problem?.url;
+    const finalCompanies = companies || problem?.companies || [];
+    const finalTopics = topics || problem?.topics || [];
 
     console.log('Generating suggestions for platform:', finalPlatform);
     const suggestions = await suggestionService.generateSuggestions(
