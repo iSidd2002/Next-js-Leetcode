@@ -120,8 +120,8 @@ export async function POST(
 
     console.log('Generating suggestions for platform:', finalPlatform);
     const suggestions = await suggestionService.generateSuggestions(
-      problem.title,
-      problem.difficulty,
+      problemTitle,
+      problemDifficulty,
       finalTopics,
       failureDetection.missing_concepts,
       failureDetection.failure_reason,

@@ -41,6 +41,46 @@ export class SuggestionService {
   private isValidObjectId(str: string | undefined): boolean {
     return !!str && /^[0-9a-fA-F]{24}$/.test(str);
   }
+
+  private async discoverSupportedModels(): Promise<Array<{version: 'v1'|'v1beta', model: string}>> {
+    const versions: Array<'v1'|'v1beta'> = ['v1', 'v1beta'];
+    const discovered: Array<{version: 'v1'|'v1beta', model: string}> = [];
+
+    for (const v of versions) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/${v}/models?key=${this.apiKey}`;
+        const res = await fetch(url);
+        if (!res.ok) {
+          console.warn('ListModels failed', v, res.status);
+          continue;
+        }
+        const data: any = await res.json();
+        const models: any[] = data.models || [];
+        for (const m of models) {
+          const fullName: string = m.name || '';
+          const name = fullName.replace(/^models\//, '');
+          const supported = m.supportedGenerationMethods || m.supported_generation_methods || [];
+          const hasGenerate = Array.isArray(supported)
+            ? supported.includes('generateContent')
+            : false;
+          if (hasGenerate && /gemini/i.test(name)) {
+            discovered.push({ version: v, model: name });
+          }
+        }
+      } catch (e) {
+        console.warn('Error discovering models for version', v, e);
+      }
+    }
+
+    // De-duplicate while preserving order
+    const seen = new Set<string>();
+    return discovered.filter(({version, model}) => {
+      const key = `${version}:${model}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
   private apiKey: string;
 
   constructor() {
@@ -67,10 +107,9 @@ export class SuggestionService {
     const payload = {
       contents: [
         {
+          role: 'user',
           parts: [
-            {
-              text: prompt,
-            },
+            { text: prompt },
           ],
         },
       ],
@@ -103,6 +142,7 @@ export class SuggestionService {
 
     let lastError: string | undefined;
 
+    // First, try our known-good endpoint/model combinations
     for (const base of endpoints) {
       const url = `${base}?key=${this.apiKey}`;
       try {
@@ -114,9 +154,7 @@ export class SuggestionService {
 
         if (!response.ok) {
           let errorBody: any = {};
-          try {
-            errorBody = await response.json();
-          } catch {}
+          try { errorBody = await response.json(); } catch {}
           const message = errorBody?.error?.message || response.statusText;
           console.warn('Gemini API attempt failed', { endpoint: base, status: response.status, message });
           lastError = message;
@@ -138,7 +176,40 @@ export class SuggestionService {
       }
     }
 
-    throw new Error(`Gemini API error: ${lastError || 'All attempts failed'}`);
+    // If all attempts failed, call ListModels to auto-detect accessible models
+    const discovered = await this.discoverSupportedModels();
+    for (const { version, model } of discovered) {
+      const url = `https://generativelanguage.googleapis.com/${version}/models/${model}:generateContent?key=${this.apiKey}`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        if (!response.ok) {
+          let errorBody: any = {};
+          try { errorBody = await response.json(); } catch {}
+          const message = errorBody?.error?.message || response.statusText;
+          console.warn('Gemini API (discovered) attempt failed', { endpoint: `${version}/${model}`, status: response.status, message });
+          lastError = message;
+          continue;
+        }
+        const data = await response.json();
+        console.log('Gemini API success via discovered model', { version, model });
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!content) {
+          console.warn('No content in Gemini response for discovered model', { version, model }, data);
+          lastError = 'No content in Gemini response';
+          continue;
+        }
+        return content;
+      } catch (e: any) {
+        console.warn('Gemini API fetch error via discovered model', { version, model, error: e?.message || e });
+        lastError = e?.message || String(e);
+      }
+    }
+
+    throw new Error(`Gemini API error: ${lastError || 'All attempts failed (including ListModels)'}`);
   }
 
   /**
