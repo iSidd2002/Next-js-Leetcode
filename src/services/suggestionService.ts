@@ -61,49 +61,69 @@ export class SuggestionService {
     const temperature = isFailureDetection ? 0.2 : 0.4;
     const maxTokens = isFailureDetection ? 1500 : 2500;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          contents: [
+    const payload = {
+      contents: [
+        {
+          parts: [
             {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
+              text: prompt,
             },
           ],
-          generationConfig: {
-            temperature,
-            maxOutputTokens: maxTokens,
-            topP: 0.95,
-            topK: 40,
-          },
-        }),
+        },
+      ],
+      generationConfig: {
+        temperature,
+        maxOutputTokens: maxTokens,
+        topP: 0.95,
+        topK: 40,
+      },
+    };
+
+    const endpoints = [
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+      'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+      'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+    ];
+
+    let lastError: string | undefined;
+
+    for (const base of endpoints) {
+      const url = `${base}?key=${this.apiKey}`;
+      try {
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+
+        if (!response.ok) {
+          let errorBody: any = {};
+          try {
+            errorBody = await response.json();
+          } catch {}
+          const message = errorBody?.error?.message || response.statusText;
+          console.warn('Gemini API attempt failed', { endpoint: base, status: response.status, message });
+          lastError = message;
+          continue;
+        }
+
+        const data = await response.json();
+        console.log('Gemini API success via', base);
+        const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!content) {
+          console.warn('No content in Gemini response for endpoint', base, data);
+          lastError = 'No content in Gemini response';
+          continue;
+        }
+        return content;
+      } catch (e: any) {
+        console.warn('Gemini API fetch error via', base, e?.message || e);
+        lastError = e?.message || String(e);
       }
-    );
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error('Gemini API Error Response:', error);
-      throw new Error(`Gemini API error: ${error.error?.message || response.statusText}`);
     }
 
-    const data = await response.json();
-    console.log('Gemini API Response:', data);
-    const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-    if (!content) {
-      console.error('No content in Gemini response. Full response:', data);
-      throw new Error('No content in Gemini response');
-    }
-
-    return content;
+    throw new Error(`Gemini API error: ${lastError || 'All attempts failed'}`);
   }
 
   /**
@@ -292,7 +312,7 @@ export class SuggestionService {
    */
   private addDifficultyToSuggestions(
     suggestions: SuggestionsResult['similarProblems'],
-    difficulty: string
+    _difficulty: string
   ): SuggestionsResult['similarProblems'] {
     return suggestions.map((suggestion, index) => {
       // Check if difficulty already in tags
@@ -388,7 +408,7 @@ export class SuggestionService {
       }));
 
       // ENHANCED: Add difficulty tags to LLM suggestions
-      fallbackSuggestions = this.addDifficultyToSuggestions(fallbackSuggestions, difficulty);
+      fallbackSuggestions = this.addDifficultyToSuggestions(fallbackSuggestions, difficulty) as typeof fallbackSuggestions;
 
       // ENHANCED: Rank by tag relevance
       return this.rankSuggestionsByTags(fallbackSuggestions, topics).slice(0, 6);
@@ -401,7 +421,7 @@ export class SuggestionService {
       }));
 
       // Add difficulty tags
-      fallback = this.addDifficultyToSuggestions(fallback, difficulty);
+      fallback = this.addDifficultyToSuggestions(fallback, difficulty) as typeof fallback;
       return fallback.slice(0, 6);
     }
   }
@@ -414,7 +434,7 @@ export class SuggestionService {
   async cacheSuggestions(
     userId: string,
     problemId: string,
-    suggestions: SuggestionsResult,
+    _suggestions: SuggestionsResult,
     failureReason: string,
     confidence: number
   ): Promise<void> {
@@ -462,7 +482,7 @@ export class SuggestionService {
         return null;
       }
 
-      return suggestion.suggestions as SuggestionsResult;
+      return suggestion.suggestions as unknown as SuggestionsResult;
     } catch (error) {
       console.error('Get suggestions error:', error);
       return null;
