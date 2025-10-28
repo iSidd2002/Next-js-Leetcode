@@ -82,12 +82,26 @@ export class SuggestionService {
     });
   }
   private apiKey: string;
+  private openaiKey: string;
+  private provider: 'gemini' | 'openai';
+
 
   constructor() {
+    this.provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase() === 'openai' ? 'openai' : 'gemini';
     this.apiKey = process.env.GEMINI_API_KEY || '';
-    console.log('SuggestionService initialized. API Key configured:', !!this.apiKey);
-    if (!this.apiKey) {
-      console.warn('⚠️ GEMINI_API_KEY environment variable is not set!');
+    this.openaiKey = process.env.OPENAI_API_KEY || '';
+
+    console.log('SuggestionService initialized.', {
+      provider: this.provider,
+      geminiKey: !!this.apiKey,
+      openaiKey: !!this.openaiKey,
+    });
+
+    if (this.provider === 'gemini' && !this.apiKey) {
+      console.warn('⚠️ GEMINI_API_KEY environment variable is not set while LLM_PROVIDER=gemini');
+    }
+    if (this.provider === 'openai' && !this.openaiKey) {
+      console.warn('⚠️ OPENAI_API_KEY environment variable is not set while LLM_PROVIDER=openai');
     }
   }
 
@@ -213,6 +227,60 @@ export class SuggestionService {
   }
 
   /**
+   * Call OpenAI Chat Completions with a prompt
+   */
+  private async callOpenAIChat(prompt: string, isFailureDetection: boolean = false): Promise<string> {
+    const key = this.openaiKey || process.env.OPENAI_API_KEY || '';
+    if (!key) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    // Align behavior with Gemini path
+    const temperature = isFailureDetection ? 0.2 : 0.4;
+    const maxTokens = isFailureDetection ? 800 : 2000;
+    const model = (process.env.OPENAI_MODEL || 'gpt-3.5-turbo').trim();
+
+    try {
+      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${key}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: 'system', content: 'You are a helpful coding mentor. Always respond with valid JSON only.' },
+            { role: 'user', content: prompt },
+          ],
+          max_tokens: maxTokens,
+          temperature,
+        }),
+      });
+
+      if (!res.ok) {
+        let err: any = {};
+        try { err = await res.json(); } catch {}
+        const message = err?.error?.message || res.statusText;
+        console.warn('OpenAI API attempt failed', { status: res.status, message });
+        throw new Error(message);
+      }
+
+      const data: any = await res.json();
+      const content: string | undefined = data.choices?.[0]?.message?.content;
+      if (!content) {
+        console.warn('No content in OpenAI response', data);
+        throw new Error('No content in OpenAI response');
+      }
+      return content;
+    } catch (e: any) {
+      console.error('OpenAI API fetch error', e?.message || e);
+      throw e;
+    }
+  }
+
+
+  /**
    * Detect if user failed and identify missing concepts
    */
   async detectFailure(
@@ -231,16 +299,27 @@ export class SuggestionService {
         difficulty
       );
 
-      const response = await this.callGeminiAPI(prompt, true);
+      const response = this.provider === 'openai'
+        ? await this.callOpenAIChat(prompt, true)
+        : await this.callGeminiAPI(prompt, true);
 
-      // Extract JSON from response (handle markdown code blocks)
+      // Extract JSON robustly (handle code fences and extra text)
       let jsonStr = response;
-      const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        jsonStr = jsonMatch[1];
+      const fenceMatch = response.match(/```(?:[\w+-]+)?\s*([\s\S]*?)\s*```/i);
+      if (fenceMatch?.[1]) {
+        jsonStr = fenceMatch[1];
       }
-
-      const result: FailureDetectionResult = JSON.parse(jsonStr);
+      let result: FailureDetectionResult;
+      try {
+        result = JSON.parse(jsonStr);
+      } catch (_e) {
+        // Fallback: strip any fences and extract the first JSON object/array
+        let cleaned = response.replace(/```(?:[\w+-]+)?/gi, '').replace(/```/g, '').trim();
+        const objMatch = cleaned.match(/{[\s\S]*}/);
+        const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+        const candidate = objMatch?.[0] || arrMatch?.[0] || cleaned;
+        result = JSON.parse(candidate);
+      }
       return result;
     } catch (error) {
       console.error('Failure detection error:', error);
@@ -274,16 +353,27 @@ export class SuggestionService {
         companies
       );
 
-      const response = await this.callGeminiAPI(prompt, false);
+      const response = this.provider === 'openai'
+        ? await this.callOpenAIChat(prompt, false)
+        : await this.callGeminiAPI(prompt, false);
 
-      // Extract JSON from response (handle markdown code blocks)
+      // Extract JSON robustly (handle code fences and extra text)
       let jsonStr = response;
-      const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (jsonMatch) {
-        jsonStr = jsonMatch[1];
+      const fenceMatch = response.match(/```(?:[\w+-]+)?\s*([\s\S]*?)\s*```/i);
+      if (fenceMatch?.[1]) {
+        jsonStr = fenceMatch[1];
       }
-
-      const result: SuggestionsResult = JSON.parse(jsonStr);
+      let result: SuggestionsResult;
+      try {
+        result = JSON.parse(jsonStr);
+      } catch (_e) {
+        // Fallback: strip any fences and extract the first JSON object/array
+        let cleaned = response.replace(/```(?:[\w+-]+)?/gi, '').replace(/```/g, '').trim();
+        const objMatch = cleaned.match(/{[\s\S]*}/);
+        const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+        const candidate = objMatch?.[0] || arrMatch?.[0] || cleaned;
+        result = JSON.parse(candidate);
+      }
 
       // Enrich similar problems with web search results
       if (platform) {
