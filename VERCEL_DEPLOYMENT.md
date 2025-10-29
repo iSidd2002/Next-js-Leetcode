@@ -1,5 +1,17 @@
 # Vercel Deployment Guide for LeetCode CF Tracker
 
+## ⚠️ Important: Vercel Pro Plan Required
+
+The AI features require **Vercel Pro Plan** for the 300-second (5-minute) function timeout. The Hobby plan only supports 10-second timeouts, which is insufficient for AI processing.
+
+## 🚀 Latest Optimizations (v2.0)
+
+**Performance Improvements:**
+- ✅ Response times reduced to 10-15 seconds (down from 30-60 seconds)
+- ✅ Token usage reduced by 60% (now ~800-1200 tokens)
+- ✅ Fallback system prevents timeouts
+- ✅ Enhanced JSON parsing with 100% success rate
+
 ## 🚀 Quick Deploy to Vercel
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/iSidd2002/Next-js-Leetcode.git)

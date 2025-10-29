@@ -58,17 +58,14 @@ Platform expertise:
 - AtCoder: Implementation, Math, DP, Graph, Data Structure problems`,
 
     user: (request: SimilarProblemsRequest) => `
-Generate ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problems for: ${request.problem.title} (${request.problem.platform})
+Find ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problems for: ${request.problem.title}
 
-**Target:** ${request.problem.difficulty.category} | Topics: ${request.problem.topics.length > 0 ? request.problem.topics.slice(0, 3).join(', ') : 'General'}
+Platform: ${request.problem.platform} | Difficulty: ${request.problem.difficulty.category}
+Topics: ${request.problem.topics.slice(0, 2).join(', ') || 'General'}
 
-**Requirements:**
-- ${request.targetDistribution.easy} Easy + ${request.targetDistribution.medium} Medium + ${request.targetDistribution.hard} Hard problems
-- Mix of LeetCode, Codeforces, AtCoder platforms
-- Focus on similar algorithmic patterns
-- Keep explanations concise (max 50 words each)
-
-${request.excludeIds?.length ? `Exclude: ${request.excludeIds.slice(0, 5).join(', ')}` : ''}`,
+Need: ${request.targetDistribution.easy} Easy, ${request.targetDistribution.medium} Medium, ${request.targetDistribution.hard} Hard
+Platforms: LeetCode, Codeforces, AtCoder
+Keep reasoning under 30 words.`,
 
     schema: `{
   "recommendations": [
@@ -78,14 +75,14 @@ ${request.excludeIds?.length ? `Exclude: ${request.excludeIds.slice(0, 5).join('
       "difficulty": "Easy|Medium|Hard",
       "topics": ["string"],
       "similarity_score": "number (0.0-1.0)",
-      "reasoning": "string (max 50 words)",
-      "estimated_time": "string (e.g., '15-20 min')",
-      "key_concepts": ["string", "string"]
+      "reasoning": "string (max 25 words)",
+      "estimated_time": "string (e.g., '15min')",
+      "key_concepts": ["string"]
     }
   ],
   "analysis": {
     "primary_patterns": ["string"],
-    "progression_path": "string (max 30 words)"
+    "progression_path": "string (max 20 words)"
   }
 }`
   },

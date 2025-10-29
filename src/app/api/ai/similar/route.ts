@@ -2,14 +2,53 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getGeminiClient } from '@/lib/ai/gemini-client';
 import { getCacheManager, CacheKeys } from '@/lib/ai/cache-manager';
-import { PlatformAdapter } from '@/lib/ai/platform-adapter';
+import { PlatformAdapter, NormalizedProblem } from '@/lib/ai/platform-adapter';
 import { PromptTemplates, SimilarProblemsRequest, SimilarProblemsResponse } from '@/lib/ai/prompts';
 import { authenticateRequest } from '@/lib/auth';
 import AIDatabaseService from '@/lib/ai/database-service';
 
+// Fallback recommendations for when AI times out
+function generateFallbackRecommendations(problem: NormalizedProblem) {
+  const fallbackProblems = [
+    {
+      title: "Two Sum",
+      platform: "leetcode",
+      difficulty: "Easy",
+      topics: ["Array", "Hash Table"],
+      similarity_score: 0.7,
+      reasoning: "Fundamental array problem for building problem-solving skills",
+      estimated_time: "15-20 min",
+      key_concepts: ["Array traversal", "Hash maps"]
+    },
+    {
+      title: "A+B Problem",
+      platform: "codeforces",
+      difficulty: "Easy",
+      topics: ["Implementation", "Math"],
+      similarity_score: 0.6,
+      reasoning: "Basic implementation practice",
+      estimated_time: "5-10 min",
+      key_concepts: ["Input/Output", "Basic math"]
+    },
+    {
+      title: "ABC001 A - Snowy Day",
+      platform: "atcoder",
+      difficulty: "Easy",
+      topics: ["Implementation"],
+      similarity_score: 0.6,
+      reasoning: "Simple implementation problem",
+      estimated_time: "10-15 min",
+      key_concepts: ["Basic logic", "Implementation"]
+    }
+  ];
+
+  // Return first 3 problems as fallback
+  return fallbackProblems.slice(0, 3);
+}
+
 // Ensure this runs in Node.js runtime (not Edge Runtime)
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 seconds for AI processing
+export const maxDuration = 300; // 5 minutes for AI processing (Pro plan)
 export const dynamic = 'force-dynamic'; // Disable static optimization
 
 export async function POST(request: NextRequest) {
@@ -105,16 +144,44 @@ export async function POST(request: NextRequest) {
 
     console.log('🤖 Generating AI recommendations...');
     const startTime = Date.now();
-    
-    const aiResponse = await geminiClient.generateStructuredResponse<SimilarProblemsResponse>(
+
+    // Create a timeout promise for 45 seconds (well before Vercel's limit)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI_TIMEOUT')), 45000);
+    });
+
+    const aiPromise = geminiClient.generateStructuredResponse<SimilarProblemsResponse>(
       `${systemPrompt}\n\n${userPrompt}`,
       schema,
       {
         userId,
         temperature: 0.7,
-        maxTokens: 4096 // Reduced for more reliable responses
+        maxTokens: 3072 // Further reduced for faster responses
       }
     );
+
+    let aiResponse;
+    try {
+      aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+    } catch (error: any) {
+      if (error.message === 'AI_TIMEOUT') {
+        console.log('⏰ AI request timed out, returning fallback recommendations');
+        return NextResponse.json({
+          success: true,
+          data: {
+            recommendations: generateFallbackRecommendations(normalizedProblem),
+            analysis: {
+              primary_patterns: normalizedProblem.topics.slice(0, 3),
+              progression_path: "Practice similar problems to strengthen core concepts"
+            },
+            cached: false,
+            processingTime: Date.now() - startTime,
+            fallback: true
+          }
+        });
+      }
+      throw error;
+    }
 
     const processingTime = Date.now() - startTime;
     console.log(`✅ AI recommendations generated in ${processingTime}ms`);
