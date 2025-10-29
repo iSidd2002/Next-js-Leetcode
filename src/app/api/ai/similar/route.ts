@@ -42,8 +42,15 @@ function generateFallbackRecommendations(problem: NormalizedProblem) {
     }
   ];
 
-  // Return first 3 problems as fallback
-  return fallbackProblems.slice(0, 3);
+  // Return complete response structure
+  return {
+    recommendations: fallbackProblems.slice(0, 3),
+    analysis: {
+      primary_patterns: problem.topics.slice(0, 3) || ["General Programming"],
+      skill_focus: ["Problem Solving", "Implementation"],
+      progression_path: "Practice similar problems to strengthen core concepts"
+    }
+  };
 }
 
 // Ensure this runs in Node.js runtime (not Edge Runtime)
@@ -166,14 +173,11 @@ export async function POST(request: NextRequest) {
     } catch (error: any) {
       if (error.message === 'AI_TIMEOUT') {
         console.log('⏰ AI request timed out, returning fallback recommendations');
+        const fallbackData = generateFallbackRecommendations(normalizedProblem);
         return NextResponse.json({
           success: true,
           data: {
-            recommendations: generateFallbackRecommendations(normalizedProblem),
-            analysis: {
-              primary_patterns: normalizedProblem.topics.slice(0, 3),
-              progression_path: "Practice similar problems to strengthen core concepts"
-            },
+            ...fallbackData,
             cached: false,
             processingTime: Date.now() - startTime,
             fallback: true

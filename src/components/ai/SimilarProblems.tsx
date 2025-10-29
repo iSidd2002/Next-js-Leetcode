@@ -175,21 +175,21 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
                 <div>
                   <p className="font-medium text-muted-foreground mb-1">Primary Patterns</p>
                   <div className="flex flex-wrap gap-1">
-                    {recommendations.analysis.primary_patterns.map((pattern, idx) => (
+                    {recommendations.analysis?.primary_patterns?.map((pattern, idx) => (
                       <Badge key={idx} variant="secondary" className="text-xs">
                         {pattern}
                       </Badge>
-                    ))}
+                    )) || <span className="text-xs text-muted-foreground">No patterns available</span>}
                   </div>
                 </div>
                 <div>
                   <p className="font-medium text-muted-foreground mb-1">Skill Focus</p>
                   <div className="flex flex-wrap gap-1">
-                    {recommendations.analysis.skill_focus.map((skill, idx) => (
+                    {recommendations.analysis?.skill_focus?.map((skill, idx) => (
                       <Badge key={idx} variant="outline" className="text-xs">
                         {skill}
                       </Badge>
-                    ))}
+                    )) || <span className="text-xs text-muted-foreground">No skills available</span>}
                   </div>
                 </div>
                 <div>
@@ -203,10 +203,11 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
             <div className="space-y-4">
               <h4 className="font-semibold flex items-center gap-2">
                 <TrendingUp className="h-4 w-4" />
-                Recommended Problems ({recommendations.recommendations.length})
+                Recommended Problems ({recommendations.recommendations?.length || 0})
               </h4>
               
-              {recommendations.recommendations.map((rec, idx) => (
+              {recommendations.recommendations?.length > 0 ? (
+                recommendations.recommendations.map((rec, idx) => (
                 <Card key={idx} className="border-l-4 border-l-purple-500">
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-3">
@@ -245,28 +246,35 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1">Topics</p>
                         <div className="flex flex-wrap gap-1">
-                          {rec.topics.map((topic, topicIdx) => (
+                          {rec.topics?.map((topic, topicIdx) => (
                             <Badge key={topicIdx} variant="outline" className="text-xs">
                               {topic}
                             </Badge>
-                          ))}
+                          )) || <span className="text-xs text-muted-foreground">No topics</span>}
                         </div>
                       </div>
                       
                       <div>
                         <p className="text-xs font-medium text-muted-foreground mb-1">Key Concepts</p>
                         <div className="flex flex-wrap gap-1">
-                          {rec.key_concepts.map((concept, conceptIdx) => (
+                          {rec.key_concepts?.map((concept, conceptIdx) => (
                             <Badge key={conceptIdx} variant="secondary" className="text-xs">
                               {concept}
                             </Badge>
-                          ))}
+                          )) || <span className="text-xs text-muted-foreground">No concepts</span>}
                         </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              ))}
+              ))
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Brain className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                  <p>No recommendations available at the moment.</p>
+                  <p className="text-sm">Try refreshing or check back later.</p>
+                </div>
+              )}
             </div>
 
             <div className="flex justify-center pt-4">
