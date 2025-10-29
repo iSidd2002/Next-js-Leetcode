@@ -9,6 +9,8 @@ import AIDatabaseService from '@/lib/ai/database-service';
 
 // Ensure this runs in Node.js runtime (not Edge Runtime)
 export const runtime = 'nodejs';
+export const maxDuration = 60; // 60 seconds for AI processing
+export const dynamic = 'force-dynamic'; // Disable static optimization
 
 export async function POST(request: NextRequest) {
   try {

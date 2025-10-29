@@ -131,10 +131,19 @@ export class GeminiClient {
     }
 
     const startTime = Date.now();
-    const result = await model.generateContent({
+
+    // Add timeout wrapper for Vercel deployment (50 seconds max)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error('AI request timeout after 50 seconds')), 50000);
+    });
+
+    const generatePromise = model.generateContent({
       contents: [{ role: 'user', parts: [{ text: fullPrompt }] }],
       generationConfig,
     });
+
+    // Race between generation and timeout
+    const result = await Promise.race([generatePromise, timeoutPromise]) as any;
 
     const response = result.response;
     const content = response.text();
