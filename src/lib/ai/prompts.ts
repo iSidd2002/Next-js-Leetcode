@@ -41,37 +41,50 @@ export interface SimilarProblemsResponse {
 export const PromptTemplates = {
 
   similarProblems: {
-    system: `You are an expert competitive programming coach with deep knowledge of LeetCode, Codeforces, and AtCoder problems. Your task is to recommend similar problems that will help users practice specific algorithmic patterns and concepts.
+    system: `You are an expert competitive programming coach with comprehensive knowledge of problems across LeetCode, Codeforces, and AtCoder platforms. You MUST provide recommendations for ANY problem from ANY platform, regardless of its complexity or topic.
 
-Key principles:
-- Focus on algorithmic similarity, not just topic tags
-- Consider problem-solving patterns and techniques
+CRITICAL REQUIREMENTS:
+- Generate recommendations for ALL problems: basic math, complex algorithms, data structures, etc.
+- Work with problems from LeetCode (Easy/Medium/Hard), Codeforces (rating 800-3500), and AtCoder (ABC/ARC/AGC)
+- Focus on algorithmic similarity and problem-solving patterns
 - Provide diverse difficulty levels for progressive learning
-- Explain the reasoning behind each recommendation
-- Suggest realistic time estimates based on difficulty`,
+- Include problems from multiple platforms when possible
+- Give realistic time estimates and clear reasoning
+- NEVER refuse to generate recommendations - find similar patterns even for simple problems
+
+Platform expertise:
+- LeetCode: Array, String, DP, Graph, Tree problems
+- Codeforces: Math, Implementation, Greedy, DP, Graph problems
+- AtCoder: Implementation, Math, DP, Graph, Data Structure problems`,
 
     user: (request: SimilarProblemsRequest) => `
-Analyze this problem and recommend ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problems:
+MANDATORY TASK: Generate ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problem recommendations for this problem. You MUST provide recommendations regardless of the problem's simplicity or complexity.
 
-**Target Problem:**
+**Target Problem Analysis:**
 - Title: ${request.problem.title}
-- Platform: ${request.problem.platform}
+- Platform: ${request.problem.platform.toUpperCase()}
 - Difficulty: ${request.problem.difficulty.category} (${request.problem.difficulty.original})
-- Topics: ${request.problem.topics.join(', ')}
-${request.problem.description ? `- Description: ${request.problem.description.substring(0, 200)}...` : ''}
+- Topics: ${request.problem.topics.length > 0 ? request.problem.topics.join(', ') : 'General Programming'}
+${request.problem.description ? `- Context: ${request.problem.description.substring(0, 200)}...` : ''}
 
-**Requirements:**
-- ${request.targetDistribution.easy} Easy problems (difficulty 1-3)
-- ${request.targetDistribution.medium} Medium problems (difficulty 4-7)
-- ${request.targetDistribution.hard} Hard problems (difficulty 8-10)
-- Include problems from different platforms when possible
-- Focus on similar algorithmic patterns and problem-solving approaches
-- Provide realistic time estimates for each problem
-- Explain why each problem is similar and what concepts it reinforces
+**STRICT REQUIREMENTS:**
+- Generate exactly ${request.targetDistribution.easy} Easy problems (beginner-friendly)
+- Generate exactly ${request.targetDistribution.medium} Medium problems (intermediate level)
+- Generate exactly ${request.targetDistribution.hard} Hard problems (advanced level)
+- Include problems from LeetCode, Codeforces, AND AtCoder when possible
+- For simple problems (like basic math), find similar foundational problems
+- For complex problems, find problems with similar algorithmic patterns
+- Provide specific, realistic time estimates (e.g., "10-15 minutes", "30-45 minutes")
+- Explain the algorithmic connection and learning progression
+
+**Platform Guidelines:**
+- LeetCode: Use problem titles like "Two Sum", "Valid Parentheses", "Merge Intervals"
+- Codeforces: Use format like "A+B Problem", "Watermelon", "Way Too Long Words"
+- AtCoder: Use format like "ABC123 A - Even Odd", "ARC045 B - Palindrome"
 
 ${request.excludeIds?.length ? `**Exclude these problem IDs:** ${request.excludeIds.join(', ')}` : ''}
 
-Provide recommendations that will help the user master the core concepts and patterns from the target problem.`,
+IMPORTANT: Even for the simplest problems (like basic arithmetic), you can find related problems that teach similar concepts or build upon the same foundations. Generate recommendations that create a learning progression.`,
 
     schema: `{
   "recommendations": [

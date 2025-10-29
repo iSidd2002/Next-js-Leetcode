@@ -139,21 +139,71 @@ export class PlatformAdapter {
    * Normalize a problem from any platform to unified format
    */
   static normalizeProblem(problemData: any, platform: string): NormalizedProblem {
-    const config = PLATFORM_CONFIGS[platform];
-    if (!config) {
-      throw new Error(`Unsupported platform: ${platform}`);
+    try {
+      const normalizedPlatform = platform?.toLowerCase() as 'leetcode' | 'codeforces' | 'atcoder';
+      const config = PLATFORM_CONFIGS[normalizedPlatform];
+
+      if (!config) {
+        console.warn(`⚠️ Unsupported platform: ${platform}, using fallback normalization`);
+        return this.createFallbackNormalizedProblem(problemData, normalizedPlatform);
+      }
+
+      switch (normalizedPlatform) {
+        case 'leetcode':
+          return this.normalizeLeetCodeProblem(problemData, config);
+        case 'codeforces':
+          return this.normalizeCodeforcesProblem(problemData, config);
+        case 'atcoder':
+          return this.normalizeAtCoderProblem(problemData, config);
+        default:
+          console.warn(`⚠️ Platform ${platform} not implemented, using fallback`);
+          return this.createFallbackNormalizedProblem(problemData, normalizedPlatform);
+      }
+    } catch (error) {
+      console.error(`❌ Error normalizing problem for platform ${platform}:`, error);
+      return this.createFallbackNormalizedProblem(problemData, platform as any);
+    }
+  }
+
+  /**
+   * Create a fallback normalized problem when platform-specific normalization fails
+   */
+  private static createFallbackNormalizedProblem(data: any, platform: string): NormalizedProblem {
+    // Determine difficulty category from various possible formats
+    let difficultyCategory: 'Easy' | 'Medium' | 'Hard' = 'Medium';
+    let normalizedDifficulty = 6;
+
+    const difficulty = data.difficulty?.toString() || '';
+
+    if (difficulty.toLowerCase().includes('easy') ||
+        (platform === 'codeforces' && parseInt(difficulty) <= 1200) ||
+        (platform === 'atcoder' && difficulty.includes('A'))) {
+      difficultyCategory = 'Easy';
+      normalizedDifficulty = 3;
+    } else if (difficulty.toLowerCase().includes('hard') ||
+               (platform === 'codeforces' && parseInt(difficulty) >= 1800) ||
+               (platform === 'atcoder' && difficulty.includes('C'))) {
+      difficultyCategory = 'Hard';
+      normalizedDifficulty = 8;
     }
 
-    switch (platform) {
-      case 'leetcode':
-        return this.normalizeLeetCodeProblem(problemData, config);
-      case 'codeforces':
-        return this.normalizeCodeforcesProblem(problemData, config);
-      case 'atcoder':
-        return this.normalizeAtCoderProblem(problemData, config);
-      default:
-        throw new Error(`Platform ${platform} not implemented`);
-    }
+    return {
+      id: data._id || data.id || data.problemId || 'unknown',
+      title: data.title || 'Unknown Problem',
+      platform: platform as 'leetcode' | 'codeforces' | 'atcoder',
+      difficulty: {
+        original: difficulty || 'Unknown',
+        normalized: normalizedDifficulty,
+        category: difficultyCategory
+      },
+      topics: Array.isArray(data.topics) ? data.topics : [],
+      companies: Array.isArray(data.companies) ? data.companies : [],
+      url: data.url || '',
+      description: data.description || `Problem: ${data.title || 'Unknown'}`,
+      metadata: {
+        tags: Array.isArray(data.tags) ? data.tags : []
+      }
+    };
   }
 
   /**

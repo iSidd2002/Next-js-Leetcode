@@ -201,26 +201,63 @@ export class GeminiClient {
     };
   }
 
-  // Utility method for structured JSON responses
+  // Utility method for structured JSON responses with retry logic
   async generateStructuredResponse<T>(
-    prompt: string, 
-    schema: string, 
+    prompt: string,
+    schema: string,
     options: AIOptions = {}
   ): Promise<T> {
-    const structuredPrompt = `${prompt}
+    const maxRetries = 3;
+    let lastError: Error | null = null;
 
-IMPORTANT: Respond with valid JSON only. No additional text or explanation.
-Required JSON schema:
-${schema}`;
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`🔄 JSON generation attempt ${attempt}/${maxRetries}`);
 
-    const response = await this.generateResponse(structuredPrompt, {
-      ...options,
-      temperature: 0.3, // Lower temperature for more consistent JSON
-    });
+        // Adjust token limits based on attempt
+        const tokenMultiplier = attempt === 1 ? 1 : attempt === 2 ? 1.5 : 2;
+        const adjustedTokens = Math.floor((options.maxTokens || 4096) * tokenMultiplier);
 
+        const structuredPrompt = `${prompt}
+
+CRITICAL INSTRUCTIONS:
+- Return ONLY valid JSON following this exact schema: ${schema}
+- Ensure the JSON is complete and properly closed
+- Do not truncate any fields or values mid-string
+- Keep responses concise but complete
+- If you must truncate, do it at the field level, not mid-sentence`;
+
+        const response = await this.generateResponse(structuredPrompt, {
+          ...options,
+          maxTokens: adjustedTokens,
+          temperature: 0.2, // Even lower temperature for more consistent JSON
+        });
+
+        const result = this.parseJSONResponse<T>(response.content, attempt);
+        console.log(`✅ JSON parsing successful on attempt ${attempt}`);
+        return result;
+
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`❌ Attempt ${attempt} failed:`, error instanceof Error ? error.message : error);
+
+        if (attempt === maxRetries) {
+          console.error('❌ All JSON generation attempts failed');
+          break;
+        }
+
+        // Wait before retry (exponential backoff)
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+    }
+
+    throw lastError || new Error('Failed to generate valid JSON after all attempts');
+  }
+
+  private parseJSONResponse<T>(content: string, attempt: number): T {
     try {
       // Clean the response content by removing markdown code blocks if present
-      let cleanContent = response.content.trim();
+      let cleanContent = content.trim();
 
       // Remove markdown code blocks (```json ... ``` or ``` ... ```)
       if (cleanContent.startsWith('```')) {
@@ -234,11 +271,57 @@ ${schema}`;
         cleanContent = lines.join('\n').trim();
       }
 
+      // Try to fix common JSON truncation issues
+      if (attempt > 1) {
+        cleanContent = this.attemptJSONRepair(cleanContent);
+      }
+
       return JSON.parse(cleanContent) as T;
     } catch (error) {
-      console.error('❌ Failed to parse JSON response. Raw content:', response.content);
+      console.error(`❌ Failed to parse JSON response on attempt ${attempt}. Raw content:`, content);
       console.error('❌ Parse error:', error);
-      throw new Error('AI returned invalid JSON format');
+      throw new Error(`AI returned invalid JSON format (attempt ${attempt}): ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  }
+
+  private attemptJSONRepair(content: string): string {
+    try {
+      // Common fixes for truncated JSON
+      let fixed = content;
+
+      // If it ends with incomplete string, try to close it
+      if (fixed.match(/[^"\\]$/)) {
+        // Check if we're in the middle of a string value
+        const lastQuoteIndex = fixed.lastIndexOf('"');
+        const lastColonIndex = fixed.lastIndexOf(':');
+
+        if (lastColonIndex > lastQuoteIndex) {
+          // We're likely in a string value, try to close it
+          fixed += '"';
+        }
+      }
+
+      // Try to close incomplete objects/arrays
+      const openBraces = (fixed.match(/\{/g) || []).length;
+      const closeBraces = (fixed.match(/\}/g) || []).length;
+      const openBrackets = (fixed.match(/\[/g) || []).length;
+      const closeBrackets = (fixed.match(/\]/g) || []).length;
+
+      // Add missing closing braces
+      for (let i = 0; i < openBraces - closeBraces; i++) {
+        fixed += '}';
+      }
+
+      // Add missing closing brackets
+      for (let i = 0; i < openBrackets - closeBrackets; i++) {
+        fixed += ']';
+      }
+
+      console.log('🔧 Attempted JSON repair');
+      return fixed;
+    } catch (error) {
+      console.error('❌ JSON repair failed:', error);
+      return content; // Return original if repair fails
     }
   }
 
