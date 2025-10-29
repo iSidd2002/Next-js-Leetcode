@@ -87,7 +87,7 @@ export class SuggestionService {
 
 
   constructor() {
-    this.provider = (process.env.LLM_PROVIDER || 'gemini').toLowerCase() === 'openai' ? 'openai' : 'gemini';
+    this.provider = (process.env.LLM_PROVIDER || 'openai').toLowerCase() === 'openai' ? 'openai' : 'gemini';
     this.apiKey = process.env.GEMINI_API_KEY || '';
     this.openaiKey = process.env.OPENAI_API_KEY || '';
 
