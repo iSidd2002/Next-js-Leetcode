@@ -16,7 +16,16 @@ const publicRoutes = [
   '/api/auth/register',
   '/api/potd',
   '/api/health',
-  '/api/debug'
+  '/api/debug',
+  '/api/ai/test',             // Allow AI test endpoint for development
+  '/api/ai/models',           // Allow AI models listing for development
+  '/api/ai/verify',           // Allow AI verification for development
+  '/api/ai/platform-test',    // Allow platform adapter testing for development
+  '/api/ai/cache-test',       // Allow cache manager testing for development
+  '/api/ai/similar',          // Allow similar problems API for development
+  '/api/ai/review',           // Allow review insights API for development
+  '/api/ai/database-test',    // Allow database testing for development
+  '/api/ai/integration-test'  // Allow integration testing for development
 ];
 
 export function middleware(request: NextRequest) {

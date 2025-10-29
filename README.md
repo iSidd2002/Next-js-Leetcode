@@ -46,6 +46,12 @@ A comprehensive problem tracking application built with Next.js, featuring the e
 - **JWT** - Authentication
 - **bcryptjs** - Password hashing
 
+### AI Features
+- **AI Review Insights** - Personalized learning strategies and recommendations
+- **Similar Problems** - AI-powered problem recommendations with reasoning
+- **Smart Analysis** - Pattern recognition and skill assessment
+- **Learning Optimization** - Adaptive study plans based on performance
+
 ## 📦 Installation
 
 1. **Clone the repository:**
@@ -183,6 +189,31 @@ This Next.js version maintains 100% feature parity with the original React/Vite 
 4. **Track Contests**: Record your contest performances
 5. **View Analytics**: Monitor your progress with detailed statistics
 6. **Company Filter**: Organize problems by target companies
+7. **AI Features**: Get personalized insights and problem recommendations
+
+## 🚀 Deployment
+
+This application is production-ready and can be deployed on multiple platforms:
+
+### Quick Deploy Options:
+- **Vercel** (Recommended): `npm run deploy:vercel`
+- **Docker**: `npm run deploy:docker`
+- **Traditional VPS**: See [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+### Environment Setup:
+1. Copy `.env.example` to `.env.local`
+2. Configure required environment variables:
+   - `DATABASE_URL` - MongoDB connection string
+   - `JWT_SECRET` - Secure JWT secret key
+   - `NEXTAUTH_SECRET` - NextAuth secret key
+   - `NEXTAUTH_URL` - Your production domain
+   - `GEMINI_API_KEY` - Google Gemini API key for AI features
+
+### Health Check:
+- Visit `/api/health` to verify deployment status
+- Monitor database connectivity and environment configuration
+
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md).
 
 ## 🤝 Contributing
 

@@ -7,7 +7,18 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "jest"
+    "lint:fix": "next lint --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "type-check": "tsc --noEmit",
+    "clean": "rm -rf .next out dist",
+    "postinstall": "prisma generate",
+    "deploy:vercel": "vercel --prod",
+    "deploy:docker": "docker build -t leetcode-tracker . && docker run -p 3000:3000 leetcode-tracker",
+    "db:push": "prisma db push",
+    "db:studio": "prisma studio",
+    "analyze": "cross-env ANALYZE=true npm run build"
   },
   "jest": {
     "preset": "ts-jest",
@@ -16,9 +27,12 @@
     "moduleNameMapper": {
       "^@/(.*)$": "<rootDir>/src/$1"
     },
-    "setupFiles": ["<rootDir>/jest.setup.js"]
+    "setupFiles": [
+      "<rootDir>/jest.setup.js"
+    ]
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.12.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
@@ -71,6 +85,7 @@
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
     "babel-jest": "^30.0.5",
+    "cross-env": "^7.0.3",
     "dotenv": "^17.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.2",

@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight, Brain, Lightbulb } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,11 +33,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import EmptyState from '@/components/EmptyState';
+import ReviewInsights from '@/components/ai/ReviewInsights';
+import SimilarProblems from '@/components/ai/SimilarProblems';
 
 // Helper function to get difficulty badge variant
 const getDifficultyVariant = (difficulty: string) => {
@@ -70,6 +73,11 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+
+  // AI Modal states
+  const [showReviewInsights, setShowReviewInsights] = useState(false);
+  const [showSimilarProblems, setShowSimilarProblems] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -108,6 +116,17 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
       console.warn('Invalid date format for problem:', problem.id, problem.nextReviewDate);
       return false;
     }
+  };
+
+  // AI Modal handlers
+  const handleShowReviewInsights = (problem: Problem) => {
+    setSelectedProblem(problem);
+    setShowReviewInsights(true);
+  };
+
+  const handleShowSimilarProblems = (problem: Problem) => {
+    setSelectedProblem(problem);
+    setShowSimilarProblems(true);
   };
 
   const getPlatformLabel = (platform: string): string => {
@@ -297,18 +316,66 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                   </div>
                 )}
 
+                {/* AI Actions for all problems */}
+                <div className="mt-3 pt-3 border-t">
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleShowReviewInsights(problem)}
+                      className="flex-1 text-xs text-blue-600 hover:text-blue-700"
+                    >
+                      <Brain className="h-3 w-3 mr-1" />
+                      AI Insights
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleShowSimilarProblems(problem)}
+                      className="flex-1 text-xs text-purple-600 hover:text-purple-700"
+                    >
+                      <Lightbulb className="h-3 w-3 mr-1" />
+                      Similar
+                    </Button>
+                  </div>
+                </div>
+
                 {isReviewList && (
-                  <div className="mt-3 pt-3 border-t flex gap-2">
-                    <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} className="flex-1 text-xs">
-                      <CheckCircle className="h-3 w-3 mr-1" />
-                      Easy
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 3)} className="flex-1 text-xs">
-                      Good
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 1)} className="flex-1 text-xs">
-                      Hard
-                    </Button>
+                  <div className="mt-3 pt-3 border-t space-y-2">
+                    {/* AI Buttons */}
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleShowReviewInsights(problem)}
+                        className="flex-1 text-xs text-blue-600 hover:text-blue-700"
+                      >
+                        <Brain className="h-3 w-3 mr-1" />
+                        AI Insights
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleShowSimilarProblems(problem)}
+                        className="flex-1 text-xs text-purple-600 hover:text-purple-700"
+                      >
+                        <Lightbulb className="h-3 w-3 mr-1" />
+                        Similar
+                      </Button>
+                    </div>
+                    {/* Review Quality Buttons */}
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} className="flex-1 text-xs">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Easy
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 3)} className="flex-1 text-xs">
+                        Good
+                      </Button>
+                      <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 1)} className="flex-1 text-xs">
+                        Hard
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -390,6 +457,24 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       <TableCell className="text-right">
                         {isReviewList ? (
                           <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleShowReviewInsights(problem)}
+                              className="text-blue-600 hover:text-blue-700"
+                            >
+                              <Brain className="h-4 w-4 mr-1" />
+                              AI Insights
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleShowSimilarProblems(problem)}
+                              className="text-purple-600 hover:text-purple-700"
+                            >
+                              <Lightbulb className="h-4 w-4 mr-1" />
+                              Similar
+                            </Button>
                             <Button size="sm" onClick={() => onProblemReviewed(problem.id, 4)} disabled={!isDueForReview(problem)}>
                               Reviewed &amp; Advance
                             </Button>
@@ -406,6 +491,16 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                               <DropdownMenuItem onClick={() => onEditProblem(problem)}>
                                 <Pencil className="mr-2 h-5 w-5" />
                                 Edit
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem onClick={() => handleShowReviewInsights(problem)}>
+                                <Brain className="mr-2 h-5 w-5 text-blue-600" />
+                                AI Review Insights
+                              </DropdownMenuItem>
+
+                              <DropdownMenuItem onClick={() => handleShowSimilarProblems(problem)}>
+                                <Lightbulb className="mr-2 h-5 w-5 text-purple-600" />
+                                Similar Problems
                               </DropdownMenuItem>
 
                               {problem.source === 'potd' && onAddToProblem && (
@@ -503,6 +598,55 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* AI Review Insights Modal */}
+      <Dialog open={showReviewInsights} onOpenChange={setShowReviewInsights}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-600" />
+              AI Review Insights: {selectedProblem?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProblem && (
+            <ReviewInsights
+              problem={selectedProblem}
+              userHistory={{
+                previousAttempts: selectedProblem.repetition || 0,
+                lastSolved: selectedProblem.dateSolved || new Date().toISOString(),
+                timeSpent: 30, // Default time in minutes
+                mistakes: selectedProblem.notes ? [selectedProblem.notes] : [],
+                successRate: selectedProblem.repetition > 0 ? 0.8 : 0.5
+              }}
+              reviewContext={{
+                daysSinceLastReview: selectedProblem.nextReviewDate ?
+                  Math.floor((new Date().getTime() - new Date(selectedProblem.nextReviewDate).getTime()) / (1000 * 60 * 60 * 24)) :
+                  1,
+                currentStreak: selectedProblem.repetition || 0,
+                upcomingInterviews: false,
+                targetDifficulty: selectedProblem.difficulty
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Similar Problems Modal */}
+      <Dialog open={showSimilarProblems} onOpenChange={setShowSimilarProblems}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-purple-600" />
+              Similar Problems: {selectedProblem?.title}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProblem && (
+            <SimilarProblems
+              problem={selectedProblem}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 };

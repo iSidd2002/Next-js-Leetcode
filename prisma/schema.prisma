@@ -25,9 +25,11 @@ model User {
   timezone            String  @default("UTC")
 
   // Relations
-  problems    Problem[]
-  contests    Contest[]
-  todos       Todo[]
+  problems           Problem[]
+  contests           Contest[]
+  todos              Todo[]
+  aiRecommendations  AIRecommendation[]
+  aiReviewInsights   AIReviewInsight[]
 
   @@map("users")
 }
@@ -101,6 +103,113 @@ model Todo {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("todos")
+}
+
+model AIRecommendation {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  problemId   String   // Reference to the problem this recommendation is for
+  platform    String   // 'leetcode' | 'codeforces' | 'atcoder'
+  type        String   // 'similar-problems' | 'personalized-suggestions'
+
+  // AI Response Data (stored as JSON)
+  recommendations Json   // Array of recommended problems with metadata
+  analysis       Json?   // Analysis data (patterns, progression path, etc.)
+
+  // Metadata
+  promptType     String   // Type of prompt used
+  modelUsed      String   // AI model that generated this
+  tokensUsed     Int?     // Number of tokens consumed
+  cost           Float?   // Estimated cost in USD
+  processingTime Int?     // Time taken to generate (ms)
+
+  // Cache and validity
+  cacheKey       String   @unique
+  expiresAt      DateTime
+  isValid        Boolean  @default(true)
+
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, problemId, type])
+  @@index([expiresAt])
+  @@map("ai_recommendations")
+}
+
+model AIReviewInsight {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  problemId   String   // Reference to the problem this insight is for
+  platform    String   // 'leetcode' | 'codeforces' | 'atcoder'
+
+  // User Context (stored as JSON for flexibility)
+  userHistory    Json   // Previous attempts, time spent, mistakes, etc.
+  reviewContext  Json   // Days since review, streak, upcoming interviews, etc.
+
+  // AI Response Data (stored as JSON)
+  reviewStrategy      Json   // Focus areas, time allocation, approach
+  keyConcepts        Json   // Must remember, pitfalls, optimization tips
+  practiceSuggestions Json   // Warm-up problems, challenges, patterns
+  confidenceAssessment Json  // Current level, improvement areas, milestones
+  personalizedNotes   Json   // Strengths, weaknesses, learning tips, motivation
+
+  // Metadata
+  modelUsed      String   // AI model that generated this
+  tokensUsed     Int?     // Number of tokens consumed
+  cost           Float?   // Estimated cost in USD
+  processingTime Int?     // Time taken to generate (ms)
+
+  // Cache and validity
+  cacheKey       String   @unique
+  expiresAt      DateTime
+  isValid        Boolean  @default(true)
+
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, problemId])
+  @@index([expiresAt])
+  @@map("ai_review_insights")
+}
+
+model AIUsageStats {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @db.ObjectId
+  date           String   // YYYY-MM-DD format for daily aggregation
+
+  // Usage counters
+  similarProblemsRequests  Int @default(0)
+  reviewInsightsRequests   Int @default(0)
+  totalRequests           Int @default(0)
+
+  // Cost tracking
+  totalTokensUsed         Int   @default(0)
+  totalCost              Float @default(0.0)
+
+  // Cache performance
+  cacheHits              Int @default(0)
+  cacheMisses            Int @default(0)
+
+  // Response times (in milliseconds)
+  avgResponseTime        Int?
+  maxResponseTime        Int?
+  minResponseTime        Int?
+
+  // Timestamps
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([userId, date])
+  @@index([date])
+  @@map("ai_usage_stats")
 }
 
 
