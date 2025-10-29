@@ -87,6 +87,24 @@ A comprehensive problem tracking application built with Next.js, featuring the e
 6. **Open your browser:**
    Navigate to [http://localhost:3000](http://localhost:3000)
 
+
+## 🤖 AI/LLM Integration (OpenRouter)
+
+This app uses OpenRouter exclusively for AI features (hints, explanations, bug detection, code review, suggestions).
+
+Setup:
+- Get a key: https://openrouter.ai/keys
+- Add to your `.env.local`:
+  - OPENROUTER_API_KEY="sk-or-v1-..."
+  - (Optional) OPENROUTER_MODELS="deepseek/deepseek-chat-v3.1:free,deepseek/deepseek-chat-v3.1,openai/gpt-4o-mini"
+  - (Optional) OPENROUTER_SITE_URL, OPENROUTER_SITE_NAME
+
+Health check:
+- Start dev: `npm run dev`
+- Visit: http://localhost:3000/api/ai/health (should return ok: true and a model sample)
+
+More details and migration guide: docs/OPENROUTER_MIGRATION.md
+
 ## 🗄️ Database Schema
 
 The application uses MongoDB with Prisma ORM. The schema includes:

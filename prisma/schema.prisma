@@ -28,7 +28,6 @@ model User {
   problems    Problem[]
   contests    Contest[]
   todos       Todo[]
-  suggestions UserProblemSuggestion[]
 
   @@map("users")
 }
@@ -55,7 +54,6 @@ model Problem {
 
   // Relations
   user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  suggestions UserProblemSuggestion[]
 
   @@unique([url, userId])
   @@map("problems")
@@ -105,23 +103,4 @@ model Todo {
   @@map("todos")
 }
 
-model UserProblemSuggestion {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String   @db.ObjectId
-  problemId     String   @db.ObjectId
-  generatedAt   DateTime @default(now())
-  expiresAt     DateTime
-  suggestions   Json
-  source        String   @default("llm-failure")
-  failureReason String?
-  confidence    Float    @default(0.0)
-  error         Json?
 
-  // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  problem Problem @relation(fields: [problemId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, problemId])
-  @@index([userId, expiresAt])
-  @@map("user_problem_suggestions")
-}

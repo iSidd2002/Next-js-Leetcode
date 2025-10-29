@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight, Lightbulb, Loader2 } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -64,12 +64,9 @@ interface ProblemListProps {
   isReviewList?: boolean;
   onAddToProblem?: (id: string) => void; // New handler for adding POTD to Problems
   isPotdInProblems?: (problem: Problem) => boolean; // Check if POTD problem exists in Problems
-  onGenerateSuggestions?: (problem: Problem) => void; // LLM feature handler
-  isLoadingSuggestions?: boolean; // Loading state for suggestions
-  selectedProblemForSuggestions?: Problem | null; // Currently selected problem for suggestions
 }
 
-const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems, onGenerateSuggestions, isLoadingSuggestions = false, selectedProblemForSuggestions }: ProblemListProps) => {
+const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems }: ProblemListProps) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [problemToDelete, setProblemToDelete] = useState<string | null>(null);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
@@ -276,22 +273,6 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                     <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
                       <Edit className="h-3 w-3" />
                     </Button>
-                    {onGenerateSuggestions && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onGenerateSuggestions(problem)}
-                        className="h-8 w-8 text-blue-600"
-                        title="Get AI suggestions"
-                        disabled={isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id}
-                      >
-                        {isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id ? (
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                        ) : (
-                          <Lightbulb className="h-3 w-3" />
-                        )}
-                      </Button>
-                    )}
                     {problem.source === 'potd' && onAddToProblem && (
                       <Button
                         variant="ghost"
@@ -409,22 +390,6 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       <TableCell className="text-right">
                         {isReviewList ? (
                           <div className="flex items-center justify-end gap-2">
-                            {onGenerateSuggestions && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => onGenerateSuggestions(problem)}
-                                className="h-8 w-8 text-blue-600"
-                                title="Get AI suggestions"
-                                disabled={isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id}
-                              >
-                                {isLoadingSuggestions && selectedProblemForSuggestions?.id === problem.id ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  <Lightbulb className="h-4 w-4" />
-                                )}
-                              </Button>
-                            )}
                             <Button size="sm" onClick={() => onProblemReviewed(problem.id, 4)} disabled={!isDueForReview(problem)}>
                               Reviewed &amp; Advance
                             </Button>

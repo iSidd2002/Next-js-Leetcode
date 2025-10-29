@@ -44,7 +44,7 @@ export function middleware(request: NextRequest) {
 
 function handleAPIRoute(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  
+
   // Allow public routes without authentication
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
@@ -52,67 +52,31 @@ function handleAPIRoute(request: NextRequest) {
 
   // Check if this is a protected route
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
-  
+
   if (!isProtectedRoute) {
     // For unspecified API routes, allow them through
     // This provides flexibility for new routes
     return NextResponse.next();
   }
 
-  // For protected routes, verify authentication
-  try {
-    console.log(`🔍 Middleware: Processing protected route ${pathname}`);
-    const token = getTokenFromRequest(request);
-    console.log(`🔍 Middleware: Token found: ${token ? 'YES' : 'NO'}`);
+  // For protected routes, just check if token exists (don't verify in Edge Runtime)
+  // JWT verification will be done in the API routes themselves using Node.js runtime
+  console.log(`🔍 Middleware: Processing protected route ${pathname}`);
+  const token = getTokenFromRequest(request);
+  console.log(`🔍 Middleware: Token found: ${token ? 'YES' : 'NO'}`);
 
-    if (!token) {
-      console.log(`🔒 Middleware: No token found for protected route: ${pathname}`);
-      return NextResponse.json(
-        { success: false, error: 'Access token required' },
-        { status: 401 }
-      );
-    }
-
-    // Verify the token
-    console.log(`🔍 Middleware: Verifying token...`);
-    const payload = verifyToken(token);
-    console.log(`🔍 Middleware: Token payload:`, payload);
-
-    if (!payload || !payload.id || !payload.email) {
-      console.log(`🔒 Middleware: Invalid token payload for route: ${pathname}`);
-      return NextResponse.json(
-        { success: false, error: 'Invalid access token' },
-        { status: 401 }
-      );
-    }
-
-    // Add user information to request headers for API routes to use
-    const response = NextResponse.next();
-    response.headers.set('x-user-id', payload.id);
-    response.headers.set('x-user-email', payload.email);
-    response.headers.set('x-user-username', payload.username);
-
-    console.log(`✅ Middleware: Authenticated request for ${pathname} by user ${payload.email}`);
-    return response;
-
-  } catch (error) {
-    console.error(`🔒 Authentication error for ${pathname}:`, error);
-    
-    // Determine the appropriate error message
-    let errorMessage = 'Authentication failed';
-    if (error instanceof Error) {
-      if (error.message.includes('expired')) {
-        errorMessage = 'Access token expired';
-      } else if (error.message.includes('invalid')) {
-        errorMessage = 'Invalid access token';
-      }
-    }
-    
+  if (!token) {
+    console.log(`🔒 Middleware: No token found for protected route: ${pathname}`);
     return NextResponse.json(
-      { success: false, error: errorMessage },
+      { success: false, error: 'Access token required' },
       { status: 401 }
     );
   }
+
+  // Token exists, let the API route handle verification
+  // Pass the token through for the API route to verify
+  console.log(`✅ Middleware: Token found, passing to API route for verification`);
+  return NextResponse.next();
 }
 
 // Configure which paths the middleware should run on

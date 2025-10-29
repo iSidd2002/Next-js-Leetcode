@@ -31,7 +31,7 @@ import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
 import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
-import { SuggestionPanel } from '@/components/SuggestionPanel';
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 export default function HomePage() {
@@ -48,11 +48,7 @@ export default function HomePage() {
   const [problemToEdit, setProblemToEdit] = useState<Problem | null>(null);
   const [activePlatform, setActivePlatform] = useState('leetcode');
 
-  // LLM Feature State
-  const [selectedProblemForSuggestions, setSelectedProblemForSuggestions] = useState<Problem | null>(null);
-  const [suggestions, setSuggestions] = useState<any>(null);
-  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
-  const [showSuggestionsModal, setShowSuggestionsModal] = useState(false);
+
 
   // Load data on component mount
   useEffect(() => {
@@ -537,73 +533,7 @@ export default function HomePage() {
     }
   };
 
-  const handleGenerateSuggestions = async (problem: Problem) => {
-    try {
-      setIsLoadingSuggestions(true);
-      setSelectedProblemForSuggestions(problem);
 
-      const response = await fetch(`/api/problems/${problem.id}/llm-result`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          transcript: 'User attempted but could not solve this problem',
-          userFinalStatus: 'unsolved',
-          code: problem.code || '',
-          problemDescription: problem.title,
-          platform: problem.platform,
-          url: problem.url,
-          companies: problem.companies || [],
-          topics: problem.topics || [],
-        }),
-      });
-
-      const data = await response.json();
-
-      if (data.success && data.data) {
-        // Store the entire response so we have access to failureReason and confidence
-        setSuggestions({
-          ...data.data,
-          failureReason: data.failureReason,
-          confidence: data.confidence,
-        });
-        setShowSuggestionsModal(true);
-        toast.success('Suggestions generated!');
-      } else if (data.data === null) {
-        toast.info(data.reason || 'No suggestions available for this problem');
-      } else {
-        toast.error('Failed to generate suggestions');
-      }
-    } catch (error) {
-      console.error('Error generating suggestions:', error);
-      toast.error('Failed to generate suggestions');
-    } finally {
-      setIsLoadingSuggestions(false);
-    }
-  };
-
-  const handleAddSuggestionToTodos = async (suggestion: any) => {
-    try {
-      const newTodo: Todo = {
-        id: generateId(),
-        title: suggestion.title,
-        description: suggestion.description || suggestion.reason,
-        estimatedTime: suggestion.estimatedTime || suggestion.duration || 30,
-        category: 'study',
-        status: 'pending',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      const createdTodo = await StorageService.addTodo(newTodo);
-      setTodos([...todos, createdTodo]);
-      toast.success('Added to Todos!');
-    } catch (error) {
-      console.error('Error adding to todos:', error);
-      toast.error('Failed to add to todos');
-    }
-  };
 
   const handleAddContest = async (contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -1282,9 +1212,6 @@ export default function HomePage() {
                 onEditProblem={handleEditProblem}
                 onProblemReviewed={handleProblemReviewed}
                 isReviewList={true}
-                onGenerateSuggestions={handleGenerateSuggestions}
-                isLoadingSuggestions={isLoadingSuggestions}
-                selectedProblemForSuggestions={selectedProblemForSuggestions}
               />
             </div>
           </TabsContent>
@@ -1358,24 +1285,7 @@ export default function HomePage() {
         }}
       />
 
-      {/* LLM Suggestions Modal */}
-      <Dialog open={showSuggestionsModal} onOpenChange={setShowSuggestionsModal}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
-              💡 Suggestions for {selectedProblemForSuggestions?.title}
-            </DialogTitle>
-          </DialogHeader>
-          {suggestions && (
-            <SuggestionPanel
-              suggestions={suggestions}
-              failureReason={suggestions.failureReason}
-              confidence={suggestions.confidence}
-              onAddToTodos={handleAddSuggestionToTodos}
-            />
-          )}
-        </DialogContent>
-      </Dialog>
+
 
       {/* Floating Action Button */}
       {isAuthenticated && (
