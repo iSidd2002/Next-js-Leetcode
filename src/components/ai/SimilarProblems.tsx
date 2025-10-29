@@ -64,7 +64,7 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
           },
           targetDistribution: {
             easy: 2,
-            medium: 3,
+            medium: 2,
             hard: 1
           }
         })

@@ -298,7 +298,17 @@ CRITICAL INSTRUCTIONS:
       // Common fixes for truncated JSON
       let fixed = content;
 
-      // If it ends with incomplete string, try to close it
+      // Handle specific truncation patterns we've seen
+      // Pattern 1: Truncated in "key_concepts" field
+      if (fixed.includes('"key_concepts"') && !fixed.includes('"key_concepts": [')) {
+        // Find the last complete field and truncate there
+        const lastCompleteField = fixed.lastIndexOf('",');
+        if (lastCompleteField > 0) {
+          fixed = fixed.substring(0, lastCompleteField + 1);
+        }
+      }
+
+      // Pattern 2: Truncated mid-string value
       if (fixed.match(/[^"\\]$/)) {
         // Check if we're in the middle of a string value
         const lastQuoteIndex = fixed.lastIndexOf('"');
@@ -310,23 +320,42 @@ CRITICAL INSTRUCTIONS:
         }
       }
 
+      // Pattern 3: Remove incomplete trailing fields
+      const incompletePatterns = [
+        /"[^"]*$/,  // Incomplete string key
+        /,\s*$/,    // Trailing comma
+        /:\s*$/,    // Incomplete value
+        /"key_concepts":\s*\[?[^\]]*$/  // Incomplete key_concepts array
+      ];
+
+      for (const pattern of incompletePatterns) {
+        if (pattern.test(fixed)) {
+          // Find the last complete field
+          const lastCompleteComma = fixed.lastIndexOf('",');
+          if (lastCompleteComma > 0) {
+            fixed = fixed.substring(0, lastCompleteComma + 1);
+          }
+          break;
+        }
+      }
+
       // Try to close incomplete objects/arrays
       const openBraces = (fixed.match(/\{/g) || []).length;
       const closeBraces = (fixed.match(/\}/g) || []).length;
       const openBrackets = (fixed.match(/\[/g) || []).length;
       const closeBrackets = (fixed.match(/\]/g) || []).length;
 
+      // Add missing closing brackets first
+      for (let i = 0; i < openBrackets - closeBrackets; i++) {
+        fixed += ']';
+      }
+
       // Add missing closing braces
       for (let i = 0; i < openBraces - closeBraces; i++) {
         fixed += '}';
       }
 
-      // Add missing closing brackets
-      for (let i = 0; i < openBrackets - closeBrackets; i++) {
-        fixed += ']';
-      }
-
-      console.log('🔧 Attempted JSON repair');
+      console.log('🔧 Attempted JSON repair - removed incomplete fields');
       return fixed;
     } catch (error) {
       console.error('❌ JSON repair failed:', error);

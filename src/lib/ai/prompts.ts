@@ -58,33 +58,17 @@ Platform expertise:
 - AtCoder: Implementation, Math, DP, Graph, Data Structure problems`,
 
     user: (request: SimilarProblemsRequest) => `
-MANDATORY TASK: Generate ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problem recommendations for this problem. You MUST provide recommendations regardless of the problem's simplicity or complexity.
+Generate ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problems for: ${request.problem.title} (${request.problem.platform})
 
-**Target Problem Analysis:**
-- Title: ${request.problem.title}
-- Platform: ${request.problem.platform.toUpperCase()}
-- Difficulty: ${request.problem.difficulty.category} (${request.problem.difficulty.original})
-- Topics: ${request.problem.topics.length > 0 ? request.problem.topics.join(', ') : 'General Programming'}
-${request.problem.description ? `- Context: ${request.problem.description.substring(0, 200)}...` : ''}
+**Target:** ${request.problem.difficulty.category} | Topics: ${request.problem.topics.length > 0 ? request.problem.topics.slice(0, 3).join(', ') : 'General'}
 
-**STRICT REQUIREMENTS:**
-- Generate exactly ${request.targetDistribution.easy} Easy problems (beginner-friendly)
-- Generate exactly ${request.targetDistribution.medium} Medium problems (intermediate level)
-- Generate exactly ${request.targetDistribution.hard} Hard problems (advanced level)
-- Include problems from LeetCode, Codeforces, AND AtCoder when possible
-- For simple problems (like basic math), find similar foundational problems
-- For complex problems, find problems with similar algorithmic patterns
-- Provide specific, realistic time estimates (e.g., "10-15 minutes", "30-45 minutes")
-- Explain the algorithmic connection and learning progression
+**Requirements:**
+- ${request.targetDistribution.easy} Easy + ${request.targetDistribution.medium} Medium + ${request.targetDistribution.hard} Hard problems
+- Mix of LeetCode, Codeforces, AtCoder platforms
+- Focus on similar algorithmic patterns
+- Keep explanations concise (max 50 words each)
 
-**Platform Guidelines:**
-- LeetCode: Use problem titles like "Two Sum", "Valid Parentheses", "Merge Intervals"
-- Codeforces: Use format like "A+B Problem", "Watermelon", "Way Too Long Words"
-- AtCoder: Use format like "ABC123 A - Even Odd", "ARC045 B - Palindrome"
-
-${request.excludeIds?.length ? `**Exclude these problem IDs:** ${request.excludeIds.join(', ')}` : ''}
-
-IMPORTANT: Even for the simplest problems (like basic arithmetic), you can find related problems that teach similar concepts or build upon the same foundations. Generate recommendations that create a learning progression.`,
+${request.excludeIds?.length ? `Exclude: ${request.excludeIds.slice(0, 5).join(', ')}` : ''}`,
 
     schema: `{
   "recommendations": [
@@ -94,15 +78,14 @@ IMPORTANT: Even for the simplest problems (like basic arithmetic), you can find 
       "difficulty": "Easy|Medium|Hard",
       "topics": ["string"],
       "similarity_score": "number (0.0-1.0)",
-      "reasoning": "string (why this problem is similar)",
-      "estimated_time": "string (e.g., '15-20 minutes')",
-      "key_concepts": ["string"]
+      "reasoning": "string (max 50 words)",
+      "estimated_time": "string (e.g., '15-20 min')",
+      "key_concepts": ["string", "string"]
     }
   ],
   "analysis": {
     "primary_patterns": ["string"],
-    "skill_focus": ["string"],
-    "progression_path": "string (learning progression advice)"
+    "progression_path": "string (max 30 words)"
   }
 }`
   },

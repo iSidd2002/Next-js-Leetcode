@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
       {
         userId,
         temperature: 0.7,
-        maxTokens: 6144 // Further increased token limit to prevent truncation
+        maxTokens: 4096 // Reduced for more reliable responses
       }
     );
 
@@ -258,7 +258,7 @@ export async function GET(request: NextRequest) {
       {
         userId,
         temperature: 0.7,
-        maxTokens: 6144 // Further increased token limit to prevent truncation
+        maxTokens: 4096 // Reduced for more reliable responses
       }
     );
 
