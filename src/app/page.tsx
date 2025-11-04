@@ -1046,18 +1046,18 @@ export default function HomePage() {
           </div>
 
           <div className="border-b overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-10 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
-              <TabsTrigger value="dashboard" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-11 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
+              <TabsTrigger value="dashboard" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
               </TabsTrigger>
 
-              <TabsTrigger value="companies" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+              <TabsTrigger value="companies" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <Building2 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Companies</span>
               </TabsTrigger>
 
-              <TabsTrigger value="potd" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+              <TabsTrigger value="potd" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
                 <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-yellow-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">POTD</span>
                 {potdProblems.length > 0 && (
@@ -1072,7 +1072,7 @@ export default function HomePage() {
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Contests</span>
               </TabsTrigger>
 
-              <TabsTrigger value="todos" className="flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
+              <TabsTrigger value="todos" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
                 <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-purple-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Todos</span>
                 {todos.length > 0 && (
