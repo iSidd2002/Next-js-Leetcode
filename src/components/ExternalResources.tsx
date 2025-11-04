@@ -33,7 +33,7 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     features: ['450+ Problems', 'Step-by-step Guide', 'Video Solutions', 'Beginner Friendly', 'CF Roadmap Guide'],
     additionalLinks: [
       {
-        name: 'Codeforces Roadmap',
+        name: 'Competitive Programming Guide Till Expert',
         url: 'https://www.shivambhadani.com/student-guide/roadmap-from-newbie-to-expert-in-codeforces',
         description: 'Complete roadmap from newbie to expert in Codeforces'
       }
@@ -74,18 +74,6 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     color: 'text-red-600',
     bgGradient: 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20',
     features: ['Structured Learning', 'Interview Prep', 'Multiple Languages', 'Guided Practice']
-  },
-  {
-    id: 'algoexpert',
-    name: 'AlgoExpert Problems',
-    description: 'Algorithm practice problems with detailed explanations and multiple solution approaches',
-    url: 'https://algo.theffox.workers.dev/',
-    category: 'algorithms',
-    difficulty: 'Advanced',
-    icon: <Code className="h-5 w-5" />,
-    color: 'text-orange-600',
-    bgGradient: 'from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20',
-    features: ['Algorithm Focus', 'Multiple Solutions', 'Time Complexity', 'Space Complexity']
   },
   {
     id: 'algoexpert',
