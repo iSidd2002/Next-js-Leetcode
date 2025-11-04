@@ -929,13 +929,13 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center space-x-2 sm:space-x-3">
               <div className="relative">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-600 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
                   <span className="text-white font-bold text-sm sm:text-lg">LC</span>
                 </div>
                 <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-blue-700 to-violet-600 bg-clip-text text-transparent">
                   LeetCode Tracker
                 </h1>
                 <p className="text-xs text-muted-foreground hidden sm:block">Master coding problems</p>
@@ -974,7 +974,7 @@ export default function HomePage() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
-                      <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
+                      <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-violet-600 rounded-full flex items-center justify-center">
                         <User className="h-4 w-4 text-white" />
                       </div>
                     </Button>
@@ -1008,7 +1008,7 @@ export default function HomePage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button onClick={() => setShowAuthModal(true)} className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700">
+                <Button onClick={() => setShowAuthModal(true)} className="bg-gradient-to-r from-blue-600 to-violet-700 hover:from-blue-700 hover:to-violet-800">
                   <User className="h-4 w-4 mr-2" />
                   Login
                 </Button>
@@ -1023,7 +1023,7 @@ export default function HomePage() {
           <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
           <div className="flex flex-col space-y-3 sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
             <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-blue-700 to-violet-600 bg-clip-text text-transparent">
                 Problem Tracker
               </h1>
               <p className="text-sm sm:text-base text-muted-foreground">
@@ -1035,7 +1035,7 @@ export default function HomePage() {
               {isAuthenticated && (
                 <Button
                   onClick={() => handleOpenForm()}
-                  className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 md:hidden"
+                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 md:hidden"
                   size="sm"
                 >
                   <Plus className="h-4 w-4 mr-2" />
@@ -1058,7 +1058,7 @@ export default function HomePage() {
               </TabsTrigger>
 
               <TabsTrigger value="potd" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-yellow-500" />
+                <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-yellow-600" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">POTD</span>
                 {potdProblems.length > 0 && (
                   <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
@@ -1068,12 +1068,12 @@ export default function HomePage() {
               </TabsTrigger>
 
               <TabsTrigger value="contests" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-amber-500" />
+                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-amber-600" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Contests</span>
               </TabsTrigger>
 
               <TabsTrigger value="todos" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-purple-500" />
+                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-violet-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Todos</span>
                 {todos.length > 0 && (
                   <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
@@ -1093,7 +1093,7 @@ export default function HomePage() {
               </TabsTrigger>
 
               <TabsTrigger value="review" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <History className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-orange-500" />
+                <History className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-orange-600" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Review</span>
                 {dueReviewProblems.length > 0 && (
                   <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
@@ -1103,7 +1103,7 @@ export default function HomePage() {
               </TabsTrigger>
 
               <TabsTrigger value="learned" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <LearnedIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-green-500" />
+                <LearnedIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-emerald-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Learned</span>
                 {learnedProblems.length > 0 && (
                   <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
@@ -1113,17 +1113,17 @@ export default function HomePage() {
               </TabsTrigger>
 
               <TabsTrigger value="analytics" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-blue-500" />
+                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-sky-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Analytics</span>
               </TabsTrigger>
 
               <TabsTrigger value="resources" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-indigo-500" />
+                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-indigo-600" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Resources</span>
               </TabsTrigger>
 
               <TabsTrigger value="guide" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-green-500" />
+                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-teal-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Guide</span>
               </TabsTrigger>
             </TabsList>
@@ -1301,7 +1301,7 @@ export default function HomePage() {
       {isAuthenticated && (
         <Button
           onClick={() => handleOpenForm()}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-r from-blue-600 to-violet-700 hover:from-blue-700 hover:to-violet-800 shadow-lg hover:shadow-xl transition-all duration-200 z-50"
           size="icon"
         >
           <Plus className="h-6 w-6" />

@@ -94,37 +94,37 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
       case 'leetcode':
         return {
           name: 'LeetCode',
-          color: 'bg-orange-500 text-white',
-          bgGradient: 'from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20',
+          color: 'bg-orange-600 text-white',
+          bgGradient: 'from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/15',
           borderColor: 'border-orange-200'
         };
       case 'codeforces':
         return {
           name: 'CodeForces',
-          color: 'bg-blue-500 text-white',
-          bgGradient: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20',
+          color: 'bg-blue-600 text-white',
+          bgGradient: 'from-blue-50 to-sky-50 dark:from-blue-950/20 dark:to-sky-950/15',
           borderColor: 'border-blue-200'
         };
       case 'geeksforgeeks':
         return {
           name: 'GeeksforGeeks',
-          color: 'bg-green-600 text-white',
-          bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20',
-          borderColor: 'border-green-200'
+          color: 'bg-emerald-600 text-white',
+          bgGradient: 'from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/15',
+          borderColor: 'border-emerald-200'
         };
       case 'codingninjas':
         return {
           name: 'Coding Ninjas',
-          color: 'bg-red-500 text-white',
-          bgGradient: 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20',
-          borderColor: 'border-red-200'
+          color: 'bg-rose-600 text-white',
+          bgGradient: 'from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/15',
+          borderColor: 'border-rose-200'
         };
       case 'atcoder':
         return {
           name: 'AtCoder',
-          color: 'bg-purple-500 text-white',
-          bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20',
-          borderColor: 'border-purple-200'
+          color: 'bg-violet-600 text-white',
+          bgGradient: 'from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/15',
+          borderColor: 'border-violet-200'
         };
       default:
         return {

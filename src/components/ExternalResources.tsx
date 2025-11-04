@@ -27,8 +27,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'practice',
     difficulty: 'All Levels',
     icon: <Target className="h-5 w-5" />,
-    color: 'text-indigo-600',
-    bgGradient: 'from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20',
+    color: 'text-indigo-700',
+    bgGradient: 'from-indigo-50 to-violet-50 dark:from-indigo-950/15 dark:to-violet-950/25',
     features: ['Beginner to Expert', 'Codeforces Focused', 'Step-by-step Roadmap', 'Competitive Programming']
   },
   {
@@ -39,8 +39,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'dsa',
     difficulty: 'All Levels',
     icon: <BookOpen className="h-5 w-5" />,
-    color: 'text-blue-600',
-    bgGradient: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20',
+    color: 'text-sky-600',
+    bgGradient: 'from-sky-50 to-blue-50 dark:from-sky-950/20 dark:to-blue-950/15',
     features: ['450+ Problems', 'Step-by-step Guide', 'Video Solutions', 'Beginner Friendly']
   },
   {
@@ -51,8 +51,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'interview',
     difficulty: 'Intermediate',
     icon: <Target className="h-5 w-5" />,
-    color: 'text-green-600',
-    bgGradient: 'from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20',
+    color: 'text-emerald-600',
+    bgGradient: 'from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/15',
     features: ['150 Essential Problems', 'Interview Focused', 'Video Explanations', 'Pattern-based Learning']
   },
   {
@@ -63,8 +63,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'practice',
     difficulty: 'All Levels',
     icon: <Brain className="h-5 w-5" />,
-    color: 'text-purple-600',
-    bgGradient: 'from-purple-50 to-pink-50 dark:from-purple-950/20 dark:to-pink-950/20',
+    color: 'text-purple-700',
+    bgGradient: 'from-purple-50 to-fuchsia-50 dark:from-purple-950/25 dark:to-fuchsia-950/20',
     features: ['Interactive Practice', 'Multiple Topics', 'Progress Tracking', 'Concept Building']
   },
   {
@@ -75,8 +75,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'practice',
     difficulty: 'All Levels',
     icon: <Code className="h-5 w-5" />,
-    color: 'text-red-600',
-    bgGradient: 'from-red-50 to-orange-50 dark:from-red-950/20 dark:to-orange-950/20',
+    color: 'text-rose-600',
+    bgGradient: 'from-rose-50 to-orange-50 dark:from-rose-950/20 dark:to-orange-950/15',
     features: ['Structured Learning', 'Interview Prep', 'Multiple Languages', 'Guided Practice']
   },
   {
@@ -87,8 +87,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'algorithms',
     difficulty: 'Advanced',
     icon: <Code className="h-5 w-5" />,
-    color: 'text-orange-600',
-    bgGradient: 'from-orange-50 to-yellow-50 dark:from-orange-950/20 dark:to-yellow-950/20',
+    color: 'text-amber-600',
+    bgGradient: 'from-amber-50 to-yellow-50 dark:from-amber-950/15 dark:to-yellow-950/25',
     features: ['Algorithm Focus', 'Multiple Solutions', 'Time Complexity', 'Space Complexity']
   }
 ];
