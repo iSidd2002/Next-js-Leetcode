@@ -16,7 +16,7 @@ import CompanyGroupedProblemList from '@/components/CompanyGroupedProblemList';
 import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, ExternalLink, Lightbulb } from 'lucide-react';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, ExternalLink, Lightbulb, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
@@ -31,6 +31,7 @@ import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
 import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
+import Guide from '@/components/Guide';
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
@@ -1116,9 +1117,14 @@ export default function HomePage() {
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Analytics</span>
               </TabsTrigger>
 
-              <TabsTrigger value="resources" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+              <TabsTrigger value="resources" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-indigo-500" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Resources</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="guide" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-green-500" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Guide</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1240,6 +1246,10 @@ export default function HomePage() {
 
           <TabsContent value="resources" className="space-y-6">
             <ExternalResources />
+          </TabsContent>
+
+          <TabsContent value="guide" className="space-y-6">
+            <Guide />
           </TabsContent>
         </Tabs>
         </ClientOnly>

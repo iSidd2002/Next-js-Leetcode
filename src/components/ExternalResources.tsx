@@ -16,10 +16,21 @@ interface ExternalResource {
   color: string;
   bgGradient: string;
   features: string[];
-  additionalLinks?: { name: string; url: string; description: string }[];
 }
 
 const EXTERNAL_RESOURCES: ExternalResource[] = [
+  {
+    id: 'codeforces-roadmap',
+    name: 'Competitive Programming Guide Till Expert',
+    description: 'Complete roadmap from newbie to expert in Codeforces with structured learning path and practice strategies',
+    url: 'https://www.shivambhadani.com/student-guide/roadmap-from-newbie-to-expert-in-codeforces',
+    category: 'practice',
+    difficulty: 'All Levels',
+    icon: <Target className="h-5 w-5" />,
+    color: 'text-indigo-600',
+    bgGradient: 'from-indigo-50 to-purple-50 dark:from-indigo-950/20 dark:to-purple-950/20',
+    features: ['Beginner to Expert', 'Codeforces Focused', 'Step-by-step Roadmap', 'Competitive Programming']
+  },
   {
     id: 'striver-a2z',
     name: 'Striver A2Z DSA Sheet',
@@ -30,14 +41,7 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     icon: <BookOpen className="h-5 w-5" />,
     color: 'text-blue-600',
     bgGradient: 'from-blue-50 to-indigo-50 dark:from-blue-950/20 dark:to-indigo-950/20',
-    features: ['450+ Problems', 'Step-by-step Guide', 'Video Solutions', 'Beginner Friendly', 'CF Roadmap Guide'],
-    additionalLinks: [
-      {
-        name: 'Competitive Programming Guide Till Expert',
-        url: 'https://www.shivambhadani.com/student-guide/roadmap-from-newbie-to-expert-in-codeforces',
-        description: 'Complete roadmap from newbie to expert in Codeforces'
-      }
-    ]
+    features: ['450+ Problems', 'Step-by-step Guide', 'Video Solutions', 'Beginner Friendly']
   },
   {
     id: 'neetcode-150',
@@ -210,35 +214,6 @@ const ExternalResources = () => {
                   <ExternalLink className="mr-2 h-4 w-4" />
                   Visit {resource.name}
                 </Button>
-
-                {/* Additional Links */}
-                {resource.additionalLinks && resource.additionalLinks.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-border/50">
-                    <h5 className="text-xs font-medium text-muted-foreground mb-2">Additional Resources:</h5>
-                    <div className="space-y-2">
-                      {resource.additionalLinks.map((link, index) => (
-                        <Button
-                          key={index}
-                          variant="ghost"
-                          size="sm"
-                          className="w-full justify-start h-auto p-2 text-left"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleResourceClick(link.url, link.name);
-                          }}
-                        >
-                          <div className="flex items-start space-x-2 w-full">
-                            <ExternalLink className="h-3 w-3 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                            <div className="flex-1 min-w-0">
-                              <div className="text-xs font-medium">{link.name}</div>
-                              <div className="text-xs text-muted-foreground">{link.description}</div>
-                            </div>
-                          </div>
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           );
