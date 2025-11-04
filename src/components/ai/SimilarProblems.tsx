@@ -102,10 +102,10 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
 
   const getPlatformColor = (platform: string) => {
     switch (platform.toLowerCase()) {
-      case 'leetcode': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300';
-      case 'codeforces': return 'bg-sky-100 text-sky-800 dark:bg-sky-900 dark:text-sky-300';
-      case 'atcoder': return 'bg-violet-100 text-violet-800 dark:bg-violet-900 dark:text-violet-300';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+      case 'leetcode': return 'bg-orange-100 text-orange-900 dark:bg-orange-900 dark:text-orange-200';
+      case 'codeforces': return 'bg-sky-100 text-sky-900 dark:bg-sky-900 dark:text-sky-200';
+      case 'atcoder': return 'bg-violet-100 text-violet-900 dark:bg-violet-900 dark:text-violet-200';
+      default: return 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-200';
     }
   };
 

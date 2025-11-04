@@ -134,7 +134,7 @@ const MonthlyPotdList = ({
                 <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-lg flex items-center">
-                      <Calendar className="h-5 w-5 mr-2 text-blue-600" />
+                      <Calendar className="h-5 w-5 mr-2 text-orange-600" />
                       {monthYear}
                       <Badge variant="outline" className="ml-3">
                         {monthProblems.length} problem{monthProblems.length !== 1 ? 's' : ''}

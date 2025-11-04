@@ -156,7 +156,7 @@ const CompanyDashboard = ({ problems }: CompanyDashboardProps) => {
                     )}
                     {company.recentActivity > 0 && (
                       <div className="flex items-center space-x-1">
-                        <Activity className="h-3 w-3 text-blue-600" />
+                        <Activity className="h-3 w-3 text-orange-600" />
                         <span>{company.recentActivity} this week</span>
                       </div>
                     )}

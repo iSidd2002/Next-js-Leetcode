@@ -323,7 +323,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       size="sm"
                       variant="outline"
                       onClick={() => handleShowReviewInsights(problem)}
-                      className="flex-1 text-xs text-blue-600 hover:text-blue-700"
+                      className="flex-1 text-xs text-blue-700 hover:text-blue-800"
                     >
                       <Brain className="h-3 w-3 mr-1" />
                       AI Insights
@@ -332,7 +332,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       size="sm"
                       variant="outline"
                       onClick={() => handleShowSimilarProblems(problem)}
-                      className="flex-1 text-xs text-purple-600 hover:text-purple-700"
+                      className="flex-1 text-xs text-purple-700 hover:text-purple-800"
                     >
                       <Lightbulb className="h-3 w-3 mr-1" />
                       Similar
@@ -348,7 +348,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                         size="sm"
                         variant="outline"
                         onClick={() => handleShowReviewInsights(problem)}
-                        className="flex-1 text-xs text-blue-600 hover:text-blue-700"
+                        className="flex-1 text-xs text-blue-700 hover:text-blue-800"
                       >
                         <Brain className="h-3 w-3 mr-1" />
                         AI Insights
@@ -357,7 +357,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                         size="sm"
                         variant="outline"
                         onClick={() => handleShowSimilarProblems(problem)}
-                        className="flex-1 text-xs text-purple-600 hover:text-purple-700"
+                        className="flex-1 text-xs text-purple-700 hover:text-purple-800"
                       >
                         <Lightbulb className="h-3 w-3 mr-1" />
                         Similar
@@ -461,7 +461,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                               size="sm"
                               variant="outline"
                               onClick={() => handleShowReviewInsights(problem)}
-                              className="text-blue-600 hover:text-blue-700"
+                              className="text-blue-700 hover:text-blue-800"
                             >
                               <Brain className="h-4 w-4 mr-1" />
                               AI Insights
@@ -470,7 +470,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                               size="sm"
                               variant="outline"
                               onClick={() => handleShowSimilarProblems(problem)}
-                              className="text-purple-600 hover:text-purple-700"
+                              className="text-purple-700 hover:text-purple-800"
                             >
                               <Lightbulb className="h-4 w-4 mr-1" />
                               Similar
@@ -494,12 +494,12 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                               </DropdownMenuItem>
 
                               <DropdownMenuItem onClick={() => handleShowReviewInsights(problem)}>
-                                <Brain className="mr-2 h-5 w-5 text-blue-600" />
+                                <Brain className="mr-2 h-5 w-5 text-blue-700" />
                                 AI Review Insights
                               </DropdownMenuItem>
 
                               <DropdownMenuItem onClick={() => handleShowSimilarProblems(problem)}>
-                                <Lightbulb className="mr-2 h-5 w-5 text-purple-600" />
+                                <Lightbulb className="mr-2 h-5 w-5 text-purple-700" />
                                 Similar Problems
                               </DropdownMenuItem>
 
@@ -508,7 +508,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                                   onClick={() => onAddToProblem(problem.id)}
                                   disabled={isPotdInProblems && isPotdInProblems(problem)}
                                 >
-                                  <ArrowRight className="mr-2 h-5 w-5 text-blue-600" />
+                                  <ArrowRight className="mr-2 h-5 w-5 text-blue-700" />
                                   {isPotdInProblems && isPotdInProblems(problem) ? 'Already in Problems' : 'Add to Problems'}
                                 </DropdownMenuItem>
                               )}
@@ -604,7 +604,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-blue-600" />
+              <Brain className="h-5 w-5 text-blue-700" />
               AI Review Insights: {selectedProblem?.title}
             </DialogTitle>
           </DialogHeader>
@@ -636,7 +636,7 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-purple-600" />
+              <Lightbulb className="h-5 w-5 text-purple-700" />
               Similar Problems: {selectedProblem?.title}
             </DialogTitle>
           </DialogHeader>

@@ -105,7 +105,7 @@ const AllContestsList = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'upcoming': return 'bg-blue-500';
+      case 'upcoming': return 'bg-amber-500';
       case 'running': return 'bg-green-500';
       case 'finished': return 'bg-gray-500';
       default: return 'bg-purple-500';
@@ -116,7 +116,7 @@ const AllContestsList = () => {
     const colors: Record<string, string> = {
       'Codeforces': 'bg-red-500',
       'LeetCode': 'bg-orange-500',
-      'AtCoder': 'bg-blue-500',
+      'AtCoder': 'bg-indigo-500',
       'CodeChef': 'bg-yellow-500',
       'HackerRank': 'bg-green-500',
       'TopCoder': 'bg-purple-500'

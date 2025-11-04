@@ -63,14 +63,14 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
 
   const statusColors = {
     pending: 'bg-gray-100 text-gray-800',
-    'in-progress': 'bg-blue-100 text-blue-800',
+    'in-progress': 'bg-amber-100 text-amber-800',
     completed: 'bg-green-100 text-green-800',
     cancelled: 'bg-red-100 text-red-800'
   };
 
   const categoryColors = {
     coding: 'bg-purple-100 text-purple-800',
-    study: 'bg-blue-100 text-blue-800',
+    study: 'bg-teal-100 text-teal-800',
     'interview-prep': 'bg-indigo-100 text-indigo-800',
     project: 'bg-cyan-100 text-cyan-800',
     personal: 'bg-pink-100 text-pink-800',

@@ -428,7 +428,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Target className="h-6 w-6 text-blue-500" />
+              <Target className="h-6 w-6 text-orange-500" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{inProgressTodos}</div>

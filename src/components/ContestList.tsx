@@ -61,7 +61,7 @@ export default function ContestList({ contests, onEditContest, onDeleteContest }
                       href={contest.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="flex items-center hover:text-blue-600 transition-colors"
+                      className="flex items-center hover:text-orange-600 transition-colors"
                     >
                       {contest.name}
                       <ExternalLink className="ml-2 h-4 w-4" />

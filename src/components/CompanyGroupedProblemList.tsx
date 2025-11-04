@@ -191,7 +191,7 @@ const CompanyGroupedProblemList = ({
                         ) : (
                           <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         )}
-                        <Building2 className="h-5 w-5 text-blue-600" />
+                        <Building2 className="h-5 w-5 text-orange-600" />
                         <CardTitle className="text-lg">{group.company}</CardTitle>
                       </div>
                       

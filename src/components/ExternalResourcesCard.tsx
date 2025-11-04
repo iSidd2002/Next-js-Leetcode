@@ -23,7 +23,7 @@ const QUICK_RESOURCES: QuickResource[] = [
     url: 'https://takeuforward.org/strivers-a2z-dsa-course/strivers-a2z-dsa-course-sheet-2/',
     category: 'DSA',
     icon: <BookOpen className="h-4 w-4" />,
-    color: 'text-blue-600'
+    color: 'text-teal-600'
   },
   {
     id: 'neetcode-150',
@@ -120,8 +120,8 @@ const ExternalResourcesCard = ({ onViewAll }: ExternalResourcesCardProps) => {
         ))}
 
         {/* Quick Access Note */}
-        <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-          <p className="text-xs text-blue-700 dark:text-blue-300">
+        <div className="mt-4 p-3 bg-teal-50 dark:bg-teal-950/20 rounded-lg border border-teal-200 dark:border-teal-800">
+          <p className="text-xs text-teal-700 dark:text-teal-300">
             💡 <strong>Tip:</strong> Find problems on these platforms, then add them to your POTD archive for tracking and spaced repetition.
           </p>
         </div>

@@ -96,7 +96,7 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
 const getCategoryInfo = (category: string) => {
   switch (category) {
     case 'dsa':
-      return { name: 'DSA', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' };
+      return { name: 'DSA', color: 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200' };
     case 'interview':
       return { name: 'Interview Prep', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
     case 'practice':
@@ -117,7 +117,7 @@ const getDifficultyColor = (difficulty: string) => {
     case 'Advanced':
       return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
     case 'All Levels':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      return 'bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200';
     default:
       return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
   }
@@ -224,8 +224,8 @@ const ExternalResources = () => {
       <div className="mt-8 p-4 bg-muted/50 rounded-lg">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
-              <Users className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+            <div className="w-8 h-8 bg-teal-100 dark:bg-teal-900 rounded-full flex items-center justify-center">
+              <Users className="h-4 w-4 text-teal-600 dark:text-teal-400" />
             </div>
           </div>
           <div className="flex-1">
