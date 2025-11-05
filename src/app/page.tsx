@@ -1047,7 +1047,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-b overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-12 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
               <TabsTrigger value="dashboard" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
