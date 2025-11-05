@@ -14,7 +14,8 @@ import {
   CheckCircle,
   Info,
   Lightbulb,
-  Zap
+  Zap,
+  Brain
 } from "lucide-react";
 
 const Guide = () => {
@@ -223,6 +224,67 @@ const Guide = () => {
               <li>Struggling with a problem decreases the interval for more practice</li>
               <li>Optimal timing maximizes retention while minimizing review time</li>
             </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* AI Features */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Brain className="h-5 w-5 text-blue-600" />
+            AI-Powered Features
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Leverage artificial intelligence to enhance your coding practice with personalized insights and recommendations.
+          </p>
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h4 className="font-medium flex items-center gap-2 mb-2">
+                <Brain className="h-4 w-4 text-blue-600" />
+                Similar Problems Discovery
+              </h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                Find problems with similar patterns, algorithms, or concepts to reinforce your learning.
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
+                <li>AI analyzes problem descriptions and tags</li>
+                <li>Suggests problems from multiple platforms</li>
+                <li>Groups by algorithmic patterns and difficulty</li>
+                <li>Helps build comprehensive understanding of concepts</li>
+              </ul>
+            </div>
+
+            <div className="p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <h4 className="font-medium flex items-center gap-2 mb-2">
+                <Lightbulb className="h-4 w-4 text-blue-600" />
+                AI Review Insights
+              </h4>
+              <p className="text-sm text-muted-foreground mb-2">
+                Get personalized insights about your problem-solving approach and areas for improvement.
+              </p>
+              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
+                <li>Analyzes your solution patterns and performance</li>
+                <li>Identifies knowledge gaps and weak areas</li>
+                <li>Suggests targeted practice recommendations</li>
+                <li>Provides study tips for specific algorithms</li>
+              </ul>
+            </div>
+
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
+              <h4 className="font-medium flex items-center gap-2 mb-2">
+                <Info className="h-4 w-4 text-amber-600" />
+                How to Use AI Features
+              </h4>
+              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
+                <li>Click the "Similar Problems" button on any problem to discover related challenges</li>
+                <li>Use "AI Insights" to get personalized review recommendations</li>
+                <li>AI features work best with a history of solved problems</li>
+                <li>Features are powered by Google Gemini AI for accurate analysis</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
