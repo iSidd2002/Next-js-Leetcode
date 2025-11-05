@@ -214,16 +214,39 @@ const Guide = () => {
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
-            Our intelligent review system helps you retain problem-solving patterns long-term.
+            Our intelligent review system leverages cognitive science to help you retain problem-solving patterns long-term through optimally timed reviews.
           </p>
-          <div className="space-y-3">
-            <h4 className="font-medium">How it works:</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm text-muted-foreground ml-4">
-              <li>Problems are scheduled for review based on your performance</li>
-              <li>Successful reviews increase the interval between future reviews</li>
-              <li>Struggling with a problem decreases the interval for more practice</li>
-              <li>Optimal timing maximizes retention while minimizing review time</li>
-            </ul>
+
+          <div className="space-y-4">
+            <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+              <h4 className="font-medium flex items-center gap-2 mb-2">
+                <Brain className="h-4 w-4 text-purple-600" />
+                How it works (The Science)
+              </h4>
+              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
+                <li>Based on the "forgetting curve" - we forget information exponentially over time</li>
+                <li>Reviews problems just before you're likely to forget them (optimal retention)</li>
+                <li>Uses intervals: 1 day → 3 days → 7 days → 14 days → 30 days → 90 days</li>
+                <li>Successful reviews double the interval; failed reviews reset to 1 day</li>
+                <li>Problems enter review queue when marked as "solved" or "needs review"</li>
+                <li>System adapts to your performance - harder problems get shorter intervals</li>
+              </ul>
+            </div>
+
+            <div className="p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <h4 className="font-medium flex items-center gap-2 mb-2">
+                <Target className="h-4 w-4 text-green-600" />
+                How to Use Effectively
+              </h4>
+              <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
+                <li>Mark problems for review when you solved them but want to reinforce the pattern</li>
+                <li>During reviews: try solving from scratch first, then check your original solution</li>
+                <li>Check the Review tab daily - consistency is key for retention</li>
+                <li>If you fail a review, don't worry - the interval resets and you'll see it again soon</li>
+                <li>Focus on understanding the approach, not memorizing the exact code</li>
+                <li>Skip review only for problems you're 100% confident you've mastered</li>
+              </ul>
+            </div>
           </div>
         </CardContent>
       </Card>
