@@ -226,10 +226,10 @@ const Guide = () => {
               <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">
                 <li>Based on the "forgetting curve" - we forget information exponentially over time</li>
                 <li>Reviews problems just before you're likely to forget them (optimal retention)</li>
-                <li>Uses intervals: 1 day → 3 days → 7 days → 14 days → 30 days → 90 days</li>
-                <li>Successful reviews double the interval; failed reviews reset to 1 day</li>
+                <li>Default intervals: 1 → 3 → 7 → 14 → 30 → 90 → 180 → 365 days (customizable)</li>
+                <li>Successful reviews advance to next interval; failed reviews reset to 1 day</li>
                 <li>Problems enter review queue when marked as "solved" or "needs review"</li>
-                <li>System adapts to your performance - harder problems get shorter intervals</li>
+                <li>After exhausting predefined intervals, uses exponential growth (×2.5)</li>
               </ul>
             </div>
 
@@ -244,7 +244,7 @@ const Guide = () => {
                 <li>Check the Review tab daily - consistency is key for retention</li>
                 <li>If you fail a review, don't worry - the interval resets and you'll see it again soon</li>
                 <li>Focus on understanding the approach, not memorizing the exact code</li>
-                <li>Skip review only for problems you're 100% confident you've mastered</li>
+                <li>Customize review intervals in Settings if the defaults don't suit your learning style</li>
               </ul>
             </div>
           </div>
