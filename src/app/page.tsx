@@ -16,7 +16,8 @@ import CompanyGroupedProblemList from '@/components/CompanyGroupedProblemList';
 import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, ExternalLink, Lightbulb, BookOpen } from 'lucide-react';
+import MoreProjects from '@/components/MoreProjects';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, ExternalLink, Lightbulb, BookOpen, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
@@ -1046,7 +1047,7 @@ export default function HomePage() {
           </div>
 
           <div className="border-b overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-11 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
+            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 lg:grid-cols-12 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
               <TabsTrigger value="dashboard" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
@@ -1125,6 +1126,11 @@ export default function HomePage() {
               <TabsTrigger value="guide" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
                 <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-teal-600" />
                 <span className="text-xs lg:text-sm mt-1 lg:mt-0">Guide</span>
+              </TabsTrigger>
+
+              <TabsTrigger value="projects" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
+                <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-rose-600" />
+                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Projects</span>
               </TabsTrigger>
             </TabsList>
           </div>
@@ -1250,6 +1256,10 @@ export default function HomePage() {
 
           <TabsContent value="guide" className="space-y-6">
             <Guide />
+          </TabsContent>
+
+          <TabsContent value="projects" className="space-y-6">
+            <MoreProjects />
           </TabsContent>
         </Tabs>
         </ClientOnly>
