@@ -16,7 +16,7 @@ import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
 import MoreProjects from '@/components/MoreProjects';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, LogOut, User, CheckSquare, ExternalLink, BookOpen, Briefcase, Trophy, Building2, History, Archive as LearnedIcon, Command } from 'lucide-react';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, LogOut, User, CheckSquare, ExternalLink, BookOpen, Briefcase, Trophy, Building2, History, Archive as LearnedIcon, Command, HelpCircle, BookMarked } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
@@ -733,6 +733,12 @@ export default function HomePage() {
                  <TabsTrigger value="analytics" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
                    Analytics
                 </TabsTrigger>
+                 <TabsTrigger value="guide" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Guide
+                </TabsTrigger>
+                 <TabsTrigger value="resources" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Resources
+                </TabsTrigger>
               </TabsList>
             </div>
 
@@ -847,6 +853,18 @@ export default function HomePage() {
                   <Analytics
                     problems={manualProblems}
                   />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="guide" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                  <Guide />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="resources" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                  <ExternalResources />
                 </div>
               </TabsContent>
             </div>
