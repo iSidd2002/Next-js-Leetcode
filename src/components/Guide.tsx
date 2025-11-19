@@ -57,7 +57,7 @@ const Guide = () => {
               <p className="text-sm text-muted-foreground">Review problems at optimal intervals</p>
             </div>
             <div className="p-4 border rounded-lg">
-              <BarChart3 className="h-8 w-8 text-purple-600 mb-2" />
+              <BarChart3 className="h-8 w-8 text-rose-600 mb-2" />
               <h4 className="font-medium">Analytics</h4>
               <p className="text-sm text-muted-foreground">Visualize your performance and patterns</p>
             </div>
@@ -110,9 +110,9 @@ const Guide = () => {
               <h5 className="font-medium text-green-900 dark:text-green-100">Codeforces</h5>
               <p className="text-xs text-green-700 dark:text-green-300">URL format: codeforces.com/problem/123/A</p>
             </div>
-            <div className="p-3 bg-purple-50 dark:bg-purple-950/20 rounded-lg">
-              <h5 className="font-medium text-purple-900 dark:text-purple-100">AtCoder</h5>
-              <p className="text-xs text-purple-700 dark:text-purple-300">URL format: atcoder.jp/contests/abc123/tasks/abc123_a</p>
+            <div className="p-3 bg-cyan-50 dark:bg-cyan-950/20 rounded-lg">
+              <h5 className="font-medium text-cyan-900 dark:text-cyan-100">AtCoder</h5>
+              <p className="text-xs text-cyan-700 dark:text-cyan-300">URL format: atcoder.jp/contests/abc123/tasks/abc123_a</p>
             </div>
           </div>
         </CardContent>
@@ -182,7 +182,7 @@ const Guide = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5 text-indigo-600" />
+            <ExternalLink className="h-5 w-5 text-cyan-600" />
             External Resources
           </CardTitle>
         </CardHeader>
@@ -208,7 +208,7 @@ const Guide = () => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-purple-600" />
+            <Clock className="h-5 w-5 text-rose-600" />
             Spaced Repetition System
           </CardTitle>
         </CardHeader>
@@ -218,9 +218,9 @@ const Guide = () => {
           </p>
 
           <div className="space-y-4">
-            <div className="p-4 bg-purple-50 dark:bg-purple-950/20 rounded-lg border border-purple-200 dark:border-purple-800">
+            <div className="p-4 bg-rose-50 dark:bg-rose-950/20 rounded-lg border border-rose-200 dark:border-rose-800">
               <h4 className="font-medium flex items-center gap-2 mb-2">
-                <Brain className="h-4 w-4 text-purple-600" />
+                <Brain className="h-4 w-4 text-rose-600" />
                 How it works (The Science)
               </h4>
               <ul className="list-disc list-inside space-y-1 text-xs text-muted-foreground ml-4">

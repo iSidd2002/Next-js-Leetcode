@@ -1,163 +1,151 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer components {
-  .card {
-    @apply bg-white rounded-2xl border border-gray-200 shadow-sm dark:bg-gray-800 dark:border-gray-700;
-  }
-  .layout-container {
-    @apply w-full max-w-screen-xl mx-auto px-4 sm:px-6 lg:px-8;
-  }
-}
-
-body {
-  @apply bg-gray-100 text-gray-900 font-sans antialiased dark:bg-gray-900 dark:text-gray-100;
-}
-
-.hide-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Surreal Day: Creamy warm background with Stark Teal and Rose */
+    --background: 30 30% 98%; /* Warm Cream */
+    --foreground: 222 47% 11%; /* Deep Slate */
+    
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card-foreground: 222 47% 11%;
+    
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 6% 12%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 240 5% 96%;
-    --secondary-foreground: 240 5.9% 10%;
-    --muted: 240 5% 94%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 82% 58%;
-    --destructive-foreground: 0 0% 98%;
-    --warning: 48 94% 61%;
-    --warning-foreground: 0 0% 15%;
-    --success: 142 74% 38%;
-    --success-foreground: 0 0% 98%;
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 240 5% 64.9%;
-    --radius: 0.5rem;
+    --popover-foreground: 222 47% 11%;
+    
+    --primary: 175 84% 32%; /* Deep Teal */
+    --primary-foreground: 210 40% 98%;
+    
+    --secondary: 38 92% 50%; /* Vivid Amber/Gold */
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 30 20% 94%;
+    --muted-foreground: 215 16% 47%;
+    
+    --accent: 340 82% 56%; /* Rose/Magenta */
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 175 84% 32%;
+    
+    --radius: 1rem; /* More rounded for fluid feel */
   }
 
   .dark {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 6% 12%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 82% 58%;
-    --destructive-foreground: 0 0% 98%;
-    --warning: 48 94% 61%;
-    --warning-foreground: 0 0% 15%;
-    --success: 142 74% 38%;
-    --success-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    /* Surreal Night: Deep Ocean, Neon Teal, Electric Gold */
+    --background: 222 47% 8%; /* Darker Ocean */
+    --foreground: 210 40% 98%;
+    
+    --card: 222 47% 10%; /* Slightly lighter ocean */
+    --card-foreground: 210 40% 98%;
+    
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
+    
+    --primary: 173 80% 50%; /* Neon Teal */
+    --primary-foreground: 222 47% 11%;
+    
+    --secondary: 45 93% 47%; /* Dali Gold */
+    --secondary-foreground: 222 47% 11%;
+    
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20.2% 65.1%;
+    
+    --accent: 340 82% 56%; /* Surreal Rose */
+    --accent-foreground: 210 40% 98%;
+    
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 173 80% 50%;
   }
+}
 
+@layer base {
   * {
     @apply border-border;
   }
-
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans antialiased selection:bg-secondary selection:text-secondary-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
   }
+}
 
-  /* Custom scrollbar */
-  ::-webkit-scrollbar {
-    width: 6px;
+@layer components {
+  .card {
+    @apply bg-card text-card-foreground rounded-2xl border border-border shadow-lg transition-all duration-300 hover:shadow-xl hover:border-primary/20;
   }
 
-  ::-webkit-scrollbar-track {
-    @apply bg-muted/30;
+  .glass-panel {
+    @apply bg-background/40 backdrop-blur-xl border border-white/5 shadow-2xl;
   }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-muted-foreground/30 rounded-full;
+  
+  /* Dali-esque Gradient */
+  .gradient-text {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-teal-400 via-amber-400 to-rose-500 animate-gradient-x;
+    background-size: 200% 200%;
   }
+}
 
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
-  }
+/* Custom Scrollbar - Thin & Teal */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
 
-  /* Smooth transitions for theme switching */
-  * {
-    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-  }
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}
 
-  /* Custom animations */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
+::-webkit-scrollbar-thumb {
+  @apply bg-primary/30 rounded-full transition-colors hover:bg-primary/60;
+}
 
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
-  .animate-fade-in {
-    animation: fadeIn 0.3s ease-out;
-  }
+.animate-fade-in {
+  animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
 
-  .animate-slide-in {
-    animation: slideIn 0.3s ease-out;
-  }
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 10px rgba(20, 184, 166, 0.2); } /* Teal Glow */
+  50% { box-shadow: 0 0 25px rgba(245, 158, 11, 0.4); } /* Gold Pulse */
+}
 
-  /* Improved focus styles */
-  .focus-visible:focus-visible {
-    @apply ring-2 ring-ring ring-offset-2 ring-offset-background outline-none;
-  }
+.animate-glow {
+  animation: glow 3s ease-in-out infinite;
+}
 
-  /* Better button hover effects */
-  .btn-gradient {
-    background: linear-gradient(135deg, rgb(59 130 246), rgb(147 51 234));
-    transition: all 0.2s ease;
-  }
+@keyframes gradient-x {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
-  .btn-gradient:hover {
-    background: linear-gradient(135deg, rgb(37 99 235), rgb(126 34 206));
-    transform: translateY(-1px);
-    box-shadow: 0 10px 25px -5px rgba(59, 130, 246, 0.4);
-  }
+.animate-gradient-x {
+  animation: gradient-x 15s ease infinite;
+}
 
+/* Floating Animation for Surreal Feel */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
 
+.animate-float {
+  animation: float 6s ease-in-out infinite;
 }

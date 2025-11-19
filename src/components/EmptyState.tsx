@@ -71,8 +71,8 @@ export default function EmptyState({
           </div>
           
           <div className="text-center">
-            <div className="p-3 bg-purple-100 dark:bg-purple-900/20 rounded-full w-fit mx-auto mb-4">
-              <BookOpen className="h-6 w-6 text-purple-600" />
+            <div className="p-3 bg-rose-100 dark:bg-rose-900/20 rounded-full w-fit mx-auto mb-4">
+              <BookOpen className="h-6 w-6 text-rose-600" />
             </div>
             <h4 className="font-medium mb-2">Analytics</h4>
             <p className="text-sm text-muted-foreground">

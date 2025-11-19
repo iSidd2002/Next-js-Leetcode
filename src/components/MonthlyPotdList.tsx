@@ -27,6 +27,7 @@ import {
   Calendar,
   ChevronDown as ChevronDownIcon
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface MonthlyPotdListProps {
   problems: Problem[];
@@ -90,11 +91,11 @@ const MonthlyPotdList = ({
   const getDifficultyVariant = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return 'default';
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
       case 'medium':
-        return 'secondary';
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800';
       case 'hard':
-        return 'destructive';
+        return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800';
       default:
         return 'outline';
     }
@@ -109,9 +110,9 @@ const MonthlyPotdList = ({
 
   if (problems.length === 0) {
     return (
-      <Card>
+      <Card className="bg-transparent border-none shadow-none">
         <CardContent className="flex flex-col items-center justify-center py-12">
-          <Calendar className="h-12 w-12 text-muted-foreground/50 mb-4" />
+          <Calendar className="h-12 w-12 text-muted-foreground/20 mb-4" />
           <h3 className="text-lg font-semibold mb-2">No POTD Problems Yet</h3>
           <p className="text-muted-foreground text-center">
             Start adding Problem of the Day problems to see them organized by month here.
@@ -128,41 +129,42 @@ const MonthlyPotdList = ({
         const isExpanded = expandedMonths.has(monthYear);
         
         return (
-          <Card key={monthYear}>
+          <Card key={monthYear} className="border-none shadow-sm bg-card/30 backdrop-blur-sm overflow-hidden transition-all">
             <Collapsible open={isExpanded} onOpenChange={() => toggleMonth(monthYear)}>
               <CollapsibleTrigger asChild>
-                <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                <CardHeader className="cursor-pointer hover:bg-muted/20 transition-colors py-4">
                   <div className="flex items-center justify-between">
-                    <CardTitle className="text-lg flex items-center">
-                      <Calendar className="h-5 w-5 mr-2 text-orange-600" />
+                    <CardTitle className="text-base flex items-center">
+                      <Calendar className="h-4 w-4 mr-3 text-orange-500" />
                       {monthYear}
-                      <Badge variant="outline" className="ml-3">
+                      <Badge variant="secondary" className="ml-3 bg-secondary/50 text-muted-foreground font-normal">
                         {monthProblems.length} problem{monthProblems.length !== 1 ? 's' : ''}
                       </Badge>
                     </CardTitle>
                     {isExpanded ? (
-                      <ChevronDown className="h-5 w-5" />
+                      <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
-                      <ChevronRight className="h-5 w-5" />
+                      <ChevronRight className="h-4 w-4 text-muted-foreground" />
                     )}
                   </div>
                 </CardHeader>
               </CollapsibleTrigger>
               
               <CollapsibleContent>
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
+                <CardContent className="pt-0 pb-4">
+                  <div className="space-y-2">
                     {monthProblems.map(problem => {
                       const problemStatus = isPotdInProblems ? isPotdInProblems(problem) : { inProblems: false, inLearned: false, status: '' };
                       
                       return (
                         <div
                           key={problem.id}
-                          className={`border rounded-lg p-4 ${
+                          className={cn(
+                            "border rounded-lg p-3 transition-all hover:bg-muted/20",
                             isDueForReview(problem) 
-                              ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' 
-                              : 'bg-card'
-                          }`}
+                              ? "border-orange-500/30 bg-orange-500/5" 
+                              : "bg-background/40 border-white/5"
+                          )}
                         >
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
@@ -172,33 +174,30 @@ const MonthlyPotdList = ({
                                     href={problem.url} 
                                     target="_blank" 
                                     rel="noopener noreferrer" 
-                                    className="font-medium hover:underline flex items-center gap-1 truncate"
+                                    className="font-medium text-sm hover:text-primary transition-colors flex items-center gap-1 truncate"
                                   >
                                     {problem.title}
-                                    <ExternalLink className="h-3 w-3 shrink-0" />
+                                    <ExternalLink className="h-3 w-3 shrink-0 opacity-30" />
                                   </a>
                                 ) : (
-                                  <span className="font-medium truncate">{problem.title}</span>
+                                  <span className="font-medium text-sm truncate">{problem.title}</span>
                                 )}
                                 {problem.isReview && (
-                                  <Star className={`h-4 w-4 shrink-0 ${
-                                    isDueForReview(problem) ? 'text-blue-500' : 'text-yellow-500'
+                                  <Star className={`h-3.5 w-3.5 shrink-0 ${
+                                    isDueForReview(problem) ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground/40'
                                   }`} />
                                 )}
                               </div>
 
                               <div className="flex flex-wrap gap-2 mb-2">
-                                <Badge variant="outline" className="text-xs">
-                                  {problem.platform === 'leetcode' ? 'LeetCode' : 'CodeForces'}
+                                <Badge variant="outline" className="text-[10px] h-5 px-1.5 border-white/10 text-muted-foreground">
+                                  {problem.platform === 'leetcode' ? 'LC' : 'CF'}
                                 </Badge>
-                                <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
+                                <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5 border-0", getDifficultyVariant(problem.difficulty))}>
                                   {problem.difficulty}
                                 </Badge>
-                                <Badge variant={problem.status === 'learned' ? 'default' : 'secondary'} className="text-xs">
-                                  {problem.status === 'learned' ? 'Learned' : 'Active'}
-                                </Badge>
                                 {problemStatus.status && (
-                                  <Badge variant="default" className="text-xs bg-green-100 text-green-800">
+                                  <Badge variant="default" className="text-[10px] h-5 px-1.5 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/30">
                                     {problemStatus.status}
                                   </Badge>
                                 )}
@@ -207,17 +206,17 @@ const MonthlyPotdList = ({
                               {problem.topics && problem.topics.length > 0 && (
                                 <div className="flex flex-wrap gap-1 mb-2">
                                   {problem.topics.slice(0, 3).map(topic => (
-                                    <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>
+                                    <Badge key={topic} variant="secondary" className="text-[10px] h-5 bg-background/50">{topic}</Badge>
                                   ))}
                                   {problem.topics.length > 3 && (
-                                    <Badge variant="secondary" className="text-xs">+{problem.topics.length - 3}</Badge>
+                                    <Badge variant="secondary" className="text-[10px] h-5 bg-background/50">+{problem.topics.length - 3}</Badge>
                                   )}
                                 </div>
                               )}
 
                               {problem.dateSolved && (
-                                <p className="text-xs text-muted-foreground">
-                                  Solved: {format(parseISO(problem.dateSolved), 'MMM dd, yyyy')}
+                                <p className="text-[10px] text-muted-foreground">
+                                  Solved: {format(parseISO(problem.dateSolved), 'MMM dd')}
                                 </p>
                               )}
                             </div>
@@ -227,13 +226,21 @@ const MonthlyPotdList = ({
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
                                     <Button
-                                      variant={problemStatus.inProblems || problemStatus.inLearned ? "outline" : "default"}
+                                      variant={problemStatus.inProblems || problemStatus.inLearned ? "ghost" : "default"}
                                       size="sm"
-                                      className="text-xs"
+                                      className={cn(
+                                          "text-xs h-8",
+                                          problemStatus.inProblems || problemStatus.inLearned ? "text-muted-foreground" : "bg-primary/80 hover:bg-primary"
+                                      )}
                                     >
-                                      <Plus className="h-3 w-3 mr-1" />
-                                      {problemStatus.status || 'Add to Problems'}
-                                      <ChevronDownIcon className="h-3 w-3 ml-1" />
+                                      {problemStatus.inProblems || problemStatus.inLearned ? (
+                                          <CheckCircle className="h-4 w-4" />
+                                      ) : (
+                                          <>
+                                            <Plus className="h-3 w-3 mr-1" />
+                                            Add
+                                          </>
+                                      )}
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end">
@@ -259,7 +266,7 @@ const MonthlyPotdList = ({
                                 <DropdownMenuTrigger asChild>
                                   <Button variant="ghost" className="h-8 w-8 p-0">
                                     <span className="sr-only">Open menu</span>
-                                    <MoreHorizontal className="h-4 w-4" />
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
@@ -288,7 +295,7 @@ const MonthlyPotdList = ({
                                     </DropdownMenuItem>
                                   )}
 
-                                  <DropdownMenuItem onClick={() => onDeleteProblem(problem.id)}>
+                                  <DropdownMenuItem onClick={() => onDeleteProblem(problem.id)} className="text-destructive">
                                     <Trash2 className="mr-2 h-4 w-4" />
                                     Delete
                                   </DropdownMenuItem>
@@ -298,8 +305,8 @@ const MonthlyPotdList = ({
                           </div>
 
                           {problem.notes && (
-                            <div className="mt-3 pt-3 border-t">
-                              <p className="text-xs text-muted-foreground">{problem.notes}</p>
+                            <div className="mt-3 pt-3 border-t border-white/5">
+                              <p className="text-xs text-muted-foreground line-clamp-2">{problem.notes}</p>
                             </div>
                           )}
                         </div>

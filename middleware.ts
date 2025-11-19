@@ -17,6 +17,8 @@ const publicRoutes = [
   '/api/potd',
   '/api/health',
   '/api/debug',
+  '/api/contests/all',        // Allow public contest listing
+  '/api/daily-challenge',     // Allow public daily challenge
   '/api/ai/test',             // Allow AI test endpoint for development
   '/api/ai/models',           // Allow AI models listing for development
   '/api/ai/verify',           // Allow AI verification for development

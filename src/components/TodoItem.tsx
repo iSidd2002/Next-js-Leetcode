@@ -69,9 +69,9 @@ export default function TodoItem({ todo, onUpdate, onDelete }: TodoItemProps) {
   };
 
   const categoryColors = {
-    coding: 'bg-purple-100 text-purple-800',
+    coding: 'bg-rose-100 text-rose-800',
     study: 'bg-teal-100 text-teal-800',
-    'interview-prep': 'bg-indigo-100 text-indigo-800',
+    'interview-prep': 'bg-cyan-100 text-cyan-800',
     project: 'bg-cyan-100 text-cyan-800',
     personal: 'bg-pink-100 text-pink-800',
     other: 'bg-gray-100 text-gray-800'

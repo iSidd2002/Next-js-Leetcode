@@ -6,7 +6,6 @@ import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
-import { isCleanupNeeded } from '@/utils/potdCleanup';
 import { markAsReviewed, initializeSpacedRepetition } from '@/utils/spacedRepetition';
 import { isToday, isPast } from 'date-fns';
 import Dashboard from '@/components/Dashboard';
@@ -17,24 +16,20 @@ import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
 import MoreProjects from '@/components/MoreProjects';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, Archive as LearnedIcon, History, Trophy, Building2, LogOut, User, FileText, CheckSquare, ExternalLink, Lightbulb, BookOpen, Briefcase } from 'lucide-react';
+import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, LogOut, User, CheckSquare, ExternalLink, BookOpen, Briefcase, Trophy, Building2, History, Archive as LearnedIcon, Command } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useTheme } from '@/components/theme-provider';
-import { Settings as SettingsComponent } from '@/components/Settings';
 import { toast } from 'sonner';
 import ContestTracker from '@/components/ContestTracker';
 import { Badge } from '@/components/ui/badge';
-import CompanyView from '@/components/CompanyView';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import Sheets from '@/components/Sheets';
 import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
 import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
 import Guide from '@/components/Guide';
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { CommandMenu } from '@/components/CommandMenu';
 
 export default function HomePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -48,213 +43,12 @@ export default function HomePage() {
   const { theme, setTheme } = useTheme();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [problemToEdit, setProblemToEdit] = useState<Problem | null>(null);
-  const [activePlatform, setActivePlatform] = useState('leetcode');
-
-
+  const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
 
   // Load data on component mount
   useEffect(() => {
     initializeApp();
   }, []);
-
-  // Load data after successful authentication (doesn't change auth state)
-  const loadDataAfterAuth = async (maxRetries = 5) => {
-    console.log('🔄 Loading data after authentication...');
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`📊 Data loading attempt ${attempt}/${maxRetries}`);
-
-        // Load all data without checking auth status (we know user is authenticated)
-        let problemsData: Problem[] = [];
-        let potdData: Problem[] = [];
-        let contestsData: Contest[] = [];
-        let todosData: Todo[] = [];
-
-        try {
-          [problemsData, potdData, contestsData, todosData] = await Promise.all([
-            StorageService.getProblems(),
-            StorageService.getPotdProblems(),
-            StorageService.getContests(),
-            StorageService.getTodos()
-          ]);
-
-          console.log('✅ Post-auth data loaded successfully:', {
-            problems: problemsData.length,
-            potd: potdData.length,
-            contests: contestsData.length,
-            todos: todosData.length
-          });
-
-        } catch (error) {
-          console.error('❌ Error loading post-auth data:', error);
-
-          // If it's an auth error and we have more retries, continue
-          if (error instanceof Error && error.message.includes('Access token required') && attempt < maxRetries) {
-            console.log(`⏳ Access token error, retrying in ${attempt * 1000}ms...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-            continue;
-          }
-
-          // Use empty arrays as fallback
-          problemsData = [];
-          potdData = [];
-          contestsData = [];
-          todosData = [];
-        }
-
-        // Set the data
-        setProblems(problemsData);
-        setPotdProblems(potdData);
-        setContests(contestsData);
-        setTodos(todosData);
-        setIsLoaded(true);
-
-        console.log('🎉 Post-auth data loading completed successfully');
-        return; // Success, exit retry loop
-
-      } catch (error) {
-        console.error(`❌ Post-auth data load attempt ${attempt} failed:`, error);
-
-        if (attempt === maxRetries) {
-          console.error('💥 All post-auth retry attempts failed');
-          // Set empty data as fallback
-          setProblems([]);
-          setPotdProblems([]);
-          setContests([]);
-          setTodos([]);
-          setIsLoaded(true);
-        } else {
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-        }
-      }
-    }
-  };
-
-  // Load data with retry logic for post-authentication scenarios
-  const loadDataWithRetry = async (maxRetries = 3) => {
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        console.log(`🔄 Loading data attempt ${attempt}/${maxRetries}`);
-
-        // Check authentication status with retry
-        const authenticated = await ApiService.checkAuthStatusWithRetry(3, 200);
-        console.log('🔐 Authentication status:', authenticated);
-
-        // Don't set authentication to false during post-login retry attempts
-        // Only set to true if authenticated, or false on final attempt
-        if (authenticated) {
-          setIsAuthenticated(true);
-        } else if (attempt === maxRetries) {
-          console.log('❌ Authentication failed after all retries');
-          setIsAuthenticated(false);
-          setShowAuthModal(true);
-          return;
-        }
-
-        if (authenticated) {
-          try {
-            // Get user profile first
-            console.log('👤 Fetching user profile...');
-            const userProfile = await ApiService.getProfile();
-            setCurrentUser(userProfile);
-            console.log('✅ User profile loaded:', userProfile.email);
-          } catch (error: any) {
-            console.error('❌ Failed to get user profile:', error);
-
-            if (error.message === 'User not found' || error.status === 404) {
-              console.log('🧹 User not found, clearing auth state');
-              setIsAuthenticated(false);
-              setCurrentUser(null);
-              ApiService.clearAuthState();
-              return;
-            }
-
-            // If it's an auth error and we have more retries, continue
-            if (error.status === 401 && attempt < maxRetries) {
-              console.log(`⏳ Auth error, retrying in ${attempt * 200}ms...`);
-              await new Promise(resolve => setTimeout(resolve, attempt * 200));
-              continue;
-            }
-          }
-        }
-
-        // Load all data
-        console.log('📊 Loading application data...');
-        let problemsData: Problem[] = [];
-        let potdData: Problem[] = [];
-        let contestsData: Contest[] = [];
-        let todosData: Todo[] = [];
-
-        try {
-          [problemsData, potdData, contestsData, todosData] = await Promise.all([
-            StorageService.getProblems(),
-            StorageService.getPotdProblems(),
-            StorageService.getContests(),
-            StorageService.getTodos()
-          ]);
-
-          console.log('✅ Data loaded successfully:', {
-            problems: problemsData.length,
-            potd: potdData.length,
-            contests: contestsData.length,
-            todos: todosData.length
-          });
-
-        } catch (error) {
-          console.error('❌ Error loading data:', error);
-
-          // If it's an auth error and we have more retries, continue
-          if (error instanceof Error && error.message.includes('Access token required') && attempt < maxRetries) {
-            console.log(`⏳ Access token error, retrying in ${attempt * 500}ms...`);
-            await new Promise(resolve => setTimeout(resolve, attempt * 500));
-            continue;
-          }
-
-          // If it's an auth error on final attempt, show login modal
-          if (error instanceof Error && error.message.includes('Access token required') && attempt === maxRetries) {
-            console.log('❌ Authentication failed after all retries, showing login modal');
-            setIsAuthenticated(false);
-            setShowAuthModal(true);
-            return;
-          }
-
-          // For other errors or final attempt, use empty arrays
-          problemsData = [];
-          potdData = [];
-          contestsData = [];
-          todosData = [];
-        }
-
-        // Set the data
-        setProblems(problemsData);
-        setPotdProblems(potdData);
-        setContests(contestsData);
-        setTodos(todosData);
-        setIsLoaded(true);
-
-        console.log('🎉 Data loading completed successfully');
-        return; // Success, exit retry loop
-
-      } catch (error) {
-        console.error(`❌ Load data attempt ${attempt} failed:`, error);
-
-        if (attempt === maxRetries) {
-          console.error('💥 All retry attempts failed');
-          // Set empty data as fallback
-          setProblems([]);
-          setPotdProblems([]);
-          setContests([]);
-          setTodos([]);
-          setIsLoaded(true);
-        } else {
-          // Wait before retrying
-          await new Promise(resolve => setTimeout(resolve, attempt * 500));
-        }
-      }
-    }
-  };
 
   // Reliable app initialization with hybrid authentication check
   const initializeApp = async () => {
@@ -262,13 +56,9 @@ export default function HomePage() {
 
     try {
       // First, check if auth-status cookie indicates authentication
-      console.log('🔍 Checking client-side authentication indicator...');
       const hasAuthCookie = ApiService.isAuthenticated();
-      console.log('🔍 Auth cookie present:', hasAuthCookie);
-
+      
       if (!hasAuthCookie) {
-        // No auth indicator cookie, user is not authenticated
-        console.log('❌ No auth indicator, showing login modal');
         setIsAuthenticated(false);
         setShowAuthModal(true);
         setIsLoaded(true);
@@ -276,19 +66,15 @@ export default function HomePage() {
       }
 
       // Auth cookie present, verify with server
-      console.log('✅ Auth indicator found, verifying with server...');
       try {
         const userProfile = await ApiService.getProfile();
-        console.log('👤 User profile loaded:', userProfile.email);
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
 
         // Load user data
         await loadUserData();
-        console.log('📊 User data loaded successfully');
 
       } catch (error: any) {
-        // Server verification failed, clear state and show login
         console.error('❌ Server verification failed:', error);
         setIsAuthenticated(false);
         setCurrentUser(null);
@@ -325,21 +111,10 @@ export default function HomePage() {
       setContests(contestsData);
       setTodos(todosData);
 
-      // Save cleaned data back if any changes were made
-      if (JSON.stringify(cleanedProblems) !== JSON.stringify(problemsData)) {
-        console.log('Cleaned up invalid dates in problems data');
-        StorageService.saveProblems(cleanedProblems);
-      }
-      if (JSON.stringify(cleanedPotdProblems) !== JSON.stringify(potdData)) {
-        console.log('Cleaned up invalid dates in POTD data');
-        StorageService.savePotdProblems(cleanedPotdProblems);
-      }
-
       // Automatic POTD cleanup - remove expired POTD problems
       try {
         const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
         if (cleanupResult.removedCount > 0) {
-          console.log('POTD Auto-cleanup:', cleanupResult.summary);
           // Reload POTD problems after cleanup
           const updatedPotdProblems = await StorageService.getPotdProblems();
           setPotdProblems(updatedPotdProblems);
@@ -358,7 +133,6 @@ export default function HomePage() {
 
     } catch (error) {
       console.error('Failed to load user data:', error);
-      // Use empty arrays as fallback
       setProblems([]);
       setPotdProblems([]);
       setContests([]);
@@ -366,6 +140,7 @@ export default function HomePage() {
     }
   };
 
+  // ... [Keep existing handler functions: handleAddProblem, handleUpdateProblem, etc. unchanged]
   const handleAddProblem = async (problem: Omit<Problem, 'id' | 'createdAt'>) => {
     try {
       if (!isAuthenticated) {
@@ -373,28 +148,17 @@ export default function HomePage() {
         setShowAuthModal(true);
         return;
       }
-
-      // Create the problem via API (which handles user association)
       const newProblem = await StorageService.addProblem(problem);
-
-      // Add to local state immediately for better UX
       setProblems(prevProblems => [newProblem, ...prevProblems]);
-
       toast.success('Problem added successfully!');
     } catch (error) {
       console.error('Failed to add problem:', error);
-      if (error instanceof Error && error.message.includes('Access token required')) {
-        setIsAuthenticated(false);
-        setShowAuthModal(true);
-        toast.error('Please log in to add problems');
-      } else {
-        toast.error('Failed to add problem. Please try again.');
-      }
+      toast.error('Failed to add problem. Please try again.');
     }
   };
+
   const handleUpdateProblem = async (id: string, updates: Partial<Problem>) => {
     try {
-      // Find the existing problem in both regular problems and POTD problems
       let existingProblem = problems.find(p => p.id === id);
       let isPotdProblem = false;
 
@@ -408,19 +172,14 @@ export default function HomePage() {
         return;
       }
 
-      // Create the updated problem
       const updatedProblem = { ...existingProblem, ...updates };
-
-      // Use the API to update the problem (which handles user association)
       await StorageService.updateProblem(id, updates);
 
-      // Update local state based on problem type
       if (isPotdProblem) {
         setPotdProblems(potdProblems.map(p => p.id === id ? updatedProblem : p));
       } else {
         setProblems(problems.map(p => p.id === id ? updatedProblem : p));
       }
-
       toast.success('Problem updated successfully!');
     } catch (error) {
       console.error('Failed to update problem:', error);
@@ -430,11 +189,8 @@ export default function HomePage() {
 
   const handleToggleReview = async (id: string, updates: Partial<Problem>) => {
     try {
-      // Find the problem in both regular problems and POTD problems
       let problem = problems.find(p => p.id === id);
-      if (!problem) {
-        problem = potdProblems.find(p => p.id === id);
-      }
+      if (!problem) problem = potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
@@ -444,11 +200,9 @@ export default function HomePage() {
       let updatedProblem: Problem;
 
       if (updates.isReview && !problem.isReview) {
-        // Starting review cycle - initialize spaced repetition
         updatedProblem = initializeSpacedRepetition({ ...problem, ...updates }, true);
         toast.success('Problem marked for review! First review scheduled.');
       } else if (!updates.isReview && problem.isReview) {
-        // Stopping review cycle - reset spaced repetition
         updatedProblem = {
           ...problem,
           ...updates,
@@ -459,11 +213,9 @@ export default function HomePage() {
         };
         toast.success('Problem unmarked from review.');
       } else {
-        // Regular update
         updatedProblem = { ...problem, ...updates };
       }
 
-      // Persist the full updated problem so spaced repetition data is saved
       await handleUpdateProblem(problem.id, updatedProblem);
     } catch (error) {
       console.error('Failed to toggle review:', error);
@@ -473,22 +225,16 @@ export default function HomePage() {
 
   const handleDeleteProblem = async (id: string) => {
     try {
-      // Check if it's a POTD problem first
       const isPotdProblem = potdProblems.some(p => p.id === id);
-
-      // Use the API to delete the problem (which handles user association)
       await StorageService.deleteProblem(id);
 
       if (isPotdProblem) {
-        // Refresh the POTD problems list from the server
         const refreshedPotdProblems = await StorageService.getPotdProblems();
         setPotdProblems(refreshedPotdProblems);
       } else {
-        // Refresh the regular problems list from the server
         const refreshedProblems = await StorageService.getProblems();
         setProblems(refreshedProblems);
       }
-
       toast.success('Problem deleted successfully!');
     } catch (error) {
       console.error('Failed to delete problem:', error);
@@ -501,11 +247,6 @@ export default function HomePage() {
     setIsFormOpen(true);
   };
 
-  const handleCloseForm = () => {
-    setIsFormOpen(false);
-    setProblemToEdit(null);
-  };
-
   const handleEditProblem = (problem: Problem) => {
     setProblemToEdit(problem);
     setIsFormOpen(true);
@@ -513,20 +254,15 @@ export default function HomePage() {
 
   const handleProblemReviewed = async (id: string, quality: number = 4) => {
     try {
-      // Find the problem in both regular problems and POTD problems
       let problem = problems.find(p => p.id === id);
-      if (!problem) {
-        problem = potdProblems.find(p => p.id === id);
-      }
+      if (!problem) problem = potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
         return;
       }
 
-      // Use the proper spaced repetition algorithm
       const updatedProblem = markAsReviewed(problem, quality);
-
       await handleUpdateProblem(problem.id, updatedProblem);
       toast.success(`Problem marked as reviewed! Next review in ${updatedProblem.interval} days.`);
     } catch (error) {
@@ -534,8 +270,6 @@ export default function HomePage() {
       toast.error('Failed to mark problem as reviewed');
     }
   };
-
-
 
   const handleAddContest = async (contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
@@ -548,7 +282,6 @@ export default function HomePage() {
       const updatedContests = [...contests, newContest];
       setContests(updatedContests);
       await StorageService.saveContests(updatedContests);
-
       toast.success('Contest added successfully!');
     } catch (error) {
       console.error('Failed to add contest:', error);
@@ -563,7 +296,6 @@ export default function HomePage() {
       );
       setContests(updatedContests);
       await StorageService.saveContests(updatedContests);
-
       toast.success('Contest updated successfully!');
     } catch (error) {
       console.error('Failed to update contest:', error);
@@ -576,7 +308,6 @@ export default function HomePage() {
       const updatedContests = contests.filter(c => c.id !== id);
       setContests(updatedContests);
       await StorageService.saveContests(updatedContests);
-
       toast.success('Contest deleted successfully!');
     } catch (error) {
       console.error('Failed to delete contest:', error);
@@ -584,7 +315,6 @@ export default function HomePage() {
     }
   };
 
-  // Todo handlers
   const handleAddTodo = async (todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const newTodo = await StorageService.addTodo(todoData);
@@ -620,32 +350,21 @@ export default function HomePage() {
 
   const handleClearAllProblems = async () => {
     try {
-      // Get manual and POTD problems to clear (exclude company problems)
       const problemsToClear = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
-
       if (problemsToClear.length === 0) {
         toast.info('No problems to clear');
         return;
       }
-
-      // Delete each problem individually to ensure proper cleanup
       for (const problem of problemsToClear) {
         try {
-          if (!StorageService.getOfflineMode()) {
-            await ApiService.deleteProblem(problem.id);
-          }
+          if (!StorageService.getOfflineMode()) await ApiService.deleteProblem(problem.id);
         } catch (error) {
           console.warn(`Failed to delete problem ${problem.id} from server:`, error);
         }
       }
-
-      // Update local state - keep only company problems
       const remainingProblems = problems.filter(p => p.source === 'company');
       setProblems(remainingProblems);
-
-      // Update localStorage
       await StorageService.saveProblems(remainingProblems);
-
       toast.success(`Successfully cleared ${problemsToClear.length} problems!`);
     } catch (error) {
       console.error('Failed to clear problems:', error);
@@ -659,7 +378,6 @@ export default function HomePage() {
       toast.info('Problem of the day already exists in your POTD list.');
       return;
     }
-
     const newProblem: Problem = {
       id: generateId(),
       platform: 'leetcode',
@@ -677,9 +395,8 @@ export default function HomePage() {
       topics: potd.question.topicTags.map(t => t.name),
       status: 'active',
       companies: [],
-      source: 'potd', // Mark as Problem of the Day
+      source: 'potd',
     };
-
     const updatedPotdProblems = [...potdProblems, newProblem];
     setPotdProblems(updatedPotdProblems);
     StorageService.savePotdProblems(updatedPotdProblems);
@@ -688,13 +405,11 @@ export default function HomePage() {
 
   const handleAddDailyChallengeToPotd = async (dailyProblem: any) => {
     try {
-      // Check for duplicates by URL
       const isDuplicate = potdProblems.some(p => p.url === dailyProblem.url);
       if (isDuplicate) {
         toast.info('Daily challenge already exists in your POTD archive.');
         return;
       }
-
       const newProblem: Problem = {
         id: generateId(),
         platform: dailyProblem.platform,
@@ -712,19 +427,15 @@ export default function HomePage() {
         topics: dailyProblem.topics || [],
         status: 'active',
         companies: [],
-        source: 'potd', // Mark as Problem of the Day
+        source: 'potd',
       };
-
       const updatedPotdProblems = [...potdProblems, newProblem];
       setPotdProblems(updatedPotdProblems);
       await StorageService.savePotdProblems(updatedPotdProblems);
-
-      // Also save to database
       await StorageService.addProblem(newProblem);
-
     } catch (error) {
       console.error('Failed to add daily challenge to POTD:', error);
-      throw error; // Re-throw so the component can handle it
+      throw error;
     }
   };
 
@@ -732,7 +443,6 @@ export default function HomePage() {
     try {
       const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
       if (cleanupResult.removedCount > 0) {
-        // Reload POTD problems after cleanup
         const updatedPotdProblems = await StorageService.getPotdProblems();
         setPotdProblems(updatedPotdProblems);
         toast.success(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
@@ -745,59 +455,40 @@ export default function HomePage() {
     }
   };
 
-  // Helper function to check if POTD problem already exists in Problems section
   const isPotdInProblems = (potdProblem: Problem): { inProblems: boolean; inLearned: boolean; status: string } => {
     const inProblems = problems.some(p => p.url === potdProblem.url && p.status === 'active');
     const inLearned = problems.some(p => p.url === potdProblem.url && p.status === 'learned');
-
     let status = '';
-    if (inProblems && inLearned) {
-      status = 'In Both';
-    } else if (inProblems) {
-      status = 'In Problems';
-    } else if (inLearned) {
-      status = 'In Learned';
-    }
-
+    if (inProblems && inLearned) status = 'In Both';
+    else if (inProblems) status = 'In Problems';
+    else if (inLearned) status = 'In Learned';
     return { inProblems, inLearned, status };
   };
 
   const handleAddPotdToProblem = async (id: string, targetStatus: 'active' | 'learned' = 'active') => {
     try {
-      // Find the POTD problem
       const potdProblem = potdProblems.find(p => p.id === id);
       if (!potdProblem) {
         toast.error('POTD problem not found');
         return;
       }
-
-      // Check if problem already exists with the target status
       const existsWithTargetStatus = problems.some(p => p.url === potdProblem.url && p.status === targetStatus);
       if (existsWithTargetStatus) {
         const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
         toast.info(`Problem already exists in ${sectionName} section`);
         return;
       }
-
-      // Create a new problem with a new ID for the target section
       const newProblemForProblems: Problem = {
         ...potdProblem,
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`, // Generate new unique ID
-        source: 'manual', // Change source from 'potd' to 'manual'
-        status: targetStatus, // Set the target status (active or learned)
-        createdAt: new Date().toISOString() // Update creation time for target section
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        source: 'manual',
+        status: targetStatus,
+        createdAt: new Date().toISOString()
       };
-
-      // Add the new problem to the database
       await StorageService.addProblem(newProblemForProblems);
-
-      // Add to regular problems list (POTD problem remains in POTD list)
       const updatedProblems = [...problems, newProblemForProblems];
       setProblems(updatedProblems);
-
-      // Update storage for problems (POTD storage remains unchanged)
       await StorageService.saveProblems(updatedProblems);
-
       const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
       toast.success(`Problem added to ${sectionName} section successfully!`);
     } catch (error) {
@@ -812,10 +503,8 @@ export default function HomePage() {
       const newProblems: Problem[] = [];
       const duplicateProblems: string[] = [];
       const failedProblems: string[] = [];
-
       console.log(`Starting import of ${problemsToImport.length} problems from ${companyName}`);
 
-      // Create problems one by one using the API (which handles user association)
       for (const problem of problemsToImport) {
         const problemData = {
           platform: 'leetcode' as const,
@@ -823,7 +512,7 @@ export default function HomePage() {
           problemId: problem.titleSlug || problem.title.toLowerCase().replace(/\s+/g, '-'),
           difficulty: problem.difficulty,
           url: problem.url || `https://leetcode.com/problems/${problem.titleSlug || problem.title.toLowerCase().replace(/\s+/g, '-')}/`,
-          dateSolved: '', // Empty = not solved yet
+          dateSolved: '',
           notes: `Imported from ${companyName} problems`,
           isReview: false,
           repetition: 0,
@@ -832,59 +521,34 @@ export default function HomePage() {
           topics: problem.topics || [],
           status: 'active' as const,
           companies: [companyName],
-          source: 'company' as const, // Mark as company-imported problem
+          source: 'company' as const,
         };
 
         try {
           const createdProblem = await StorageService.addProblem(problemData);
           newProblems.push(createdProblem);
-          console.log(`✅ Imported: ${problem.title} with source: ${createdProblem.source}`);
         } catch (error: any) {
-          console.warn(`Failed to import problem: ${problem.title}`, error);
-
-          // Check if it's a duplicate error (409 status or "already exists" message)
-          const isDuplicate = error.message && (
+           const isDuplicate = error.message && (
             error.message.includes('already exists') ||
             error.message.includes('HTTP error! status: 409') ||
             error.status === 409
           );
-
-          if (isDuplicate) {
-            duplicateProblems.push(problem.title);
-            console.log(`🔄 Duplicate detected: ${problem.title}`);
-          } else {
-            failedProblems.push(problem.title);
-            console.error(`❌ Failed to import: ${problem.title}`, error);
-          }
+          if (isDuplicate) duplicateProblems.push(problem.title);
+          else failedProblems.push(problem.title);
         }
       }
 
-      // Refresh the problems list from the server to get the latest data
       const refreshedProblems = await StorageService.getProblems();
       setProblems(refreshedProblems);
 
-      // Provide detailed feedback
       let message = '';
-      if (newProblems.length > 0) {
-        message += `Successfully imported ${newProblems.length} new problems from ${companyName}!`;
-      }
-      if (duplicateProblems.length > 0) {
-        message += ` ${duplicateProblems.length} problems were already imported.`;
-      }
-      if (failedProblems.length > 0) {
-        message += ` ${failedProblems.length} problems failed to import.`;
-      }
+      if (newProblems.length > 0) message += `Successfully imported ${newProblems.length} new problems!`;
+      if (duplicateProblems.length > 0) message += ` ${duplicateProblems.length} duplicates skipped.`;
+      if (failedProblems.length > 0) message += ` ${failedProblems.length} failed.`;
 
-      if (newProblems.length > 0) {
-        message += ' Check the Companies tab to see them organized.';
-        toast.success(message);
-      } else if (duplicateProblems.length > 0) {
-        toast.info(message);
-      } else {
-        toast.error(message || 'No problems were imported.');
-      }
-
-      console.log(`Import completed: ${newProblems.length} new, ${duplicateProblems.length} duplicates, ${failedProblems.length} failed`);
+      if (newProblems.length > 0) toast.success(message);
+      else if (duplicateProblems.length > 0) toast.info(message);
+      else toast.error(message || 'No problems were imported.');
     } catch (error) {
       console.error('Failed to import problems:', error);
       toast.error('Failed to import problems');
@@ -902,62 +566,77 @@ export default function HomePage() {
     );
   }
 
-  // Filter problems based on source for proper separation
-  // Manual problems (for Problems tab) - exclude company-imported problems
-  const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source); // Include legacy problems without source
+  const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
   const activeProblems = manualProblems.filter(p => p.status === 'active');
-
-  // CRITICAL FIX: Show ALL problems marked for review from both regular and POTD problems
-  // Users should see all review problems and identify which are due
   const allProblemsForReview = [...problems, ...potdProblems];
   const reviewProblems = allProblemsForReview.filter(p => p.isReview);
-
-  // Separate calculation for due problems (for badges and highlighting)
   const dueReviewProblems = reviewProblems.filter(p =>
     p.nextReviewDate &&
     (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
   );
-
   const learnedProblems = manualProblems.filter(p => p.status === 'learned');
-
-  // Company problems (for Companies tab) - only company-imported problems
   const companyProblems = problems.filter(p => p.source === 'company');
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20 font-sans antialiased">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-2 sm:px-4">
-          <div className="flex justify-between items-center h-14 sm:h-16">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="relative">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-orange-600 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <span className="text-white font-bold text-sm sm:text-lg">LC</span>
+    <div className="min-h-screen font-sans antialiased pb-8">
+      <CommandMenu 
+        open={isCommandMenuOpen} 
+        onOpenChange={setIsCommandMenuOpen} 
+        onAddProblem={() => handleOpenForm()}
+      />
+      
+      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center space-x-3">
+              <div className="relative group cursor-pointer">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary to-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all duration-300">
+                  <span className="text-white font-bold text-lg">LC</span>
                 </div>
-                <div className="absolute -top-1 -right-1 w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
+                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-lg sm:text-xl font-bold bg-gradient-to-r from-orange-700 to-red-600 bg-clip-text text-transparent">
-                  LeetCode Tracker
+                <h1 className="text-xl font-bold tracking-tight hidden sm:block">
+                  Tracker
                 </h1>
-                <p className="text-xs text-muted-foreground hidden sm:block">Master coding problems</p>
               </div>
             </div>
 
-            <div className="flex items-center space-x-1 sm:space-x-2">
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              
+              {/* Search Trigger Button for Desktop */}
+              <Button
+                variant="outline"
+                size="sm"
+                className="hidden md:flex w-64 justify-start text-muted-foreground bg-muted/50 hover:bg-muted/80"
+                onClick={() => setIsCommandMenuOpen(true)}
+              >
+                 <Command className="mr-2 h-4 w-4" />
+                 <span className="inline-flex">Search...</span>
+                 <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+                    <span className="text-xs">⌘</span>K
+                 </kbd>
+              </Button>
+
+              {/* Search Trigger Button for Mobile */}
+              <Button
+                 variant="ghost"
+                 size="icon"
+                 className="md:hidden"
+                 onClick={() => setIsCommandMenuOpen(true)}
+              >
+                <Command className="h-5 w-5" />
+              </Button>
+
               {isAuthenticated && (
-                <div className="hidden md:flex items-center space-x-2 mr-2 sm:mr-4">
-                  <div className="flex items-center space-x-1 px-2 sm:px-3 py-1 bg-green-100 dark:bg-green-900/20 rounded-full">
-                    <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                    <span className="text-xs font-medium text-green-700 dark:text-green-400">Online</span>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                <div className="hidden md:flex items-center space-x-2 mr-4">
+                   <Button
                     onClick={() => handleOpenForm()}
-                    className="hidden lg:flex"
+                    className="hidden lg:flex shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
+                    size="sm"
                   >
                     <Plus className="h-4 w-4 mr-2" />
-                    Add Problem
+                    New Problem
                   </Button>
                 </div>
               )}
@@ -966,24 +645,24 @@ export default function HomePage() {
                 variant="ghost"
                 size="icon"
                 onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                className="rounded-full h-8 w-8 sm:h-10 sm:w-10"
+                className="rounded-full"
               >
-                {theme === 'light' ? <Moon className="h-4 w-4 sm:h-5 sm:w-5" /> : <Sun className="h-4 w-4 sm:h-5 sm:w-5" />}
+                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
               </Button>
 
               {isAuthenticated ? (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="rounded-full">
-                      <div className="w-8 h-8 bg-gradient-to-br from-orange-600 to-red-600 rounded-full flex items-center justify-center">
-                        <User className="h-4 w-4 text-white" />
+                      <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-rose-600 rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform">
+                        <User className="h-4 w-4" />
                       </div>
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
                     <div className="px-2 py-1.5">
-                      <p className="text-sm font-medium">Welcome back!</p>
-                      <p className="text-xs text-muted-foreground">Manage your account</p>
+                      <p className="text-sm font-medium">Signed in as</p>
+                      <p className="text-xs text-muted-foreground truncate">{currentUser?.email || 'User'}</p>
                     </div>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => setShowAuthModal(true)}>
@@ -996,21 +675,19 @@ export default function HomePage() {
                         setIsAuthenticated(false);
                         setCurrentUser(null);
                         toast.success('Logged out successfully');
-                        // Reload data to clear user-specific content
-                        loadData();
+                        loadDataUserData();
                       } catch (error) {
                         console.error('Logout error:', error);
                         toast.error('Logout failed');
                       }
-                    }}>
+                    }} className="text-red-500 focus:text-red-500">
                       <LogOut className="h-4 w-4 mr-2" />
                       Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
-                <Button onClick={() => setShowAuthModal(true)} className="bg-gradient-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800">
-                  <User className="h-4 w-4 mr-2" />
+                <Button onClick={() => setShowAuthModal(true)}>
                   Login
                 </Button>
               )}
@@ -1019,249 +696,161 @@ export default function HomePage() {
         </div>
       </header>
 
-      <main className="container mx-auto px-2 sm:px-4 py-4 sm:py-6">
+      <main className="container mx-auto px-4 py-8">
         <ClientOnly>
-          <Tabs defaultValue="dashboard" className="space-y-4 sm:space-y-6">
-          <div className="flex flex-col space-y-3 sm:space-y-4 lg:flex-row lg:items-center lg:justify-between lg:space-y-0">
-            <div className="space-y-1">
-              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight bg-gradient-to-r from-orange-700 to-red-600 bg-clip-text text-transparent">
-                Problem Tracker
-              </h1>
-              <p className="text-sm sm:text-base text-muted-foreground">
-                Track your coding journey across LeetCode, CodeForces & more
-              </p>
+          <Tabs defaultValue="dashboard" className="space-y-8">
+            
+            {/* Navigation Tabs - Floating Pill Style */}
+            <div className="overflow-x-auto pb-2 hide-scrollbar">
+               <TabsList className="inline-flex h-12 items-center justify-center rounded-full bg-muted/50 p-1 text-muted-foreground backdrop-blur-sm">
+                <TabsTrigger value="dashboard" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Dashboard
+                </TabsTrigger>
+                <TabsTrigger value="problems" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Problems
+                   {activeProblems.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{activeProblems.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="companies" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Companies
+                </TabsTrigger>
+                <TabsTrigger value="potd" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   POTD
+                   {potdProblems.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{potdProblems.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="contests" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Contests
+                </TabsTrigger>
+                 <TabsTrigger value="review" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Review
+                   {dueReviewProblems.length > 0 && <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-[10px]">{dueReviewProblems.length}</Badge>}
+                </TabsTrigger>
+                <TabsTrigger value="todos" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Tasks
+                </TabsTrigger>
+                 <TabsTrigger value="learned" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Learned
+                </TabsTrigger>
+                 <TabsTrigger value="analytics" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
+                   Analytics
+                </TabsTrigger>
+              </TabsList>
             </div>
 
-            <div className="flex items-center space-x-2">
-              {isAuthenticated && (
-                <Button
-                  onClick={() => handleOpenForm()}
-                  className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 md:hidden"
-                  size="sm"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Problem
-                </Button>
-              )}
+            <div className="animate-fade-in">
+              <TabsContent value="dashboard" className="mt-0">
+                <Dashboard
+                  problems={manualProblems}
+                  todos={todos}
+                  onUpdateProblem={handleUpdateProblem}
+                  onAddPotd={handleAddPotdProblem}
+                  onImportProblems={handleImportProblems}
+                  onCleanupPotd={handleCleanupPotd}
+                  onAddDailyChallenge={handleAddDailyChallengeToPotd}
+                />
+              </TabsContent>
+
+              <TabsContent value="companies" className="mt-0 space-y-6">
+                <CompanyDashboard problems={companyProblems} />
+                <CompanyGroupedProblemList
+                  problems={companyProblems}
+                  onUpdateProblem={handleUpdateProblem}
+                  onToggleReview={handleToggleReview}
+                  onDeleteProblem={handleDeleteProblem}
+                  onEditProblem={handleEditProblem}
+                  onProblemReviewed={handleProblemReviewed}
+                  onImportProblems={handleImportProblems}
+                  isReviewList={false}
+                  title="Problems by Company"
+                />
+              </TabsContent>
+
+              <TabsContent value="potd" className="mt-0 space-y-6">
+                <MonthlyPotdList
+                  problems={potdProblems}
+                  onUpdateProblem={handleUpdateProblem}
+                  onToggleReview={handleToggleReview}
+                  onDeleteProblem={handleDeleteProblem}
+                  onEditProblem={handleEditProblem}
+                  onProblemReviewed={handleProblemReviewed}
+                  onAddToProblem={handleAddPotdToProblem}
+                  isPotdInProblems={isPotdInProblems}
+                />
+              </TabsContent>
+
+              <TabsContent value="contests" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
+                  <ContestTracker
+                    contests={contests}
+                    onAddContest={handleAddContest}
+                    onUpdateContest={handleUpdateContest}
+                    onDeleteContest={handleDeleteContest}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="todos" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                  <TodoList
+                    todos={todos}
+                    onAddTodo={handleAddTodo}
+                    onUpdateTodo={handleUpdateTodo}
+                    onDeleteTodo={handleDeleteTodo}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="problems" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
+                  <ProblemList
+                    problems={activeProblems}
+                    onUpdateProblem={handleUpdateProblem}
+                    onToggleReview={handleToggleReview}
+                    onDeleteProblem={handleDeleteProblem}
+                    onEditProblem={handleEditProblem}
+                    onProblemReviewed={handleProblemReviewed}
+                    onClearAll={handleClearAllProblems}
+                    isReviewList={false}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="review" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
+                  <ProblemList
+                    problems={reviewProblems}
+                    onUpdateProblem={handleUpdateProblem}
+                    onToggleReview={handleToggleReview}
+                    onDeleteProblem={handleDeleteProblem}
+                    onEditProblem={handleEditProblem}
+                    onProblemReviewed={handleProblemReviewed}
+                    isReviewList={true}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="learned" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
+                  <ProblemList
+                    problems={learnedProblems}
+                    onUpdateProblem={handleUpdateProblem}
+                    onToggleReview={handleToggleReview}
+                    onDeleteProblem={handleDeleteProblem}
+                    onEditProblem={handleEditProblem}
+                    onProblemReviewed={handleProblemReviewed}
+                    isReviewList={false}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="analytics" className="mt-0 space-y-6">
+                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
+                  <Analytics
+                    problems={manualProblems}
+                  />
+                </div>
+              </TabsContent>
             </div>
-          </div>
-
-          <div className="border-b overflow-x-auto">
-            <TabsList className="grid w-full grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-12 h-auto p-1 bg-muted/50 min-w-max sm:min-w-full">
-              <TabsTrigger value="dashboard" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <HomeIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Dashboard</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="companies" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <Building2 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Companies</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="potd" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <Star className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-yellow-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">POTD</span>
-                {potdProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {potdProblems.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-
-              <TabsTrigger value="contests" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <Trophy className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-amber-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Contests</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="todos" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <CheckSquare className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-violet-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Todos</span>
-                {todos.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {todos.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-
-              <TabsTrigger value="problems" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <List className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Problems</span>
-                {activeProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {activeProblems.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-
-              <TabsTrigger value="review" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <History className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-orange-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Review</span>
-                {dueReviewProblems.length > 0 && (
-                  <Badge variant="destructive" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {dueReviewProblems.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-
-              <TabsTrigger value="learned" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row relative px-2 sm:px-3">
-                <LearnedIcon className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-emerald-500" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Learned</span>
-                {learnedProblems.length > 0 && (
-                  <Badge variant="secondary" className="absolute -top-1 -right-1 h-4 w-4 p-0 text-xs lg:static lg:ml-2 lg:h-auto lg:w-auto lg:p-1">
-                    {learnedProblems.length}
-                  </Badge>
-                )}
-              </TabsTrigger>
-
-              <TabsTrigger value="analytics" className="hidden sm:flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-sky-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Analytics</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="resources" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <ExternalLink className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-indigo-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Resources</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="guide" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <BookOpen className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-teal-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Guide</span>
-              </TabsTrigger>
-
-              <TabsTrigger value="projects" className="flex flex-col h-14 sm:h-16 lg:h-10 lg:flex-row px-2 sm:px-3">
-                <Briefcase className="h-3 w-3 sm:h-4 sm:w-4 lg:mr-2 text-rose-600" />
-                <span className="text-xs lg:text-sm mt-1 lg:mt-0">Projects</span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          <TabsContent value="dashboard" className="space-y-6">
-            <Dashboard
-              problems={manualProblems}
-              todos={todos}
-              onUpdateProblem={handleUpdateProblem}
-              onAddPotd={handleAddPotdProblem}
-              onImportProblems={handleImportProblems}
-              onCleanupPotd={handleCleanupPotd}
-              onAddDailyChallenge={handleAddDailyChallengeToPotd}
-            />
-          </TabsContent>
-
-          <TabsContent value="companies" className="space-y-6">
-            <CompanyDashboard problems={companyProblems} />
-            <CompanyGroupedProblemList
-              problems={companyProblems}
-              onUpdateProblem={handleUpdateProblem}
-              onToggleReview={handleToggleReview}
-              onDeleteProblem={handleDeleteProblem}
-              onEditProblem={handleEditProblem}
-              onProblemReviewed={handleProblemReviewed}
-              onImportProblems={handleImportProblems}
-              isReviewList={false}
-              title="Problems by Company"
-            />
-          </TabsContent>
-
-
-
-          <TabsContent value="potd" className="space-y-6">
-            <MonthlyPotdList
-              problems={potdProblems}
-              onUpdateProblem={handleUpdateProblem}
-              onToggleReview={handleToggleReview}
-              onDeleteProblem={handleDeleteProblem}
-              onEditProblem={handleEditProblem}
-              onProblemReviewed={handleProblemReviewed}
-              onAddToProblem={handleAddPotdToProblem}
-              isPotdInProblems={isPotdInProblems}
-            />
-          </TabsContent>
-
-          <TabsContent value="contests" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <ContestTracker
-                contests={contests}
-                onAddContest={handleAddContest}
-                onUpdateContest={handleUpdateContest}
-                onDeleteContest={handleDeleteContest}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="todos" className="space-y-6">
-            <div className="rounded-lg border bg-card p-6">
-              <TodoList
-                todos={todos}
-                onAddTodo={handleAddTodo}
-                onUpdateTodo={handleUpdateTodo}
-                onDeleteTodo={handleDeleteTodo}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="problems" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <ProblemList
-                problems={activeProblems}
-                onUpdateProblem={handleUpdateProblem}
-                onToggleReview={handleToggleReview}
-                onDeleteProblem={handleDeleteProblem}
-                onEditProblem={handleEditProblem}
-                onProblemReviewed={handleProblemReviewed}
-                onClearAll={handleClearAllProblems}
-                isReviewList={false}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="review" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <ProblemList
-                problems={reviewProblems}
-                onUpdateProblem={handleUpdateProblem}
-                onToggleReview={handleToggleReview}
-                onDeleteProblem={handleDeleteProblem}
-                onEditProblem={handleEditProblem}
-                onProblemReviewed={handleProblemReviewed}
-                isReviewList={true}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="learned" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <ProblemList
-                problems={learnedProblems}
-                onUpdateProblem={handleUpdateProblem}
-                onToggleReview={handleToggleReview}
-                onDeleteProblem={handleDeleteProblem}
-                onEditProblem={handleEditProblem}
-                onProblemReviewed={handleProblemReviewed}
-                isReviewList={false}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="analytics" className="space-y-6">
-            <div className="rounded-lg border bg-card">
-              <Analytics
-                problems={manualProblems}
-              />
-            </div>
-          </TabsContent>
-
-          <TabsContent value="resources" className="space-y-6">
-            <ExternalResources />
-          </TabsContent>
-
-          <TabsContent value="guide" className="space-y-6">
-            <Guide />
-          </TabsContent>
-
-          <TabsContent value="projects" className="space-y-6">
-            <MoreProjects />
-          </TabsContent>
-        </Tabs>
+          </Tabs>
         </ClientOnly>
       </main>
 
@@ -1283,38 +872,28 @@ export default function HomePage() {
         open={showAuthModal}
         onOpenChange={setShowAuthModal}
         onAuthSuccess={async () => {
-          // Set authenticated state immediately
           setIsAuthenticated(true);
-
-          // Wait for cookies to be available, then load user profile and data
           setTimeout(async () => {
             try {
-              // Get user profile
               const userProfile = await ApiService.getProfile();
               setCurrentUser(userProfile);
-
-              // Load user data
               await loadUserData();
-
             } catch (error: any) {
               console.error('Post-auth data loading failed:', error);
-              // If something fails, re-initialize the app
               await initializeApp();
             }
-          }, 1000); // Wait for cookies to be available
+          }, 1000);
         }}
       />
-
-
 
       {/* Floating Action Button */}
       {isAuthenticated && (
         <Button
           onClick={() => handleOpenForm()}
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full bg-gradient-to-r from-orange-600 to-red-700 hover:from-orange-700 hover:to-red-800 shadow-lg hover:shadow-xl transition-all duration-200 z-50"
+          className="fixed bottom-8 right-8 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl shadow-primary/20 transition-all duration-300 z-50"
           size="icon"
         >
-          <Plus className="h-6 w-6" />
+          <Plus className="h-6 w-6 text-white" />
         </Button>
       )}
     </div>

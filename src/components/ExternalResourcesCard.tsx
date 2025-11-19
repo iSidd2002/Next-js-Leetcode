@@ -41,7 +41,7 @@ const QUICK_RESOURCES: QuickResource[] = [
     url: 'https://learnyard.com/practice/dsa',
     category: 'Practice',
     icon: <Brain className="h-4 w-4" />,
-    color: 'text-purple-600'
+    color: 'text-rose-600'
   },
   {
     id: 'codingninjas',
@@ -78,7 +78,7 @@ const ExternalResourcesCard = ({ onViewAll }: ExternalResourcesCardProps) => {
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center">
-            <ExternalLink className="h-5 w-5 mr-2 text-indigo-600" />
+            <ExternalLink className="h-5 w-5 mr-2 text-cyan-600" />
             Practice Resources
           </CardTitle>
           {onViewAll && (

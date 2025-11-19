@@ -108,7 +108,7 @@ const AllContestsList = () => {
       case 'upcoming': return 'bg-amber-500';
       case 'running': return 'bg-green-500';
       case 'finished': return 'bg-gray-500';
-      default: return 'bg-purple-500';
+      default: return 'bg-rose-500';
     }
   };
 
@@ -116,10 +116,10 @@ const AllContestsList = () => {
     const colors: Record<string, string> = {
       'Codeforces': 'bg-red-500',
       'LeetCode': 'bg-orange-500',
-      'AtCoder': 'bg-indigo-500',
+      'AtCoder': 'bg-cyan-500',
       'CodeChef': 'bg-yellow-500',
       'HackerRank': 'bg-green-500',
-      'TopCoder': 'bg-purple-500'
+      'TopCoder': 'bg-rose-500'
     };
     return colors[platform] || 'bg-gray-500';
   };
@@ -273,7 +273,7 @@ const AllContestsList = () => {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <Globe className="h-5 w-5 text-purple-500" />
+              <Globe className="h-5 w-5 text-rose-500" />
               <div>
                 <p className="text-2xl font-bold">{contests.summary.platforms.length}</p>
                 <p className="text-sm text-muted-foreground">Platforms</p>

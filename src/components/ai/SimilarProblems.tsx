@@ -104,7 +104,7 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
     switch (platform.toLowerCase()) {
       case 'leetcode': return 'bg-orange-100 text-orange-900 dark:bg-orange-900 dark:text-orange-200';
       case 'codeforces': return 'bg-sky-100 text-sky-900 dark:bg-sky-900 dark:text-sky-200';
-      case 'atcoder': return 'bg-violet-100 text-violet-900 dark:bg-violet-900 dark:text-violet-200';
+      case 'atcoder': return 'bg-teal-100 text-teal-900 dark:bg-teal-900 dark:text-teal-200';
       default: return 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-gray-200';
     }
   };
@@ -119,7 +119,7 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
     <Card className={`w-full ${className}`}>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Brain className="h-5 w-5 text-purple-600" />
+          <Brain className="h-5 w-5 text-rose-600" />
           AI-Powered Similar Problems
         </CardTitle>
         {!recommendations && !loading && (
@@ -208,7 +208,7 @@ const SimilarProblems = ({ problem, className = '' }: SimilarProblemsProps) => {
               
               {recommendations.recommendations?.length > 0 ? (
                 recommendations.recommendations.map((rec, idx) => (
-                <Card key={idx} className="border-l-4 border-l-purple-500">
+                <Card key={idx} className="border-l-4 border-l-rose-500">
                   <CardContent className="pt-4">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">

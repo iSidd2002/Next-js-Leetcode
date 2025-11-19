@@ -27,8 +27,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'practice',
     difficulty: 'All Levels',
     icon: <Target className="h-5 w-5" />,
-    color: 'text-indigo-700',
-    bgGradient: 'from-indigo-50 to-violet-50 dark:from-indigo-950/15 dark:to-violet-950/25',
+    color: 'text-cyan-700',
+    bgGradient: 'from-cyan-50 to-teal-50 dark:from-cyan-950/15 dark:to-teal-950/25',
     features: ['Beginner to Expert', 'Codeforces Focused', 'Step-by-step Roadmap', 'Competitive Programming']
   },
   {
@@ -63,8 +63,8 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     category: 'practice',
     difficulty: 'All Levels',
     icon: <Brain className="h-5 w-5" />,
-    color: 'text-purple-700',
-    bgGradient: 'from-purple-50 to-fuchsia-50 dark:from-purple-950/25 dark:to-fuchsia-950/20',
+    color: 'text-rose-700',
+    bgGradient: 'from-rose-50 to-fuchsia-50 dark:from-rose-950/25 dark:to-fuchsia-950/20',
     features: ['Interactive Practice', 'Multiple Topics', 'Progress Tracking', 'Concept Building']
   },
   {
@@ -100,7 +100,7 @@ const getCategoryInfo = (category: string) => {
     case 'interview':
       return { name: 'Interview Prep', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
     case 'practice':
-      return { name: 'Practice', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' };
+      return { name: 'Practice', color: 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-200' };
     case 'algorithms':
       return { name: 'Algorithms', color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
     default:

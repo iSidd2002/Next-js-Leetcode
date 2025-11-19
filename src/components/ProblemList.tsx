@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight, Brain, Lightbulb } from 'lucide-react';
+import { MoreHorizontal, Star, Trash2, ExternalLink, ChevronDown, ChevronRight, CheckCircle, Pencil, Undo2, BookOpen, Edit, ArrowRight, Brain, Lightbulb, Search } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,19 +41,33 @@ import remarkGfm from 'remark-gfm';
 import EmptyState from '@/components/EmptyState';
 import ReviewInsights from '@/components/ai/ReviewInsights';
 import SimilarProblems from '@/components/ai/SimilarProblems';
+import { cn } from '@/lib/utils';
 
 // Helper function to get difficulty badge variant
 const getDifficultyVariant = (difficulty: string) => {
   switch (difficulty.toLowerCase()) {
     case 'easy':
-      return 'default';
+      return 'success';
     case 'medium':
-      return 'secondary';
+      return 'warning';
     case 'hard':
       return 'destructive';
     default:
       return 'outline';
   }
+};
+
+const getDifficultyClass = (difficulty: string) => {
+    switch (difficulty.toLowerCase()) {
+      case 'easy':
+        return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800';
+      case 'medium':
+        return 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800';
+      case 'hard':
+        return 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800';
+      default:
+        return 'bg-secondary text-secondary-foreground';
+    }
 };
 
 interface ProblemListProps {
@@ -146,55 +160,42 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
     }
   };
 
-  const getDifficultyBadgeVariant = (difficulty: string, platform: string): "default" | "destructive" | "secondary" | "outline" | "success" | "warning" => {
-    if (platform === 'codeforces' || platform === 'atcoder') return 'default';
-    switch (difficulty) {
-      case 'Easy':
-        return 'success';
-      case 'Medium':
-        return 'warning';
-      case 'Hard':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
   return (
-    <Card>
-        <CardHeader className="pb-4">
+    <Card className="border-none shadow-none bg-transparent">
+        <CardHeader className="px-0 pb-4 pt-0">
             <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                 <div className="space-y-1">
-                    <CardTitle className="text-2xl font-bold flex items-center">
+                    <CardTitle className="text-2xl font-bold flex items-center tracking-tight">
                         {isReviewList ? (
                             <>
-                                <Star className="h-6 w-6 text-orange-500 mr-2" />
-                                Review Problems
+                                <Star className="h-6 w-6 text-orange-500 mr-2 fill-orange-500/20" />
+                                Review Queue
                             </>
                         ) : (
                             <>
-                                <CheckCircle className="h-6 w-6 text-green-500 mr-2" />
-                                Problems
+                                <CheckCircle className="h-6 w-6 text-emerald-500 mr-2" />
+                                All Problems
                             </>
                         )}
                     </CardTitle>
                     <p className="text-sm text-muted-foreground">
                         {filteredProblems.length} of {problems.length} problems
                         {isReviewList && filteredProblems.length > 0 && (
-                            <span className="ml-2 text-orange-600 font-medium">
-                                • {filteredProblems.length} due for review
+                            <span className="ml-2 text-orange-500 font-medium bg-orange-500/10 px-2 py-0.5 rounded-full text-xs">
+                                {filteredProblems.length} due
                             </span>
                         )}
                     </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <div className="flex-1 min-w-0">
+                    <div className="relative flex-1 min-w-0">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="text"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Search problems..."
-                            className="bg-background w-full"
+                            className="pl-9 bg-background/50 backdrop-blur-sm border-white/10 focus:bg-background transition-all"
                         />
                     </div>
                     {/* Clear All Button - only show for non-review lists and when there are problems */}
@@ -202,13 +203,12 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button
-                                    variant="destructive"
+                                    variant="ghost"
                                     size="sm"
-                                    className="whitespace-nowrap shrink-0"
+                                    className="whitespace-nowrap shrink-0 text-muted-foreground hover:text-destructive"
                                 >
                                     <Trash2 className="h-4 w-4 sm:mr-2" />
                                     <span className="hidden sm:inline">Clear All</span>
-                                    <span className="sm:hidden">Clear</span>
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
@@ -238,165 +238,113 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                 </div>
             </div>
         </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         {/* Mobile Card Layout */}
         <div className="block md:hidden space-y-3 mb-6">
           {filteredProblems.length > 0 ? (
             filteredProblems.map((problem) => (
-              <div key={problem.id} className={`border rounded-lg p-4 ${isDueForReview(problem) ? 'border-orange-500 bg-orange-50 dark:bg-orange-950/20' : 'bg-card'}`}>
+              <div key={problem.id} className={cn(
+                  "border rounded-xl p-4 transition-all",
+                  isDueForReview(problem) 
+                    ? "border-orange-500/30 bg-orange-500/5" 
+                    : "bg-card/50 border-white/10"
+                )}>
                 <div className="flex items-start justify-between mb-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2">
                       {problem.url ? (
-                        <a href={problem.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:underline flex items-center gap-1 truncate">
+                        <a href={problem.url} target="_blank" rel="noopener noreferrer" className="font-medium text-sm hover:text-primary transition-colors flex items-center gap-1 truncate">
                           {problem.title}
-                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <ExternalLink className="h-3 w-3 shrink-0 opacity-50" />
                         </a>
                       ) : (
                         <span className="font-medium text-sm truncate">{problem.title}</span>
                       )}
-                      {problem.isReview && <Star className={`h-4 w-4 shrink-0 ${isDueForReview(problem) ? 'text-blue-500' : 'text-yellow-500'}`} />}
+                      {problem.isReview && <Star className={`h-3.5 w-3.5 shrink-0 ${isDueForReview(problem) ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground'}`} />}
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-2">
-                      <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'} className="text-xs">
+                      <Badge variant="secondary" className="text-[10px] h-5 px-1.5 bg-secondary/50">
                         {getPlatformLabel(problem.platform)}
                       </Badge>
-                      <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
+                      <Badge variant="outline" className={cn("text-[10px] h-5 px-1.5 border-0", getDifficultyClass(problem.difficulty))}>
                         {problem.difficulty}
-                      </Badge>
-                      <Badge variant={problem.status === 'learned' ? 'default' : 'secondary'} className="text-xs">
-                        {problem.status === 'learned' ? 'Learned' : 'Active'}
                       </Badge>
                     </div>
 
                     {problem.topics && problem.topics.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-2">
                         {problem.topics.slice(0, 3).map(topic => (
-                          <Badge key={topic} variant="secondary" className="text-xs">{topic}</Badge>
+                          <Badge key={topic} variant="secondary" className="text-[10px] h-5 bg-background/50">{topic}</Badge>
                         ))}
                         {problem.topics.length > 3 && (
-                          <Badge variant="secondary" className="text-xs">+{problem.topics.length - 3}</Badge>
+                          <Badge variant="secondary" className="text-[10px] h-5 bg-background/50">+{problem.topics.length - 3}</Badge>
                         )}
                       </div>
                     )}
 
                     {problem.dateSolved && (
-                      <p className="text-xs text-muted-foreground">
-                        Solved: {format(new Date(problem.dateSolved), 'MMM dd, yyyy')}
+                      <p className="text-[10px] text-muted-foreground">
+                        Solved: {format(new Date(problem.dateSolved), 'MMM dd')}
                       </p>
                     )}
                   </div>
 
-                  <div className="flex flex-col gap-1 ml-2">
-                    <Button variant="ghost" size="icon" onClick={() => onEditProblem(problem)} className="h-8 w-8">
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                    {problem.source === 'potd' && onAddToProblem && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onAddToProblem(problem.id)}
-                        className="h-8 w-8 text-blue-600"
-                        title={isPotdInProblems && isPotdInProblems(problem) ? "Already in Problems" : "Add to Problems"}
-                        disabled={isPotdInProblems && isPotdInProblems(problem)}
-                      >
-                        <ArrowRight className="h-3 w-3" />
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2">
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
-                    )}
-                    <Button variant="ghost" size="icon" onClick={() => onDeleteProblem(problem.id)} className="h-8 w-8 text-destructive">
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                </div>
-
-                {problem.notes && (
-                  <div className="mt-3 pt-3 border-t">
-                    <p className="text-xs text-muted-foreground">{problem.notes}</p>
-                  </div>
-                )}
-
-                {/* AI Actions for all problems */}
-                <div className="mt-3 pt-3 border-t">
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleShowReviewInsights(problem)}
-                      className="flex-1 text-xs text-blue-700 hover:text-blue-800"
-                    >
-                      <Brain className="h-3 w-3 mr-1" />
-                      AI Insights
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleShowSimilarProblems(problem)}
-                      className="flex-1 text-xs text-purple-700 hover:text-purple-800"
-                    >
-                      <Lightbulb className="h-3 w-3 mr-1" />
-                      Similar
-                    </Button>
-                  </div>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onEditProblem(problem)}>
+                        <Pencil className="mr-2 h-4 w-4" />
+                        Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShowReviewInsights(problem)}>
+                        <Brain className="mr-2 h-4 w-4 text-blue-500" />
+                        Insights
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDeleteProblem(problem.id)} className="text-destructive">
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Delete
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
 
                 {isReviewList && (
-                  <div className="mt-3 pt-3 border-t space-y-2">
-                    {/* AI Buttons */}
-                    <div className="flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleShowReviewInsights(problem)}
-                        className="flex-1 text-xs text-blue-700 hover:text-blue-800"
-                      >
-                        <Brain className="h-3 w-3 mr-1" />
-                        AI Insights
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleShowSimilarProblems(problem)}
-                        className="flex-1 text-xs text-purple-700 hover:text-purple-800"
-                      >
-                        <Lightbulb className="h-3 w-3 mr-1" />
-                        Similar
-                      </Button>
-                    </div>
-                    {/* Review Quality Buttons */}
-                    <div className="flex gap-2">
-                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} className="flex-1 text-xs">
-                        <CheckCircle className="h-3 w-3 mr-1" />
+                  <div className="mt-3 pt-3 border-t border-white/5 flex gap-2">
+                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-green-600 hover:bg-green-700 text-white">
                         Easy
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 3)} className="flex-1 text-xs">
+                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 3)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-yellow-600 hover:bg-yellow-700 text-white">
                         Good
                       </Button>
-                      <Button size="sm" variant="outline" onClick={() => onProblemReviewed(problem.id, 1)} className="flex-1 text-xs">
+                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 1)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-red-600 hover:bg-red-700 text-white">
                         Hard
                       </Button>
-                    </div>
                   </div>
                 )}
               </div>
             ))
           ) : (
             <div className="text-center py-8 text-muted-foreground">
-              <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-50" />
-              <p>No problems found matching your search.</p>
+              <BookOpen className="mx-auto h-12 w-12 mb-4 opacity-20" />
+              <p>No problems found.</p>
             </div>
           )}
         </div>
 
         {/* Desktop Table Layout */}
-        <div className="rounded-md border hidden md:block">
+        <div className="rounded-xl border border-white/10 hidden md:block overflow-hidden bg-card/30 backdrop-blur-sm shadow-sm">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Problem</TableHead>
+            <TableHeader className="bg-muted/30">
+              <TableRow className="hover:bg-transparent border-white/5">
+                <TableHead className="w-[40%]">Problem</TableHead>
                 <TableHead>Platform</TableHead>
-                <TableHead>Difficulty / Rating</TableHead>
-                <TableHead>Next Review</TableHead>
+                <TableHead>Difficulty</TableHead>
+                <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -404,54 +352,63 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
               {filteredProblems.length > 0 ? (
                 filteredProblems.flatMap((problem) => (
                   <React.Fragment key={problem.id}>
-                    <TableRow data-state={isDueForReview(problem) ? 'selected' : undefined}>
+                    <TableRow 
+                        className={cn(
+                            "border-white/5 hover:bg-muted/20 transition-colors", 
+                            isDueForReview(problem) && "bg-orange-500/5 hover:bg-orange-500/10"
+                        )}
+                        data-state={isDueForReview(problem) ? 'selected' : undefined}
+                    >
                       <TableCell className="font-medium">
                         <div className="flex items-center">
-                          <Button variant="ghost" size="icon" onClick={() => toggleRowExpansion(problem.id)} className="mr-2 h-8 w-8">
-                            {expandedRows.has(problem.id) ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          <Button variant="ghost" size="icon" onClick={() => toggleRowExpansion(problem.id)} className="mr-2 h-6 w-6 text-muted-foreground">
+                            {expandedRows.has(problem.id) ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                           </Button>
-                          {problem.url ? (
-                            <a href={problem.url} target="_blank" rel="noopener noreferrer" className="flex items-center hover:underline">
-                              {problem.title}
-                              <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
-                          ) : (
-                            problem.title
-                          )}
-                          {problem.isReview && <Star className={`ml-2 h-5 w-5 ${isDueForReview(problem) ? 'text-blue-500' : 'text-yellow-500'}`} />}
+                          <div className="flex flex-col">
+                              <div className="flex items-center gap-2">
+                                {problem.url ? (
+                                    <a href={problem.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors flex items-center gap-1">
+                                    {problem.title}
+                                    <ExternalLink className="h-3 w-3 opacity-30" />
+                                    </a>
+                                ) : (
+                                    problem.title
+                                )}
+                                {problem.isReview && <Star className={`h-3.5 w-3.5 ${isDueForReview(problem) ? 'text-orange-500 fill-orange-500' : 'text-muted-foreground/40'}`} />}
+                              </div>
+                              {problem.topics && problem.topics.length > 0 && (
+                                <div className="flex flex-wrap gap-1 mt-1">
+                                    {problem.topics.slice(0, 3).map(topic => (
+                                    <span key={topic} className="text-[10px] text-muted-foreground bg-secondary/30 px-1.5 py-0.5 rounded-sm">{topic}</span>
+                                    ))}
+                                    {problem.topics.length > 3 && (
+                                        <span className="text-[10px] text-muted-foreground bg-secondary/30 px-1.5 py-0.5 rounded-sm">+{problem.topics.length - 3}</span>
+                                    )}
+                                </div>
+                                )}
+                          </div>
                         </div>
-                        {problem.topics && problem.topics.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {problem.topics.map(topic => (
-                              <Badge key={topic} variant="secondary">{topic}</Badge>
-                            ))}
-                          </div>
-                        )}
-                        {problem.companies && problem.companies.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            {problem.companies.map(company => (
-                              <Badge key={company} variant="default">{company}</Badge>
-                            ))}
-                          </div>
-                        )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'}>
+                        <Badge variant="secondary" className="bg-secondary/30 text-muted-foreground font-normal">
                           {getPlatformLabel(problem.platform)}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant={getDifficultyBadgeVariant(problem.difficulty, problem.platform)}>
+                        <Badge variant="outline" className={cn("font-normal border-0", getDifficultyClass(problem.difficulty))}>
                           {problem.difficulty}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {isDueForReview(problem) ? (
-                          <Badge variant="destructive">Due Today</Badge>
+                          <span className="text-xs font-medium text-orange-500 flex items-center gap-1">
+                              <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                              Due Review
+                          </span>
                         ) : problem.isReview && problem.nextReviewDate ? (
-                          formatDate(problem.nextReviewDate)
+                          <span className="text-xs text-muted-foreground">{formatDate(problem.nextReviewDate)}</span>
                         ) : (
-                          'N/A'
+                          <span className="text-xs text-muted-foreground">-</span>
                         )}
                       </TableCell>
                       <TableCell className="text-right">
@@ -459,47 +416,52 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                           <div className="flex items-center justify-end gap-2">
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="ghost"
                               onClick={() => handleShowReviewInsights(problem)}
-                              className="text-blue-700 hover:text-blue-800"
+                              className="h-8 w-8 p-0 text-blue-500 hover:text-blue-600 hover:bg-blue-500/10"
+                              title="AI Insights"
                             >
-                              <Brain className="h-4 w-4 mr-1" />
-                              AI Insights
+                              <Brain className="h-4 w-4" />
                             </Button>
                             <Button
                               size="sm"
-                              variant="outline"
+                              variant="ghost"
                               onClick={() => handleShowSimilarProblems(problem)}
-                              className="text-purple-700 hover:text-purple-800"
+                              className="h-8 w-8 p-0 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10"
+                              title="Similar Problems"
                             >
-                              <Lightbulb className="h-4 w-4 mr-1" />
-                              Similar
+                              <Lightbulb className="h-4 w-4" />
                             </Button>
-                            <Button size="sm" onClick={() => onProblemReviewed(problem.id, 4)} disabled={!isDueForReview(problem)}>
-                              Reviewed &amp; Advance
+                            <Button 
+                                size="sm" 
+                                onClick={() => onProblemReviewed(problem.id, 4)} 
+                                disabled={!isDueForReview(problem)}
+                                className="h-8 text-xs bg-primary hover:bg-primary/90"
+                            >
+                              Review
                             </Button>
                           </div>
                         ) : (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
+                              <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-muted/50">
                                 <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-5 w-5" />
+                                <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
+                            <DropdownMenuContent align="end" className="w-48">
                               <DropdownMenuItem onClick={() => onEditProblem(problem)}>
-                                <Pencil className="mr-2 h-5 w-5" />
+                                <Pencil className="mr-2 h-4 w-4" />
                                 Edit
                               </DropdownMenuItem>
 
                               <DropdownMenuItem onClick={() => handleShowReviewInsights(problem)}>
-                                <Brain className="mr-2 h-5 w-5 text-blue-700" />
-                                AI Review Insights
+                                <Brain className="mr-2 h-4 w-4 text-blue-500" />
+                                AI Insights
                               </DropdownMenuItem>
 
                               <DropdownMenuItem onClick={() => handleShowSimilarProblems(problem)}>
-                                <Lightbulb className="mr-2 h-5 w-5 text-purple-700" />
+                                <Lightbulb className="mr-2 h-4 w-4 text-rose-500" />
                                 Similar Problems
                               </DropdownMenuItem>
 
@@ -508,19 +470,19 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                                   onClick={() => onAddToProblem(problem.id)}
                                   disabled={isPotdInProblems && isPotdInProblems(problem)}
                                 >
-                                  <ArrowRight className="mr-2 h-5 w-5 text-blue-700" />
-                                  {isPotdInProblems && isPotdInProblems(problem) ? 'Already in Problems' : 'Add to Problems'}
+                                  <ArrowRight className="mr-2 h-4 w-4 text-blue-500" />
+                                  {isPotdInProblems && isPotdInProblems(problem) ? 'Already Added' : 'Add to Main List'}
                                 </DropdownMenuItem>
                               )}
 
                               {problem.status === 'active' && (
                                 <>
                                   <DropdownMenuItem onClick={() => (onToggleReview || onUpdateProblem)(problem.id, { isReview: !problem.isReview })}>
-                                    <Star className="mr-2 h-5 w-5" />
+                                    <Star className="mr-2 h-4 w-4" />
                                     {problem.isReview ? 'Unmark review' : 'Mark for review'}
                                   </DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => onUpdateProblem(problem.id, { status: 'learned' })}>
-                                    <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
                                     Mark as Learned
                                   </DropdownMenuItem>
                                 </>
@@ -528,13 +490,13 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
 
                               {problem.status === 'learned' && (
                                 <DropdownMenuItem onClick={() => onUpdateProblem(problem.id, { status: 'active' })}>
-                                  <Undo2 className="mr-2 h-5 w-5" />
+                                  <Undo2 className="mr-2 h-4 w-4" />
                                   Mark as Unlearned
                                 </DropdownMenuItem>
                               )}
 
-                              <DropdownMenuItem onClick={() => setProblemToDelete(problem.id)}>
-                                <Trash2 className="mr-2 h-5 w-5" />
+                              <DropdownMenuItem onClick={() => setProblemToDelete(problem.id)} className="text-destructive focus:text-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
                                 Delete
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -543,13 +505,13 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       </TableCell>
                     </TableRow>
                     {expandedRows.has(problem.id) && (
-                      <TableRow>
-                        <TableCell colSpan={5}>
-                          <div className="p-4 bg-muted/50 rounded-md">
-                            <h4 className="font-semibold mb-2">Notes</h4>
-                            <div className="prose dark:prose-invert max-w-none">
+                      <TableRow className="bg-muted/5 hover:bg-muted/5 border-white/5">
+                        <TableCell colSpan={5} className="p-4">
+                          <div className="pl-9">
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground bg-background/50 p-4 rounded-lg border border-white/5">
                               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {problem.notes || 'No notes for this problem.'}
+                                {problem.notes || 'No notes recorded.'}
                               </ReactMarkdown>
                             </div>
                           </div>
@@ -560,13 +522,13 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="p-0">
+                  <TableCell colSpan={5} className="h-64 text-center">
                     <EmptyState
-                      title={isReviewList ? "No problems due for review" : "No problems found"}
-                      description={isReviewList ? "Great job! You're all caught up with your reviews." : "Start tracking your coding journey by adding your first problem."}
+                      title={isReviewList ? "All Caught Up" : "No Problems Found"}
+                      description={isReviewList ? "You have no reviews scheduled for today." : "Try adjusting your search or add a new problem."}
                       actionLabel={isReviewList ? undefined : "Add Problem"}
                       onAction={isReviewList ? undefined : () => onEditProblem(null as any)}
-                      icon={isReviewList ? <CheckCircle className="h-12 w-12 text-green-500" /> : <BookOpen className="h-12 w-12 text-muted-foreground/50" />}
+                      icon={isReviewList ? <CheckCircle className="h-12 w-12 text-green-500/50" /> : <Search className="h-12 w-12 text-muted-foreground/20" />}
                     />
                   </TableCell>
                 </TableRow>
@@ -578,9 +540,9 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
       <AlertDialog open={!!problemToDelete} onOpenChange={() => setProblemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Problem</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete the problem.
+              Are you sure you want to delete this problem? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -592,8 +554,9 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                   setProblemToDelete(null);
                 }
               }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              Continue
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -604,8 +567,8 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Brain className="h-5 w-5 text-blue-700" />
-              AI Review Insights: {selectedProblem?.title}
+              <Brain className="h-5 w-5 text-blue-600" />
+              AI Insights
             </DialogTitle>
           </DialogHeader>
           {selectedProblem && (
@@ -636,8 +599,8 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
         <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-purple-700" />
-              Similar Problems: {selectedProblem?.title}
+              <Lightbulb className="h-5 w-5 text-rose-600" />
+              Similar Problems
             </DialogTitle>
           </DialogHeader>
           {selectedProblem && (

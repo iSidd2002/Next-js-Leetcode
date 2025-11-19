@@ -10,7 +10,7 @@ import ContestList from './ContestList';
 import ContestForm from './ContestForm';
 import AllContestsList from './AllContestsList';
 import { toast } from 'sonner';
-import { Globe, Plus, RefreshCw } from 'lucide-react';
+import { Globe, Plus, RefreshCw, Trophy } from 'lucide-react';
 
 interface ContestTrackerProps {
   contests: Contest[];
@@ -68,35 +68,43 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
 
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Contest Tracker</CardTitle>
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center pt-4 space-y-3 sm:space-y-0">
-          <p className="text-sm text-muted-foreground">
-            {contests.length} contests tracked
-          </p>
+    <Card className="border-none shadow-none bg-transparent">
+      <CardHeader className="px-0 pb-4 pt-0">
+        <div className="flex flex-col space-y-4 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
+           <div className="space-y-1">
+            <CardTitle className="text-2xl font-bold flex items-center tracking-tight">
+                <Trophy className="h-6 w-6 text-amber-500 mr-2" />
+                Contest Tracker
+            </CardTitle>
+            <p className="text-sm text-muted-foreground">
+                 {contests.length} contests tracked
+            </p>
+          </div>
           <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
-            <Button onClick={handleFetchContests} disabled={isFetching} variant="outline" size="sm">
+            <Button onClick={handleFetchContests} disabled={isFetching} variant="outline" size="sm" className="bg-background/50 backdrop-blur-sm">
               <RefreshCw className={`h-4 w-4 sm:mr-2 ${isFetching ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">{isFetching ? 'Fetching...' : 'Fetch Upcoming'}</span>
               <span className="sm:hidden">{isFetching ? 'Fetching...' : 'Fetch'}</span>
             </Button>
             <Dialog open={showAllContests} onOpenChange={setShowAllContests}>
               <DialogTrigger asChild>
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="bg-background/50 backdrop-blur-sm">
                   <Globe className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">All Contests</span>
                   <span className="sm:hidden">All</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] overflow-y-auto">
+              <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-white/10">
                 <DialogHeader>
-                  <DialogTitle className="text-lg sm:text-xl">All Contests from Every Platform</DialogTitle>
+                  <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
+                      <Globe className="h-5 w-5 text-primary" />
+                      Global Contest Calendar
+                  </DialogTitle>
                 </DialogHeader>
                 <AllContestsList />
               </DialogContent>
             </Dialog>
-            <Button onClick={() => handleOpenForm()} size="sm">
+            <Button onClick={() => handleOpenForm()} size="sm" className="shadow-lg shadow-primary/20">
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Add Contest</span>
               <span className="sm:hidden">Add</span>
@@ -104,7 +112,7 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <ContestList
           contests={contests}
           onDeleteContest={onDeleteContest}
@@ -120,4 +128,4 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
       </CardContent>
     </Card>
   );
-} 
+}

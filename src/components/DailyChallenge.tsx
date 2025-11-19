@@ -1,11 +1,13 @@
 "use client"
 
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Plus, RefreshCw, Zap, Calendar } from "lucide-react";
+import { ExternalLink, Plus, RefreshCw, Zap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'codingninjas' | 'atcoder';
 
@@ -94,104 +96,98 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
       case 'leetcode':
         return {
           name: 'LeetCode',
-          color: 'bg-orange-600 text-white',
-          bgGradient: 'from-orange-50 to-amber-50 dark:from-orange-950/20 dark:to-amber-950/15',
-          borderColor: 'border-orange-200'
+          color: 'bg-orange-600 text-white border-orange-600',
+          bg: 'bg-orange-500/5 dark:bg-orange-500/10',
+          borderColor: 'border-orange-200 dark:border-orange-800'
         };
       case 'codeforces':
         return {
           name: 'CodeForces',
-          color: 'bg-blue-600 text-white',
-          bgGradient: 'from-blue-50 to-sky-50 dark:from-blue-950/20 dark:to-sky-950/15',
-          borderColor: 'border-blue-200'
+          color: 'bg-blue-600 text-white border-blue-600',
+          bg: 'bg-blue-500/5 dark:bg-blue-500/10',
+          borderColor: 'border-blue-200 dark:border-blue-800'
         };
       case 'geeksforgeeks':
         return {
           name: 'GeeksforGeeks',
-          color: 'bg-emerald-600 text-white',
-          bgGradient: 'from-emerald-50 to-green-50 dark:from-emerald-950/20 dark:to-green-950/15',
-          borderColor: 'border-emerald-200'
+          color: 'bg-emerald-600 text-white border-emerald-600',
+          bg: 'bg-emerald-500/5 dark:bg-emerald-500/10',
+          borderColor: 'border-emerald-200 dark:border-emerald-800'
         };
       case 'codingninjas':
         return {
           name: 'Coding Ninjas',
-          color: 'bg-rose-600 text-white',
-          bgGradient: 'from-rose-50 to-red-50 dark:from-rose-950/20 dark:to-red-950/15',
-          borderColor: 'border-rose-200'
+          color: 'bg-rose-600 text-white border-rose-600',
+          bg: 'bg-rose-500/5 dark:bg-rose-500/10',
+          borderColor: 'border-rose-200 dark:border-rose-800'
         };
       case 'atcoder':
         return {
           name: 'AtCoder',
-          color: 'bg-violet-600 text-white',
-          bgGradient: 'from-violet-50 to-purple-50 dark:from-violet-950/20 dark:to-purple-950/15',
-          borderColor: 'border-violet-200'
+          color: 'bg-teal-600 text-white border-teal-600',
+          bg: 'bg-teal-500/5 dark:bg-teal-500/10',
+          borderColor: 'border-teal-200 dark:border-teal-800'
         };
       default:
         return {
           name: platform,
-          color: 'bg-gray-500 text-white',
-          bgGradient: 'from-gray-50 to-slate-50 dark:from-gray-950/20 dark:to-slate-950/20',
-          borderColor: 'border-gray-200'
+          color: 'bg-gray-500 text-white border-gray-500',
+          bg: 'bg-gray-500/5 dark:bg-gray-500/10',
+          borderColor: 'border-gray-200 dark:border-gray-800'
         };
     }
   };
 
-  const getDifficultyVariant = (difficulty: string) => {
+  const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
-        return 'default';
+        return 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20';
       case 'medium':
-        return 'secondary';
+        return 'text-amber-400 bg-amber-400/10 border-amber-400/20';
       case 'hard':
-        return 'destructive';
+        return 'text-rose-400 bg-rose-400/10 border-rose-400/20';
       default:
-        return 'outline';
+        return 'text-slate-400 bg-slate-400/10 border-slate-400/20';
     }
   };
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Zap className="h-5 w-5 mr-2 text-purple-600" />
+      <SpotlightCard className="border-white/10 bg-card/30 backdrop-blur-md h-full">
+        <CardHeader className="pb-4 pt-5 px-5">
+          <CardTitle className="text-sm flex items-center gap-2.5 text-muted-foreground">
+            <Zap className="h-4 w-4" />
             Daily Challenge
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <RefreshCw className="h-6 w-6 animate-spin text-muted-foreground" />
-            <span className="ml-2 text-muted-foreground">Loading today's challenge...</span>
-          </div>
+        <CardContent className="px-5 pb-5">
+          <div className="h-24 bg-white/5 rounded-xl animate-pulse"></div>
         </CardContent>
-      </Card>
+      </SpotlightCard>
     );
   }
 
   if (error && !problem) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center">
-            <Zap className="h-5 w-5 mr-2 text-purple-600" />
+      <SpotlightCard className="border-amber-500/20 bg-amber-500/5 backdrop-blur-md h-full">
+        <CardHeader className="pb-4 pt-5 px-5">
+          <CardTitle className="text-sm flex items-center gap-2.5 text-amber-400">
+            <Zap className="h-4 w-4" />
             Daily Challenge
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="text-center py-8">
-            <p className="text-muted-foreground mb-4">
-              Unable to load today's challenge. Please try again later.
+        <CardContent className="px-5 pb-5 space-y-3">
+          <div className="text-center">
+            <p className="text-sm text-amber-300/80 mb-3">
+              Unable to load challenge
             </p>
-            <p className="text-sm text-red-600 mb-4">
-              Error: {error}
-            </p>
-            <Button onClick={fetchDailyChallenge} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Try Again
+            <Button onClick={fetchDailyChallenge} variant="ghost" size="sm" className="h-8 text-xs border-amber-500/20 hover:bg-amber-500/10 text-amber-400">
+              <RefreshCw className="h-3 w-3 mr-1.5" />
+              Retry
             </Button>
           </div>
         </CardContent>
-      </Card>
+      </SpotlightCard>
     );
   }
 
@@ -202,129 +198,89 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const platformInfo = getPlatformInfo(problem.platform);
 
   return (
-    <Card className={`${platformInfo.borderColor} bg-gradient-to-br ${platformInfo.bgGradient}`}>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center">
-            <Zap className="h-5 w-5 mr-2 text-purple-600" />
-            Daily Challenge
-            <Badge className={`ml-2 ${platformInfo.color} text-xs`}>
+    <SpotlightCard className="border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden relative group h-full">
+      {/* Decorative gradient background matching platform */}
+      <div className="absolute inset-0 bg-gradient-to-br from-accent/5 via-transparent to-secondary/5 opacity-50" />
+      
+      <CardHeader className="pb-4 pt-5 px-5 relative z-10">
+        <CardTitle className="text-sm flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="p-1.5 rounded-lg bg-accent/10 text-accent ring-1 ring-accent/20">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <span className="font-semibold tracking-tight text-foreground">Challenge</span>
+          </div>
+          <Badge className={cn("text-[10px] h-6 px-2.5 font-medium", platformInfo.color)}>
               {platformInfo.name}
-            </Badge>
-          </div>
-          <div className="flex items-center text-sm text-muted-foreground">
-            <Calendar className="h-4 w-4 mr-1" />
-            {new Date().toLocaleDateString()}
-          </div>
+          </Badge>
         </CardTitle>
       </CardHeader>
-      <CardContent>
-        <div className="space-y-4">
-          {/* Problem Title and Link */}
-          <div>
+      
+      <CardContent className="relative z-10 px-5 pb-5 space-y-4">
+        <div className="space-y-3.5">
+          <a
+            href={problem.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block text-base font-bold text-foreground hover:text-primary transition-colors line-clamp-2 leading-snug"
+            title={problem.title}
+          >
+            {problem.title}
+          </a>
+
+          {/* Badges */}
+          <div className="flex flex-wrap gap-2">
+            <Badge className={cn("text-[10px] px-2.5 h-6 font-medium border", getDifficultyColor(problem.difficulty))}>
+              {problem.difficulty}
+            </Badge>
+            
+             {problem.topics && problem.topics.slice(0, 2).map(topic => (
+                <Badge 
+                  key={topic} 
+                  variant="secondary" 
+                  className="text-[10px] px-2.5 h-6 bg-white/5 hover:bg-white/10 text-slate-300 border-transparent font-normal transition-colors"
+                >
+                  {topic}
+                </Badge>
+              ))}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-2.5 pt-2">
+          {onAddToPotd && (
+            <Button 
+              size="sm" 
+              onClick={handleAddToPotd}
+              disabled={isAdding}
+              className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all"
+            >
+              {isAdding ? (
+                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Plus className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Add to POTD
+            </Button>
+          )}
+          <Button 
+            asChild 
+            variant="outline" 
+            size="sm" 
+            className="h-9 text-xs font-medium border-white/10 bg-white/5 hover:bg-white/10 hover:text-white transition-all"
+          >
             <a
               href={problem.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-lg font-semibold hover:underline flex items-center group"
             >
-              {problem.title}
-              <ExternalLink className="ml-2 h-4 w-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+              <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
+              Solve Now
             </a>
-          </div>
-
-          {/* Badges */}
-          <div className="flex flex-wrap gap-2">
-            <Badge variant={getDifficultyVariant(problem.difficulty)} className="text-xs">
-              {problem.difficulty}
-            </Badge>
-
-            {/* Platform-specific metadata */}
-            {problem.platform === 'codeforces' && problem.platformMetadata?.rating && (
-              <Badge variant="secondary" className="text-xs">
-                Rating: {problem.platformMetadata.rating}
-              </Badge>
-            )}
-
-            {problem.platform === 'codeforces' && problem.platformMetadata?.contestId && (
-              <Badge variant="outline" className="text-xs">
-                Contest {problem.platformMetadata.contestId}{problem.platformMetadata.problemIndex}
-              </Badge>
-            )}
-
-            {problem.acRate && (
-              <Badge variant="secondary" className="text-xs">
-                {problem.acRate.toFixed(1)}% Acceptance
-              </Badge>
-            )}
-          </div>
-
-          {/* Topics */}
-          {problem.topics && problem.topics.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-muted-foreground">Topics:</p>
-              <div className="flex flex-wrap gap-1">
-                {problem.topics.slice(0, 5).map(topic => (
-                  <Badge key={topic} variant="secondary" className="text-xs">
-                    {topic}
-                  </Badge>
-                ))}
-                {problem.topics.length > 5 && (
-                  <Badge variant="secondary" className="text-xs">
-                    +{problem.topics.length - 5} more
-                  </Badge>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Action Buttons */}
-          <div className="flex flex-col sm:flex-row gap-2 pt-2">
-            <Button asChild className="flex-1">
-              <a
-                href={problem.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center"
-              >
-                <ExternalLink className="h-4 w-4 mr-2" />
-                Solve Challenge
-              </a>
-            </Button>
-            
-            {onAddToPotd && (
-              <Button 
-                variant="outline" 
-                onClick={handleAddToPotd}
-                disabled={isAdding}
-                className="flex-1"
-              >
-                {isAdding ? (
-                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Add to POTD
-              </Button>
-            )}
-          </div>
-
-          {/* Refresh Button */}
-          <div className="pt-2 border-t">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={fetchDailyChallenge}
-              disabled={loading}
-              className="w-full text-xs"
-            >
-              <RefreshCw className={`h-3 w-3 mr-1 ${loading ? 'animate-spin' : ''}`} />
-              Refresh Challenge
-            </Button>
-          </div>
+          </Button>
         </div>
       </CardContent>
-    </Card>
+    </SpotlightCard>
   );
 };
 

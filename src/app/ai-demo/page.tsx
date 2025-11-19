@@ -62,7 +62,7 @@ const AIDemoPage = () => {
               </Button>
               <div>
                 <h1 className="text-3xl font-bold flex items-center gap-3">
-                  <Brain className="h-8 w-8 text-purple-600" />
+                  <Brain className="h-8 w-8 text-rose-600" />
                   AI Assistant Demo
                   <Badge variant="secondary" className="ml-2">
                     <Sparkles className="h-3 w-3 mr-1" />
@@ -183,7 +183,7 @@ const AIDemoPage = () => {
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <div className="space-y-2">
-                <h4 className="font-semibold text-purple-600">🎯 Smart Recommendations</h4>
+                <h4 className="font-semibold text-rose-600">🎯 Smart Recommendations</h4>
                 <p className="text-sm text-muted-foreground">
                   AI analyzes problem patterns, difficulty progression, and your learning style to suggest the most relevant practice problems.
                 </p>
@@ -218,7 +218,7 @@ const AIDemoPage = () => {
               </div>
               
               <div className="space-y-2">
-                <h4 className="font-semibold text-indigo-600">🔄 Spaced Repetition</h4>
+                <h4 className="font-semibold text-cyan-600">🔄 Spaced Repetition</h4>
                 <p className="text-sm text-muted-foreground">
                   AI-enhanced spaced repetition system optimizes review timing based on your performance and retention patterns.
                 </p>

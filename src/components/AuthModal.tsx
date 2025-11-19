@@ -4,13 +4,12 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-// import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Sparkles, Code, Palette, Zap } from 'lucide-react';
 import ApiService from '@/services/api';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface AuthModalProps {
   open: boolean;
@@ -44,26 +43,18 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     try {
       const { user } = await ApiService.login(loginForm.email, loginForm.password);
 
-      // Clean up old localStorage token if it exists
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-token');
       }
 
       toast.success('Login successful!');
-
-      // Close modal first
       onOpenChange(false);
-
-      // Reset form
       setLoginForm({ email: '', password: '' });
 
-      // Wait for HttpOnly cookies to be available on server-side
       setTimeout(async () => {
-        // Since cookies are HttpOnly, we can't read them in JavaScript
-        // Instead, we test authentication with an API call
         let authenticationWorking = false;
         let attempts = 0;
-        const maxAttempts = 10; // Reduced attempts since we're only testing API
+        const maxAttempts = 10;
 
         while (!authenticationWorking && attempts < maxAttempts) {
           try {
@@ -111,23 +102,15 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     try {
       await ApiService.register(registerForm.email, registerForm.username, registerForm.password);
 
-      // Clean up old localStorage token if it exists
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-token');
       }
 
       toast.success('Registration successful!');
-
-      // Close modal first
       onOpenChange(false);
-
-      // Reset form
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
-      // Wait for HttpOnly cookies to be available on server-side
       setTimeout(async () => {
-
-        // Test authentication with API call (same as login)
         let authenticationWorking = false;
         let attempts = 0;
         const maxAttempts = 10;
@@ -165,88 +148,112 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
     onAuthSuccess();
   };
 
-  const handleLogout = async () => {
-    try {
-      await ApiService.logout();
-      toast.success('Logged out successfully!');
-      onAuthSuccess(); // Refresh the app state
-    } catch (error) {
-      console.error('Logout error:', error);
-      toast.error('Logout failed');
-    }
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader className="text-center space-y-2 sm:space-y-3 pb-2">
-          <div className="mx-auto w-12 h-12 sm:w-16 sm:h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center">
-            <span className="text-white font-bold text-lg sm:text-2xl">LC</span>
-          </div>
-          <DialogTitle className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 to-red-600 bg-clip-text text-transparent">
-            Welcome to LeetCode Tracker
-          </DialogTitle>
-          <DialogDescription className="text-sm sm:text-base">
-            Sign in to sync your progress across devices or continue offline to get started locally.
-          </DialogDescription>
-          {/* Show upgrade message if user has localStorage data but no cookies */}
-          {typeof window !== 'undefined' && (
-            localStorage.getItem('auth-token') ||
-            localStorage.getItem('leetcode-cf-tracker-problems')
-          ) && !document.cookie.includes('auth-token=') && (
-            <div className="mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md text-sm text-blue-800 dark:text-blue-200">
-              <strong>Authentication Upgrade:</strong> We've upgraded to a more secure authentication system. Please log in again to access your synced data.
+      <DialogContent className="w-[95vw] max-w-[600px] max-h-[95vh] overflow-hidden p-0 border-none bg-transparent shadow-none">
+        {/* Artistic Background Layer */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-background via-background to-muted/30 backdrop-blur-2xl border border-white/10">
+          {/* Decorative Abstract Shapes - Picasso Style */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-primary/20 to-transparent rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-gradient-to-tr from-secondary/20 to-transparent rounded-full blur-3xl translate-y-1/2 -translate-x-1/2" />
+          <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 rotate-45" />
+          
+          {/* Asymmetrical Border Accents */}
+          <div className="absolute top-0 left-0 w-24 h-1 bg-gradient-to-r from-primary via-secondary to-transparent" />
+          <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-accent via-primary to-transparent rotate-12 origin-right" />
+          <div className="absolute bottom-0 right-0 w-28 h-1 bg-gradient-to-l from-secondary via-accent to-transparent rotate-[-12deg] origin-right" />
+
+          <div className="relative z-10 p-6 sm:p-8">
+            {/* Header - Asymmetrical & Artistic */}
+            <div className="relative mb-8">
+              {/* Rotated Decorative Element */}
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gradient-to-br from-primary/10 to-accent/10 rounded-2xl rotate-12 blur-sm" />
+              
+              <div className="relative flex items-start gap-4">
+                {/* Logo - Hand-drawn style */}
+                <div className="relative">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-5deg] hover:rotate-0 transition-transform duration-300">
+                    <Code className="h-8 w-8 text-white" />
+                  </div>
+                  {/* Small accent dot */}
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-accent rounded-full border-2 border-background" />
+                </div>
+                
+                <div className="flex-1 pt-2">
+                  <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-2">
+                    <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                      Welcome,
+                    </span>
+                    <br />
+                    <span className="text-foreground italic" style={{ transform: 'rotate(-1deg)' }}>
+                      Creator
+                    </span>
+                  </h2>
+                  <p className="text-sm text-muted-foreground/80 italic">
+                    Your coding journey begins here
+                  </p>
+                </div>
+              </div>
             </div>
-          )}
-        </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-4 sm:mt-6">
-          <TabsList className="grid w-full grid-cols-2 bg-muted/50">
-            <TabsTrigger value="login" className="data-[state=active]:bg-background text-sm sm:text-base">Login</TabsTrigger>
-            <TabsTrigger value="register" className="data-[state=active]:bg-background text-sm sm:text-base">Register</TabsTrigger>
-          </TabsList>
+            {/* Tabs - Creative Style */}
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+              <TabsList className="grid w-full grid-cols-2 bg-muted/30 backdrop-blur-sm p-1 rounded-2xl border border-white/5 h-12">
+                <TabsTrigger 
+                  value="login" 
+                  className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/20 transition-all font-medium"
+                >
+                  Sign In
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="register" 
+                  className="rounded-xl data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-secondary/20 transition-all font-medium"
+                >
+                  Join Us
+                </TabsTrigger>
+              </TabsList>
 
-          <TabsContent value="login" className="mt-4 sm:mt-6">
-            <Card className="border-0 shadow-none">
-              <CardHeader className="text-center pb-3 sm:pb-4 px-2 sm:px-6">
-                <CardTitle className="text-lg sm:text-xl">Welcome Back</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Sign in to sync your data across devices
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-2 sm:px-6">
-                <form onSubmit={handleLogin} className="space-y-3 sm:space-y-4">
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="login-email" className="text-sm">Email</Label>
+              {/* Login Form */}
+              <TabsContent value="login" className="mt-6 space-y-6">
+                <form onSubmit={handleLogin} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="login-email" className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-3.5 w-3.5 text-primary" />
+                      Email
+                    </Label>
                     <Input
                       id="login-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="your.email@example.com"
                       value={loginForm.email}
                       onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                       required
                       autoComplete="email"
-                      className="h-10 sm:h-11"
+                      className="h-12 bg-background/50 border-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-xl transition-all"
                     />
                   </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="login-password" className="text-sm">Password</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="login-password" className="text-sm font-medium flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-secondary" />
+                      Password
+                    </Label>
                     <div className="relative">
                       <Input
                         id="login-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Enter your password"
+                        placeholder="••••••••"
                         value={loginForm.password}
                         onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
                         required
                         autoComplete="current-password"
-                        className="h-10 sm:h-11 pr-10"
+                        className="h-12 bg-background/50 border-white/10 focus:border-primary/50 focus:ring-2 focus:ring-primary/20 rounded-xl pr-12 transition-all"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-white/5"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -255,86 +262,104 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                   </div>
 
                   {error && (
-                    <div className="p-2 sm:p-3 text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
-                      {error}
+                    <div className="p-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                        {error}
+                      </div>
                     </div>
                   )}
 
                   <Button
                     type="submit"
-                    className="w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 h-10 sm:h-11"
+                    className="w-full h-12 bg-gradient-to-r from-primary via-primary/90 to-secondary hover:from-primary/90 hover:via-primary hover:to-secondary/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                     disabled={isLoading}
                   >
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Sign In
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing in...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Sign In
+                      </>
+                    )}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
+              </TabsContent>
 
-          <TabsContent value="register" className="mt-4 sm:mt-6">
-            <Card className="border-0 shadow-none">
-              <CardHeader className="text-center pb-3 sm:pb-4 px-2 sm:px-6">
-                <CardTitle className="text-lg sm:text-xl">Create Account</CardTitle>
-                <CardDescription className="text-sm sm:text-base">
-                  Join thousands of developers tracking their progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="px-2 sm:px-6">
-                <form onSubmit={handleRegister} className="space-y-3 sm:space-y-4">
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="register-email" className="text-sm">Email</Label>
+              {/* Register Form */}
+              <TabsContent value="register" className="mt-6 space-y-6">
+                <form onSubmit={handleRegister} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="register-email" className="text-sm font-medium flex items-center gap-2">
+                      <Palette className="h-3.5 w-3.5 text-primary" />
+                      Email
+                    </Label>
                     <Input
                       id="register-email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="your.email@example.com"
                       value={registerForm.email}
                       onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
                       required
                       autoComplete="email"
-                      className="h-10 sm:h-11"
+                      className="h-12 bg-background/50 border-white/10 focus:border-secondary/50 focus:ring-2 focus:ring-secondary/20 rounded-xl transition-all"
                     />
                   </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="register-username" className="text-sm">Username</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-username" className="text-sm font-medium flex items-center gap-2">
+                      <Code className="h-3.5 w-3.5 text-accent" />
+                      Username
+                    </Label>
                     <Input
                       id="register-username"
                       type="text"
-                      placeholder="Choose a username"
+                      placeholder="Choose a cool username"
                       value={registerForm.username}
                       onChange={(e) => setRegisterForm({ ...registerForm, username: e.target.value })}
                       required
                       autoComplete="username"
-                      className="h-10 sm:h-11"
+                      className="h-12 bg-background/50 border-white/10 focus:border-secondary/50 focus:ring-2 focus:ring-secondary/20 rounded-xl transition-all"
                     />
                   </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="register-password" className="text-sm">Password</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-password" className="text-sm font-medium flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-secondary" />
+                      Password
+                    </Label>
                     <div className="relative">
                       <Input
                         id="register-password"
                         type={showPassword ? 'text' : 'password'}
-                        placeholder="Create a password"
+                        placeholder="Create a strong password"
                         value={registerForm.password}
                         onChange={(e) => setRegisterForm({ ...registerForm, password: e.target.value })}
                         required
                         autoComplete="new-password"
-                        className="h-10 sm:h-11 pr-10"
+                        className="h-12 bg-background/50 border-white/10 focus:border-secondary/50 focus:ring-2 focus:ring-secondary/20 rounded-xl pr-12 transition-all"
                       />
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-white/5"
                         onClick={() => setShowPassword(!showPassword)}
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
-                  <div className="space-y-1 sm:space-y-2">
-                    <Label htmlFor="register-confirm-password" className="text-sm">Confirm Password</Label>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="register-confirm-password" className="text-sm font-medium flex items-center gap-2">
+                      <Zap className="h-3.5 w-3.5 text-secondary" />
+                      Confirm Password
+                    </Label>
                     <Input
                       id="register-confirm-password"
                       type={showPassword ? 'text' : 'password'}
@@ -343,33 +368,57 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                       onChange={(e) => setRegisterForm({ ...registerForm, confirmPassword: e.target.value })}
                       required
                       autoComplete="new-password"
-                      className="h-10 sm:h-11"
+                      className="h-12 bg-background/50 border-white/10 focus:border-secondary/50 focus:ring-2 focus:ring-secondary/20 rounded-xl transition-all"
                     />
                   </div>
 
                   {error && (
-                    <div className="p-2 sm:p-3 text-xs sm:text-sm text-red-600 bg-red-50 border border-red-200 rounded-md dark:bg-red-950 dark:text-red-400 dark:border-red-800">
-                      {error}
+                    <div className="p-4 text-sm text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl backdrop-blur-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 bg-rose-400 rounded-full" />
+                        {error}
+                      </div>
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 h-10 sm:h-11" disabled={isLoading}>
-                    {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Create Account
+                  <Button 
+                    type="submit" 
+                    className="w-full h-12 bg-gradient-to-r from-secondary via-secondary/90 to-accent hover:from-secondary/90 hover:via-secondary hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg shadow-secondary/20 hover:shadow-xl hover:shadow-secondary/30 transition-all duration-300" 
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Creating account...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Create Account
+                      </>
+                    )}
                   </Button>
                 </form>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              </TabsContent>
+            </Tabs>
 
-        <div className="mt-4 text-center">
-          <p className="text-sm text-muted-foreground mb-2">
-            Or continue without an account
-          </p>
-          <Button variant="outline" onClick={handleOfflineMode} className="w-full">
-            Use Offline Mode
-          </Button>
+            {/* Offline Mode - Artistic Footer */}
+            <div className="mt-6 pt-6 border-t border-white/5">
+              <div className="text-center space-y-3">
+                <p className="text-xs text-muted-foreground/70 italic">
+                  Or continue your journey offline
+                </p>
+                <Button 
+                  variant="outline" 
+                  onClick={handleOfflineMode} 
+                  className="w-full h-11 border-white/10 bg-white/5 hover:bg-white/10 hover:border-white/20 rounded-xl transition-all"
+                >
+                  <Code className="mr-2 h-4 w-4" />
+                  Use Offline Mode
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

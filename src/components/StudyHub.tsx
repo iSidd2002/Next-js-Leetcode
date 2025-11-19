@@ -33,7 +33,7 @@ const StudyHub = ({}: StudyHubProps) => {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Brain className="h-6 w-6 text-indigo-600" />
+            <Brain className="h-6 w-6 text-cyan-600" />
             Study Hub
             <div className="ml-auto flex items-center gap-2">
               <div className="text-sm text-muted-foreground">
@@ -55,10 +55,10 @@ const StudyHub = ({}: StudyHubProps) => {
               <div className="font-medium text-green-900">Code Templates</div>
               <div className="text-sm text-green-700">Reusable patterns</div>
             </div>
-            <div className="text-center p-4 bg-purple-50 rounded-lg">
-              <Lightbulb className="h-8 w-8 mx-auto mb-2 text-purple-600" />
-              <div className="font-medium text-purple-900">AI Assistant</div>
-              <div className="text-sm text-purple-700">Smart code review</div>
+            <div className="text-center p-4 bg-rose-50 rounded-lg">
+              <Lightbulb className="h-8 w-8 mx-auto mb-2 text-rose-600" />
+              <div className="font-medium text-rose-900">AI Assistant</div>
+              <div className="text-sm text-rose-700">Smart code review</div>
             </div>
             <div className="text-center p-4 bg-orange-50 rounded-lg">
               <Target className="h-8 w-8 mx-auto mb-2 text-orange-600" />

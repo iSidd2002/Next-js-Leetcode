@@ -299,7 +299,7 @@ const ReviewInsights = ({ problem, userHistory, reviewContext, className = '' }:
             </Card>
 
             {/* Confidence Assessment */}
-            <Card className="border-l-4 border-l-purple-500">
+            <Card className="border-l-4 border-l-rose-500">
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
                   <TrendingUp className="h-5 w-5" />
@@ -359,9 +359,9 @@ const ReviewInsights = ({ problem, userHistory, reviewContext, className = '' }:
                   </ul>
                 </div>
                 
-                <div className="bg-purple-50 dark:bg-purple-950 p-3 rounded-lg">
-                  <p className="text-sm font-medium text-purple-800 dark:text-purple-200 mb-2">Motivation</p>
-                  <p className="text-sm text-purple-700 dark:text-purple-300">
+                <div className="bg-rose-50 dark:bg-rose-950 p-3 rounded-lg">
+                  <p className="text-sm font-medium text-rose-800 dark:text-rose-200 mb-2">Motivation</p>
+                  <p className="text-sm text-rose-700 dark:text-rose-300">
                     {insights.personalized_notes.motivation_boost}
                   </p>
                 </div>

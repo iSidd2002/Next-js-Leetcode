@@ -151,7 +151,7 @@ const AIDashboard = ({ className = '' }: AIDashboardProps) => {
 
   const getTypeColor = (type: string) => {
     switch (type) {
-      case 'similar-problems': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300';
+      case 'similar-problems': return 'bg-rose-100 text-rose-800 dark:bg-rose-900 dark:text-rose-300';
       case 'review-insights': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
     }
@@ -161,7 +161,7 @@ const AIDashboard = ({ className = '' }: AIDashboardProps) => {
     <div className={`space-y-6 ${className}`}>
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold flex items-center gap-2">
-          <Brain className="h-6 w-6 text-purple-600" />
+          <Brain className="h-6 w-6 text-rose-600" />
           AI Assistant Dashboard
         </h2>
         <Button onClick={fetchAIStats} variant="outline" size="sm" disabled={loading}>
@@ -205,7 +205,7 @@ const AIDashboard = ({ className = '' }: AIDashboardProps) => {
                     <p className="text-sm font-medium text-muted-foreground">Total Requests</p>
                     <p className="text-2xl font-bold">{stats.totalRequests}</p>
                   </div>
-                  <BarChart3 className="h-8 w-8 text-purple-600" />
+                  <BarChart3 className="h-8 w-8 text-rose-600" />
                 </div>
               </CardContent>
             </Card>
@@ -268,7 +268,7 @@ const AIDashboard = ({ className = '' }: AIDashboardProps) => {
                       <span className="text-sm font-medium">{stats.similarProblemsRequests}</span>
                       <div className="w-20 bg-muted rounded-full h-2">
                         <div 
-                          className="bg-purple-600 h-2 rounded-full" 
+                          className="bg-rose-600 h-2 rounded-full" 
                           style={{ width: `${(stats.similarProblemsRequests / stats.totalRequests) * 100}%` }}
                         />
                       </div>

@@ -1,17 +1,21 @@
 "use client"
 
 import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2 } from 'lucide-react';
-import { isToday, isPast } from 'date-fns';
+import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon } from 'lucide-react';
+import { isToday, isPast, subMonths } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
 import DailyChallenge from './DailyChallenge';
 import ExternalResourcesCard from './ExternalResourcesCard';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import Greeting from './Greeting';
+import StatsCounter from './StatsCounter';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 
 interface DashboardProps {
@@ -76,20 +80,6 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
     t.status !== 'completed'
   ).length;
 
-  const getDifficultyBadgeVariant = (difficulty: string, platform: string): "default" | "destructive" | "secondary" | "outline" | "success" | "warning" => {
-    if (platform === 'codeforces') return 'default';
-    switch (difficulty) {
-      case 'Easy':
-        return 'success';
-      case 'Medium':
-        return 'warning';
-      case 'Hard':
-        return 'destructive';
-      default:
-        return 'secondary';
-    }
-  };
-
   const calculateStreaks = (problems: Problem[]) => {
     const today = new Date();
     const solveDates = problems.map(p => new Date(p.dateSolved).setHours(0,0,0,0)).sort((a,b) => a - b);
@@ -152,7 +142,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
   // Ensure we have exactly 52-53 weeks max (GitHub shows 53 sometimes)
   const weeks = allWeeks.slice(0, Math.min(53, allWeeks.length));
 
-  // Calculate month labels with better alignment - FIXED
+  // Calculate month labels with better alignment
   const monthLabels: { label: string; weekIndex: number }[] = [];
   let lastMonth = '';
   weeks.forEach((weekStart, index) => {
@@ -184,11 +174,11 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
   // Update color scheme to match LeetCode better
   const getColor = (count: number) => {
-    if (count === 0) return 'bg-gray-100 dark:bg-gray-800';
-    if (count === 1) return 'bg-green-200 dark:bg-green-900';
-    if (count === 2) return 'bg-green-300 dark:bg-green-800';
-    if (count === 3) return 'bg-green-400 dark:bg-green-700';
-    return 'bg-green-500 dark:bg-green-600';
+    if (count === 0) return 'bg-secondary/50 dark:bg-secondary/30';
+    if (count === 1) return 'bg-emerald-300 dark:bg-emerald-900/60';
+    if (count === 2) return 'bg-emerald-400 dark:bg-emerald-700';
+    if (count === 3) return 'bg-emerald-500 dark:bg-emerald-600';
+    return 'bg-emerald-600 dark:bg-emerald-500';
   };
 
   // Stats: use the actual data range, not the padded weeks
@@ -197,63 +187,356 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
   const totalDays = differenceInDays(today, startDate) + 1;
   const activePercentage = Math.round((activeDays / totalDays) * 100);
 
+  // Generate Chart Data for Recharts (Last 30 days)
+  const chartData = useMemo(() => {
+    const end = new Date();
+    const start = subDays(end, 30);
+    const days = eachDayOfInterval({ start, end });
+
+    return days.map(day => ({
+        date: format(day, 'MMM dd'),
+        count: problems.filter(p => isSameDay(new Date(p.dateSolved), day)).length
+    }));
+  }, [problems]);
+
 
   return (
-    <div className="space-y-6 sm:space-y-8">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <ProblemOfTheDay onAddPotd={onAddPotd} />
-        <DailyChallenge onAddToPotd={onAddDailyChallenge} />
-        <ExternalResourcesCard />
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Import Problems
-            </CardTitle>
-            <Download className="h-4 w-4 text-muted-foreground" />
+    <div className="space-y-8 animate-fade-in pb-12">
+      
+      {/* Welcome Section */}
+      <Greeting />
+
+      {/* Top Stats Row - Hero Stats */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-cyan-500/10 to-rose-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Current Streak</CardTitle>
+            <Flame className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-sm text-muted-foreground mb-4">
-              Bulk import problems from company lists.
+            <div className="text-3xl font-bold">
+                <StatsCounter value={currentStreak} /> 
+                <span className="text-sm font-normal text-muted-foreground"> days</span>
             </div>
-            <Button onClick={() => setIsImporting(true)}>
-              Import Now
-            </Button>
+            <p className="text-xs text-muted-foreground mt-1">
+              Best: <span className="text-foreground font-medium">{longestStreak} days</span>
+            </p>
           </CardContent>
+          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl group-hover:bg-orange-500/20 transition-colors" />
         </Card>
 
-        {/* POTD Cleanup Card */}
-        {onCleanupPotd && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                POTD Cleanup
+        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-emerald-500/10 to-teal-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total Solved</CardTitle>
+            <Trophy className="h-4 w-4 text-emerald-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+                <StatsCounter value={totalProblems} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-emerald-500 font-medium">+{thisWeek}</span> this week
+            </p>
+          </CardContent>
+          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
+        </Card>
+
+        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Active Days</CardTitle>
+            <Activity className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+                <StatsCounter value={activeDays} />
+                <span className="text-sm font-normal text-muted-foreground"> / 365</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              <span className="text-foreground font-medium">{activePercentage}%</span> consistency
+            </p>
+          </CardContent>
+          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl group-hover:bg-blue-500/20 transition-colors" />
+        </Card>
+
+        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Due Review</CardTitle>
+            <Clock className="h-4 w-4 text-amber-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+                <StatsCounter value={dueForReview} />
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {forReview} total for review
+            </p>
+          </CardContent>
+          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors" />
+        </Card>
+      </div>
+
+      {/* Main Content Grid */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        
+        {/* Heatmap & Activity - Spans 2 columns */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Activity Chart */}
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                        30 Day Activity
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="h-[200px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={chartData}>
+                                <defs>
+                                    <linearGradient id="colorCount" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#8884d8" stopOpacity={0.3}/>
+                                        <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255,255,255,0.1)" />
+                                <XAxis 
+                                    dataKey="date" 
+                                    axisLine={false} 
+                                    tickLine={false} 
+                                    tick={{ fontSize: 12, fill: 'var(--muted-foreground)' }} 
+                                    minTickGap={30}
+                                />
+                                <YAxis hide />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: 'var(--background)', border: '1px solid var(--border)', borderRadius: '8px' }}
+                                    itemStyle={{ color: 'var(--foreground)' }}
+                                />
+                                <Area 
+                                    type="monotone" 
+                                    dataKey="count" 
+                                    stroke="#8884d8" 
+                                    strokeWidth={2}
+                                    fillOpacity={1} 
+                                    fill="url(#colorCount)" 
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </CardContent>
+            </Card>
+
+
+          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <CalendarDays className="h-5 w-5 text-primary" />
+                Activity Heatmap
               </CardTitle>
-              <Trash2 className="h-4 w-4 text-muted-foreground" />
+              <CardDescription>Your submission history over the last year</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-sm text-muted-foreground mb-2">
-                {potdProblems.length} POTD problems total
+              <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
+                <div className="min-w-[600px]">
+                  {/* Month labels */}
+                  <div className="relative mb-4 h-5 w-full">
+                    {monthLabels.map((month, i) => (
+                      <div
+                        key={i}
+                        className="absolute text-xs text-muted-foreground font-medium"
+                        style={{
+                          left: `${(month.weekIndex / weeks.length) * 100}%`,
+                        }}
+                      >
+                        {month.label}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Heatmap grid */}
+                  <div className="flex gap-2">
+                    <div className="flex flex-col justify-between text-xs text-muted-foreground font-medium h-[100px] pb-1">
+                      <span>Mon</span>
+                      <span>Wed</span>
+                      <span>Fri</span>
+                    </div>
+
+                    <div className="flex-1 grid grid-flow-col gap-[3px] auto-cols-fr">
+                      {heatmapData.map((week, weekIdx) => (
+                        <div key={weekIdx} className="grid grid-rows-7 gap-[3px]">
+                          {week.map((cell, dayIdx) => {
+                            const isOutOfRange = !cell.isInDataRange;
+                            return (
+                              <div
+                                key={dayIdx}
+                                className={cn(
+                                  "h-[10px] w-[10px] rounded-[2px] transition-all duration-300",
+                                  isOutOfRange ? "bg-transparent" : getColor(cell.count),
+                                  !isOutOfRange && cell.count > 0 && "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background cursor-pointer shadow-sm hover:scale-125 z-10"
+                                )}
+                                title={isOutOfRange 
+                                  ? "Out of range" 
+                                  : `${format(cell.date, 'MMM d, yyyy')}: ${cell.count} problems`}
+                              />
+                            );
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  {/* Legend */}
+                  <div className="flex items-center justify-end mt-4 gap-2 text-xs text-muted-foreground">
+                    <span>Less</span>
+                    <div className="flex gap-1">
+                      <div className="w-3 h-3 rounded-[2px] bg-secondary/50 dark:bg-secondary/30" />
+                      <div className="w-3 h-3 rounded-[2px] bg-emerald-300 dark:bg-emerald-900/60" />
+                      <div className="w-3 h-3 rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
+                      <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-600" />
+                      <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" />
+                    </div>
+                    <span>More</span>
+                  </div>
+                </div>
               </div>
-              {expiredPotdCount > 0 ? (
-                <div className="text-sm text-orange-600 dark:text-orange-400 mb-4">
-                  {expiredPotdCount} expired (&gt;7 days old)
-                </div>
-              ) : (
-                <div className="text-sm text-green-600 dark:text-green-400 mb-4">
-                  All POTD problems are current
-                </div>
-              )}
-              <Button
-                onClick={handleCleanupPotd}
-                disabled={isCleaningPotd || expiredPotdCount === 0}
-                variant={expiredPotdCount > 0 ? "default" : "secondary"}
-                size="sm"
-              >
-                {isCleaningPotd ? 'Cleaning...' : 'Cleanup Old POTD'}
-              </Button>
             </CardContent>
           </Card>
-        )}
+
+          {/* Recent Activity */}
+          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <HistoryIcon className="h-5 w-5 text-primary" />
+                Recent Solves
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {problems.slice(0, 5).map((problem) => (
+                  <div key={problem.id} className="flex items-center justify-between p-3 rounded-lg bg-background/50 border border-border/50 hover:bg-accent/50 transition-all duration-200 group hover:pl-4">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shadow-sm",
+                        problem.platform === 'leetcode' ? "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500" : "bg-blue-500/10 text-blue-600 dark:text-blue-500"
+                      )}>
+                        {problem.platform === 'leetcode' ? 'LC' : 'CF'}
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm group-hover:text-primary transition-colors truncate max-w-[200px] sm:max-w-xs">
+                          {problem.title}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge variant="outline" className={cn(
+                            "text-[10px] h-5 px-1.5 font-normal border-none bg-opacity-20",
+                            problem.difficulty === 'Easy' ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" :
+                            problem.difficulty === 'Medium' ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" :
+                            "bg-red-500/10 text-red-600 dark:text-red-400"
+                          )}>
+                            {problem.difficulty}
+                          </Badge>
+                          <span className="text-[10px] text-muted-foreground">
+                            {format(new Date(problem.dateSolved), 'MMM d')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onUpdateProblem(problem.id, { isReview: !problem.isReview })}
+                      className={cn(
+                        "opacity-0 group-hover:opacity-100 transition-opacity",
+                        problem.isReview ? "text-yellow-500 opacity-100" : "text-muted-foreground"
+                      )}
+                    >
+                      <Star className={cn("h-4 w-4", problem.isReview && "fill-current")} />
+                    </Button>
+                  </div>
+                ))}
+                {problems.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                        <p>No problems solved yet. Start your journey today!</p>
+                    </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Sidebar - Daily Tasks & Actions */}
+        <div className="space-y-5">
+          {/* Daily Actions */}
+          <div className="grid gap-4">
+             <ProblemOfTheDay onAddPotd={onAddPotd} />
+             <DailyChallenge onAddToPotd={onAddDailyChallenge} />
+          </div>
+
+          {/* Todo Snapshot */}
+          {totalTodos > 0 && (
+             <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+               <CardHeader className="pb-4 pt-5 px-5">
+                 <CardTitle className="text-sm flex items-center gap-2.5">
+                   <CheckSquare className="h-4 w-4 text-primary" />
+                   Tasks
+                 </CardTitle>
+               </CardHeader>
+               <CardContent className="px-5 pb-5 space-y-4">
+                 <div className="flex items-center justify-between">
+                   <span className="text-sm text-muted-foreground">Progress</span>
+                   <span className="text-sm font-medium">{Math.round((completedTodos / totalTodos) * 100) || 0}%</span>
+                 </div>
+                 <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
+                   <div 
+                      className="h-full bg-primary transition-all duration-1000 ease-out"
+                      style={{ width: `${(completedTodos / totalTodos) * 100}%` }}
+                   />
+                 </div>
+                 <div className="grid grid-cols-2 gap-2 pt-2">
+                    <div className="bg-accent/50 p-2 rounded-md text-center">
+                      <div className="text-lg font-bold text-orange-500">{inProgressTodos}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">In Progress</div>
+                    </div>
+                    <div className="bg-accent/50 p-2 rounded-md text-center">
+                      <div className="text-lg font-bold text-red-500">{overdueTodos}</div>
+                      <div className="text-[10px] text-muted-foreground uppercase tracking-wider">Overdue</div>
+                    </div>
+                 </div>
+               </CardContent>
+             </Card>
+          )}
+
+          {/* Quick Tools */}
+          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-4 pt-5 px-5">
+              <CardTitle className="text-sm flex items-center gap-2.5">
+                <Zap className="h-4 w-4 text-yellow-500" />
+                Tools
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-5 pb-5 space-y-3">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start transition-all hover:bg-primary/10 hover:border-primary/50" 
+                onClick={() => setIsImporting(true)}
+              >
+                <Download className="h-4 w-4 mr-2 text-muted-foreground" />
+                Import Problems
+              </Button>
+              <ExternalResourcesCard />
+              
+              {onCleanupPotd && (
+                 <Button 
+                    variant="ghost" 
+                    className="w-full justify-start text-muted-foreground hover:text-destructive"
+                    onClick={handleCleanupPotd}
+                    disabled={isCleaningPotd || expiredPotdCount === 0}
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
+                    Clean Old POTD ({expiredPotdCount})
+                  </Button>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
       
       <ImportProblems 
@@ -261,264 +544,6 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
         onOpenChange={setIsImporting} 
         onImport={onImportProblems} 
       />
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Solve Streaks</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-center mb-4">
-            <div className="relative">
-              <div className="w-24 h-24 rounded-full border-4 border-green-500 flex items-center justify-center">
-                <div className="text-center">
-                  <div className="text-3xl font-bold">{currentStreak}</div>
-                  <div className="text-sm">Streak</div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="text-center text-sm text-muted-foreground">
-            Longest: {longestStreak} days
-          </div>
-          
-          {/* LeetCode-style heatmap */}
-          <div className="w-full">
-            {/* Month labels */}
-            <div className="relative mb-6 ml-12 h-4">
-              {monthLabels.map((month, i) => (
-                <div
-                  key={i}
-                  className="absolute text-xs text-muted-foreground font-medium"
-                  style={{
-                    left: `${(month.weekIndex / weeks.length) * 100}%`,
-                    top: '0px'
-                  }}
-                >
-                  {month.label}
-                </div>
-              ))}
-            </div>
-
-            {/* Heatmap grid */}
-            <div className="flex items-start">
-              {/* Day labels */}
-              <div className="flex flex-col justify-around text-xs text-muted-foreground mr-3 font-medium" style={{ height: '112px' }}>
-                <span></span>
-                <span>Mon</span>
-                <span></span>
-                <span>Wed</span>
-                <span></span>
-                <span>Fri</span>
-                <span></span>
-              </div>
-
-              {/* Calendar grid - Fill all gaps */}
-              <div className="flex-1">
-                <div className="grid gap-[1px] w-full" style={{ gridTemplateColumns: `repeat(${weeks.length}, 1fr)` }}>
-                  {heatmapData.map((week, weekIdx) => (
-                    <div key={weekIdx} className="flex flex-col gap-[1px]">
-                      {week.map((cell, dayIdx) => {
-                        // Render all cells consistently to avoid gaps
-                        const isOutOfRange = !cell.isInDataRange;
-
-                        return (
-                          <div
-                            key={dayIdx}
-                            className={`aspect-square rounded-[2px] ${
-                              isOutOfRange
-                                ? 'bg-gray-100 dark:bg-gray-800'
-                                : getColor(cell.count)
-                            } hover:ring-1 hover:ring-gray-400 transition-all cursor-default`}
-                            title={
-                              isOutOfRange
-                                ? `${format(cell.date, 'MMM d, yyyy')}: Out of range`
-                                : `${format(cell.date, 'MMM d, yyyy')}: ${cell.count} ${cell.count === 1 ? 'problem' : 'problems'}`
-                            }
-                          />
-                        );
-                      })}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            
-            {/* Legend */}
-            <div className="flex items-center justify-between mt-4 text-xs text-muted-foreground">
-              <span>Less</span>
-              <div className="flex items-center gap-[1px]">
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-gray-100 dark:bg-gray-800" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-200 dark:bg-green-900" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-300 dark:bg-green-800" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-400 dark:bg-green-700" />
-                <div className="w-[12px] h-[12px] rounded-[1px] bg-green-500 dark:bg-green-600" />
-              </div>
-              <span>More</span>
-            </div>
-          </div>
-          <div className="text-center space-y-1 mt-3 sm:mt-4">
-            <div className="text-base sm:text-lg font-medium">{pastYearSolves} Submissions in the past year</div>
-            <div className="text-xs sm:text-sm text-muted-foreground">Total Active Days: {activeDays} ({activePercentage}%)</div>
-          </div>
-        </CardContent>
-      </Card>
-      <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Problems</CardTitle>
-            <BookCopy className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalProblems}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Solved This Week</CardTitle>
-            <CalendarDays className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{thisWeek}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Marked for Review</CardTitle>
-            <Star className="h-6 w-6 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{forReview}</div>
-          </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Due for Review</CardTitle>
-                <Clock className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{dueForReview}</div>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Easy Problems</CardTitle>
-                <Trophy className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-                <div className="text-2xl font-bold">{problems.filter(p => p.difficulty === 'Easy').length}</div>
-            </CardContent>
-        </Card>
-      </div>
-
-      {/* Todo Statistics */}
-      {totalTodos > 0 && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Todos</CardTitle>
-              <CheckSquare className="h-6 w-6 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalTodos}</div>
-              <p className="text-xs text-muted-foreground">
-                {completedTodos} completed
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Target className="h-6 w-6 text-orange-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{inProgressTodos}</div>
-              <p className="text-xs text-muted-foreground">
-                {pendingTodos} pending
-              </p>
-            </CardContent>
-          </Card>
-          {overdueTodos > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Overdue</CardTitle>
-                <AlertTriangle className="h-6 w-6 text-red-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-red-600">{overdueTodos}</div>
-                <p className="text-xs text-muted-foreground">
-                  Need attention
-                </p>
-              </CardContent>
-            </Card>
-          )}
-          {urgentTodos > 0 && (
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Urgent</CardTitle>
-                <AlertTriangle className="h-6 w-6 text-orange-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{urgentTodos}</div>
-                <p className="text-xs text-muted-foreground">
-                  High priority
-                </p>
-              </CardContent>
-            </Card>
-          )}
-        </div>
-      )}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <Card className="col-span-4">
-          <CardHeader>
-            <CardTitle>Recent Problems</CardTitle>
-          </CardHeader>
-          <CardContent className="pl-2">
-            {problems.slice(0, 5).map((problem) => (
-              <div key={problem.id} className="flex items-center justify-between p-3">
-                <div>
-                  <p className="font-medium">{problem.title}</p>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={problem.platform === 'leetcode' ? 'outline' : 'default'}>
-                        {problem.platform === 'leetcode' ? 'LeetCode' : 'CodeForces'}
-                    </Badge>
-                    <Badge variant={getDifficultyBadgeVariant(problem.difficulty, problem.platform)}>
-                        {problem.difficulty}
-                    </Badge>
-                  </div>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onUpdateProblem(problem.id, { isReview: !problem.isReview })}
-                  className={problem.isReview ? 'text-yellow-500' : 'text-muted-foreground'}
-                >
-                  <Star className="h-5 w-5" />
-                </Button>
-              </div>
-            ))}
-            {problems.length === 0 && (
-                <div className="text-center py-12">
-                    <BookCopy className="mx-auto h-16 w-16 text-muted-foreground" />
-                    <h3 className="mt-4 text-lg font-medium">No problems yet</h3>
-                    <p className="mt-2 text-sm text-muted-foreground">
-                        Start tracking your coding progress by adding your first problem!
-                    </p>
-                </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="col-span-3">
-            <CardHeader>
-                <CardTitle>Activity</CardTitle>
-            </CardHeader>
-            <CardContent>
-                {/* Placeholder for activity chart or feed */}
-                <div className="h-64 flex items-center justify-center text-muted-foreground">
-                    Activity feed coming soon...
-                </div>
-            </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };
