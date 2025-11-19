@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import { comparePassword, generateToken } from '@/lib/auth';
+import { sanitizeEmail } from '@/lib/input-validation';
 
 // Simple in-memory rate limiting (for production, use Redis or database)
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
@@ -62,10 +63,10 @@ export async function POST(request: NextRequest) {
       }, { status: 429 });
     }
 
-    const { email, password } = await request.json();
+    const body = await request.json();
 
     // Validation
-    if (!email || !password) {
+    if (!body.email || !body.password) {
       return NextResponse.json({
         success: false,
         error: 'Email and password are required'
@@ -73,24 +74,34 @@ export async function POST(request: NextRequest) {
     }
 
     // Additional validation
-    if (typeof email !== 'string' || typeof password !== 'string') {
+    if (typeof body.email !== 'string' || typeof body.password !== 'string') {
       return NextResponse.json({
         success: false,
         error: 'Invalid input format'
       }, { status: 400 });
     }
 
-    if (email.length > 255 || password.length > 128) {
+    if (body.email.length > 255 || body.password.length > 128) {
       return NextResponse.json({
         success: false,
         error: 'Input too long'
       }, { status: 400 });
     }
 
+    // Sanitize email
+    let email: string;
+    try {
+      email = sanitizeEmail(body.email);
+    } catch (validationError) {
+      recordFailedAttempt(rateLimitKey);
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid email format'
+      }, { status: 400 });
+    }
+
     // Find user
-    const user = await User.findOne({
-      email: email.toLowerCase().trim()
-    });
+    const user = await User.findOne({ email });
 
     if (!user) {
       recordFailedAttempt(rateLimitKey);
@@ -101,7 +112,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check password
-    const isValidPassword = await comparePassword(password, user.password);
+    const isValidPassword = await comparePassword(body.password, user.password);
     if (!isValidPassword) {
       recordFailedAttempt(rateLimitKey);
       return NextResponse.json({

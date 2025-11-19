@@ -16,18 +16,26 @@ const publicRoutes = [
   '/api/auth/register',
   '/api/potd',
   '/api/health',
-  '/api/debug',
   '/api/contests/all',        // Allow public contest listing
   '/api/daily-challenge',     // Allow public daily challenge
-  '/api/ai/test',             // Allow AI test endpoint for development
-  '/api/ai/models',           // Allow AI models listing for development
-  '/api/ai/verify',           // Allow AI verification for development
-  '/api/ai/platform-test',    // Allow platform adapter testing for development
-  '/api/ai/cache-test',       // Allow cache manager testing for development
-  '/api/ai/similar',          // Allow similar problems API for development
-  '/api/ai/review',           // Allow review insights API for development
-  '/api/ai/database-test',    // Allow database testing for development
-  '/api/ai/integration-test'  // Allow integration testing for development
+];
+
+// Debug/test routes - only available in development
+const devOnlyRoutes = [
+  '/api/debug',
+  '/api/ai/test',
+  '/api/ai/models',
+  '/api/ai/verify',
+  '/api/ai/platform-test',
+  '/api/ai/cache-test',
+  '/api/ai/database-test',
+  '/api/ai/integration-test'
+];
+
+// AI routes that require authentication
+const aiProtectedRoutes = [
+  '/api/ai/similar',
+  '/api/ai/review'
 ];
 
 export function middleware(request: NextRequest) {
@@ -56,13 +64,30 @@ export function middleware(request: NextRequest) {
 function handleAPIRoute(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // Block debug/test routes in production
+  if (process.env.NODE_ENV === 'production') {
+    if (devOnlyRoutes.some(route => pathname.startsWith(route))) {
+      console.log(`🚫 Blocked access to dev-only route in production: ${pathname}`);
+      return NextResponse.json(
+        { success: false, error: 'Not found' },
+        { status: 404 }
+      );
+    }
+  }
+
   // Allow public routes without authentication
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Check if this is a protected route
-  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+  // Dev-only routes are allowed in development
+  if (process.env.NODE_ENV !== 'production' && devOnlyRoutes.some(route => pathname.startsWith(route))) {
+    return NextResponse.next();
+  }
+
+  // Check if this is a protected route (including AI routes)
+  const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route)) ||
+                          aiProtectedRoutes.some(route => pathname.startsWith(route));
 
   if (!isProtectedRoute) {
     // For unspecified API routes, allow them through

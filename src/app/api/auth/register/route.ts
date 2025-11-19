@@ -2,39 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import User from '@/models/User';
 import { hashPassword, generateToken } from '@/lib/auth';
+import { sanitizeEmail, sanitizeUsername, validatePassword } from '@/lib/input-validation';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { email, username, password } = await request.json();
+    const body = await request.json();
 
     // Validation
-    if (!email || !username || !password) {
+    if (!body.email || !body.username || !body.password) {
       return NextResponse.json({
         success: false,
         error: 'Email, username, and password are required'
       }, { status: 400 });
     }
 
-    if (password.length < 6) {
+    // Sanitize and validate inputs
+    let email: string;
+    let username: string;
+    
+    try {
+      email = sanitizeEmail(body.email);
+      username = sanitizeUsername(body.username);
+      validatePassword(body.password);
+    } catch (validationError) {
       return NextResponse.json({
         success: false,
-        error: 'Password must be at least 6 characters long'
-      }, { status: 400 });
-    }
-
-    if (username.length < 3 || username.length > 30) {
-      return NextResponse.json({
-        success: false,
-        error: 'Username must be between 3 and 30 characters'
+        error: validationError instanceof Error ? validationError.message : 'Invalid input'
       }, { status: 400 });
     }
 
     // Check if user already exists
     const existingUser = await User.findOne({
       $or: [
-        { email: email.toLowerCase() },
+        { email },
         { username }
       ]
     });
@@ -47,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Hash password and create user
-    const hashedPassword = await hashPassword(password);
+    const hashedPassword = await hashPassword(body.password);
 
     const user = new User({
       email: email.toLowerCase(),

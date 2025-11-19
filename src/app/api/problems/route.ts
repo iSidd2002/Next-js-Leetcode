@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Problem from '@/models/Problem';
 import { authenticateRequest } from '@/lib/auth';
+import { sanitizeQueryParam, sanitizeString, sanitizeUrl, sanitizeInteger, sanitizeStringArray } from '@/lib/input-validation';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -17,20 +32,33 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const platform = searchParams.get('platform');
-    const status = searchParams.get('status');
-    const isReview = searchParams.get('isReview');
-    const company = searchParams.get('company');
-    const topic = searchParams.get('topic');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    
+    // Sanitize query parameters
+    const platform = sanitizeQueryParam(searchParams.get('platform'));
+    const status = sanitizeQueryParam(searchParams.get('status'));
+    const isReviewParam = searchParams.get('isReview');
+    const company = sanitizeQueryParam(searchParams.get('company'));
+    const topic = sanitizeQueryParam(searchParams.get('topic'));
+    
+    // Sanitize and validate numeric parameters
+    let limit: number;
+    let offset: number;
+    try {
+      limit = sanitizeInteger(searchParams.get('limit') || '100', 1, 1000);
+      offset = sanitizeInteger(searchParams.get('offset') || '0', 0, 100000);
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Invalid parameters'
+      }, { status: 400 });
+    }
 
     // Build filter
     const filter: Record<string, unknown> = { userId: user.id };
 
     if (platform) filter.platform = platform;
     if (status) filter.status = status;
-    if (isReview !== null) filter.isReview = isReview === 'true';
+    if (isReviewParam !== null) filter.isReview = isReviewParam === 'true';
     if (company) filter.companies = { $in: [company] };
     if (topic) filter.topics = { $in: [topic] };
 
@@ -76,6 +104,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -97,29 +138,43 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const problem = new Problem({
-      userId: user.id,
-      platform: problemData.platform,
-      title: problemData.title,
-      problemId: problemData.problemId || '',
-      difficulty: problemData.difficulty || '',
-      url: problemData.url || '',
-      dateSolved: problemData.dateSolved || new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-      notes: problemData.notes || '',
-      isReview: problemData.isReview || false,
-      repetition: problemData.repetition || 0,
-      interval: problemData.interval || 0,
-      nextReviewDate: problemData.nextReviewDate || null,
-      topics: problemData.topics || [],
-      status: problemData.status || 'active',
-      companies: problemData.companies || [],
-      source: problemData.source || 'manual'
-    });
+    // Sanitize inputs
+    let sanitizedUrl = '';
+    try {
+      const title = sanitizeString(problemData.title, 'Title');
+      const platform = sanitizeString(problemData.platform, 'Platform');
+      const problemId = problemData.problemId ? sanitizeString(problemData.problemId, 'Problem ID') : '';
+      const difficulty = problemData.difficulty ? sanitizeString(problemData.difficulty, 'Difficulty') : '';
+      sanitizedUrl = problemData.url ? sanitizeUrl(problemData.url) : '';
+      const notes = problemData.notes ? sanitizeString(problemData.notes, 'Notes') : '';
+      const statusValue = problemData.status ? sanitizeString(problemData.status, 'Status') : 'active';
+      const source = problemData.source ? sanitizeString(problemData.source, 'Source') : 'manual';
+      const topics = sanitizeStringArray(problemData.topics, 'Topics');
+      const companies = sanitizeStringArray(problemData.companies, 'Companies');
 
-    await problem.save();
+      const problem = new Problem({
+        userId: user.id,
+        platform,
+        title,
+        problemId,
+        difficulty,
+        url: sanitizedUrl,
+        dateSolved: problemData.dateSolved || new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+        notes,
+        isReview: Boolean(problemData.isReview),
+        repetition: typeof problemData.repetition === 'number' ? problemData.repetition : 0,
+        interval: typeof problemData.interval === 'number' ? problemData.interval : 0,
+        nextReviewDate: problemData.nextReviewDate || null,
+        topics,
+        status: statusValue,
+        companies,
+        source
+      });
 
-    const formattedProblem = {
+      await problem.save();
+
+      const formattedProblem = {
       id: problem._id.toString(),
       platform: problem.platform,
       title: problem.title,
@@ -139,10 +194,17 @@ export async function POST(request: NextRequest) {
       source: problem.source || 'manual'
     };
 
-    return NextResponse.json({
-      success: true,
-      data: formattedProblem
-    }, { status: 201 });
+      return NextResponse.json({
+        success: true,
+        data: formattedProblem
+      }, { status: 201 });
+
+    } catch (validationError) {
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid input'
+      }, { status: 400 });
+    }
 
   } catch (error: unknown) {
     if ((error as { code?: number }).code === 11000) {
