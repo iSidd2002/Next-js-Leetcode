@@ -111,14 +111,17 @@ export default function HomePage() {
       setContests(contestsData);
       setTodos(todosData);
 
-      // Automatic POTD cleanup - remove expired POTD problems
+      // Automatic POTD cleanup - remove expired POTD problems (keeps saved ones forever)
       try {
         const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
-        if (cleanupResult.removedCount > 0) {
+        if (cleanupResult.removedCount > 0 || cleanupResult.preservedCount > 0) {
           // Reload POTD problems after cleanup
           const updatedPotdProblems = await StorageService.getPotdProblems();
           setPotdProblems(updatedPotdProblems);
-          toast.info(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
+          
+          if (cleanupResult.removedCount > 0) {
+            toast.info(`🧹 Cleaned up ${cleanupResult.removedCount} old POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}${cleanupResult.preservedCount > 0 ? `, kept ${cleanupResult.preservedCount} saved` : ''}`);
+          }
         }
       } catch (error) {
         console.error('POTD Auto-cleanup failed:', error);
@@ -442,12 +445,21 @@ export default function HomePage() {
   const handleCleanupPotd = async () => {
     try {
       const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
+      
+      // Reload POTD problems after cleanup
+      const updatedPotdProblems = await StorageService.getPotdProblems();
+      setPotdProblems(updatedPotdProblems);
+
       if (cleanupResult.removedCount > 0) {
-        const updatedPotdProblems = await StorageService.getPotdProblems();
-        setPotdProblems(updatedPotdProblems);
-        toast.success(`Cleaned up ${cleanupResult.removedCount} expired POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`);
+        let message = `🧹 Cleaned up ${cleanupResult.removedCount} old POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`;
+        if (cleanupResult.preservedCount > 0) {
+          message += `\n✨ Kept ${cleanupResult.preservedCount} saved problem${cleanupResult.preservedCount === 1 ? '' : 's'} forever (with notes/reviews)`;
+        }
+        toast.success(message);
+      } else if (cleanupResult.preservedCount > 0) {
+        toast.success(`✨ No cleanup needed - all ${cleanupResult.preservedCount} old problem${cleanupResult.preservedCount === 1 ? ' is' : 's are'} saved by you!`);
       } else {
-        toast.info('No expired POTD problems found');
+        toast.info('✅ No expired POTD problems found - everything is current!');
       }
     } catch (error) {
       console.error('POTD cleanup failed:', error);

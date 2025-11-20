@@ -87,6 +87,7 @@ class StorageService {
 
   static async cleanupExpiredPotdProblems(): Promise<{
     removedCount: number;
+    preservedCount: number;
     summary: string;
   }> {
     try {
@@ -95,25 +96,28 @@ class StorageService {
       if (!isCleanupNeeded(potdProblems)) {
         return {
           removedCount: 0,
-          summary: 'No expired POTD problems found'
+          preservedCount: 0,
+          summary: '✨ No cleanup needed - all POTD problems are either current or saved by you!'
         };
       }
 
-      const { cleanedProblems, removedCount, removedProblems } = cleanupExpiredPotdProblems(potdProblems);
+      const { cleanedProblems, removedCount, removedProblems, preservedCount } = cleanupExpiredPotdProblems(potdProblems);
 
       // Save cleaned problems back to storage
       await this.savePotdProblems(cleanedProblems);
 
-      const summary = getCleanupSummary(removedCount, removedProblems);
+      const summary = getCleanupSummary(removedCount, removedProblems, preservedCount);
 
       return {
         removedCount,
+        preservedCount,
         summary
       };
     } catch (error) {
       console.error('🧹 POTD Cleanup: Error during cleanup:', error);
       return {
         removedCount: 0,
+        preservedCount: 0,
         summary: 'Cleanup failed due to error'
       };
     }

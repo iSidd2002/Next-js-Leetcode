@@ -3,13 +3,59 @@ import type { Problem } from '@/types';
 /**
  * POTD (Problem of the Day) Cleanup Utilities
  * Handles automatic cleanup of old POTD problems to prevent accumulation
+ * 
+ * 🔒 SMART PRESERVATION: Problems are kept FOREVER if user has:
+ *   - Marked for review (isReview = true)
+ *   - Added custom notes
+ *   - Started spaced repetition (repetition > 0)
+ *   - Manually edited the problem
+ * 
+ * Only untouched POTD problems older than 7 days are cleaned up.
  */
 
 // Configuration
 const POTD_RETENTION_DAYS = 7; // Keep POTD problems for 7 days
 
 /**
+ * Check if a POTD problem should be preserved forever
+ * Returns true if the user has interacted with the problem in any meaningful way
+ */
+export function shouldPreservePotdForever(problem: Problem): boolean {
+  if (problem.source !== 'potd') {
+    return false; // Only applies to POTD problems
+  }
+
+  // Preserve if marked for review
+  if (problem.isReview) {
+    return true;
+  }
+
+  // Preserve if user added notes (shows they care about it)
+  if (problem.notes && problem.notes.trim().length > 0) {
+    return true;
+  }
+
+  // Preserve if user has started spaced repetition
+  if (problem.repetition > 0) {
+    return true;
+  }
+
+  // Preserve if user has a scheduled review date
+  if (problem.nextReviewDate) {
+    return true;
+  }
+
+  // Preserve if user manually edited tags (non-default companies or edited topics)
+  if (problem.companies && problem.companies.length > 0) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
  * Check if a POTD problem is expired (older than retention period)
+ * This only checks the age, not whether it should be preserved
  */
 export function isPotdExpired(problem: Problem): boolean {
   if (problem.source !== 'potd') {
@@ -25,22 +71,44 @@ export function isPotdExpired(problem: Problem): boolean {
 
 /**
  * Clean up expired POTD problems from a list
- * IMPORTANT: Preserves POTD problems that are marked for review
+ * 
+ * ⚠️ SMART CLEANUP: Only removes POTD problems that are:
+ *   1. Older than 7 days AND
+ *   2. User has NOT interacted with (no review, notes, or edits)
+ * 
+ * 🔒 PRESERVED FOREVER if user has:
+ *   - Marked for review
+ *   - Added notes
+ *   - Started spaced repetition
+ *   - Added companies/tags
+ *   - Scheduled next review
  */
 export function cleanupExpiredPotdProblems(problems: Problem[]): {
   cleanedProblems: Problem[];
   removedCount: number;
   removedProblems: Problem[];
+  preservedCount: number;
 } {
   const cleanedProblems: Problem[] = [];
   const removedProblems: Problem[] = [];
+  let preservedCount = 0;
 
   for (const problem of problems) {
-    if (isPotdExpired(problem) && !problem.isReview) {
-      // Only remove expired POTD problems that are NOT marked for review
+    // Check if problem should be preserved forever
+    const shouldPreserve = shouldPreservePotdForever(problem);
+    
+    // Check if problem is expired (old)
+    const isExpired = isPotdExpired(problem);
+
+    if (isExpired && shouldPreserve) {
+      // Problem is old but user has interacted with it - KEEP FOREVER
+      cleanedProblems.push(problem);
+      preservedCount++;
+    } else if (isExpired && !shouldPreserve) {
+      // Problem is old and untouched - safe to remove
       removedProblems.push(problem);
     } else {
-      // Keep the problem if it's not expired OR if it's marked for review
+      // Problem is not expired yet - keep it
       cleanedProblems.push(problem);
     }
   }
@@ -50,7 +118,8 @@ export function cleanupExpiredPotdProblems(problems: Problem[]): {
   return {
     cleanedProblems,
     removedCount,
-    removedProblems
+    removedProblems,
+    preservedCount
   };
 }
 
@@ -61,6 +130,8 @@ export function getPotdStatistics(problems: Problem[]): {
   total: number;
   active: number;
   expired: number;
+  preserved: number;
+  reviewProblems: number;
   oldestDate: string | null;
   newestDate: string | null;
 } {
@@ -71,13 +142,16 @@ export function getPotdStatistics(problems: Problem[]): {
       total: 0,
       active: 0,
       expired: 0,
+      preserved: 0,
+      reviewProblems: 0,
       oldestDate: null,
       newestDate: null
     };
   }
 
   const active = potdProblems.filter(p => !isPotdExpired(p)).length;
-  const expired = potdProblems.filter(p => isPotdExpired(p) && !p.isReview).length; // Don't count review problems as expired
+  const preserved = potdProblems.filter(p => isPotdExpired(p) && shouldPreservePotdForever(p)).length;
+  const expired = potdProblems.filter(p => isPotdExpired(p) && !shouldPreservePotdForever(p)).length;
   const reviewProblems = potdProblems.filter(p => p.isReview).length;
 
   // Find oldest and newest dates
@@ -89,6 +163,7 @@ export function getPotdStatistics(problems: Problem[]): {
     total: potdProblems.length,
     active,
     expired,
+    preserved,
     reviewProblems,
     oldestDate,
     newestDate
@@ -96,24 +171,38 @@ export function getPotdStatistics(problems: Problem[]): {
 }
 
 /**
- * Check if cleanup is needed (has expired POTD problems)
+ * Check if cleanup is needed (has expired POTD problems that can be removed)
  */
 export function isCleanupNeeded(problems: Problem[]): boolean {
-  return problems.some(p => isPotdExpired(p));
+  return problems.some(p => isPotdExpired(p) && !shouldPreservePotdForever(p));
 }
 
 /**
  * Get a summary message for cleanup results
  */
-export function getCleanupSummary(removedCount: number, removedProblems: Problem[]): string {
-  if (removedCount === 0) {
+export function getCleanupSummary(
+  removedCount: number, 
+  removedProblems: Problem[], 
+  preservedCount: number = 0
+): string {
+  if (removedCount === 0 && preservedCount === 0) {
     return 'No expired POTD problems found. All POTD problems are current.';
+  }
+
+  if (removedCount === 0 && preservedCount > 0) {
+    return `✨ All ${preservedCount} old POTD problem${preservedCount === 1 ? '' : 's'} preserved due to user interactions (notes, reviews, or edits).`;
   }
 
   const titles = removedProblems.slice(0, 3).map(p => `"${p.title}"`).join(', ');
   const moreText = removedCount > 3 ? ` and ${removedCount - 3} more` : '';
   
-  return `Removed ${removedCount} expired POTD problem${removedCount === 1 ? '' : 's'}: ${titles}${moreText}`;
+  let summary = `🧹 Removed ${removedCount} expired POTD problem${removedCount === 1 ? '' : 's'}: ${titles}${moreText}`;
+  
+  if (preservedCount > 0) {
+    summary += `\n✨ Preserved ${preservedCount} problem${preservedCount === 1 ? '' : 's'} with user interactions (kept forever).`;
+  }
+  
+  return summary;
 }
 
 /**
