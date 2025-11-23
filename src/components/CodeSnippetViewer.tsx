@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus, atomDark, tomorrow, oneLight, nightOwl, dracula } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { Button } from '@/components/ui/button';
@@ -67,6 +67,9 @@ export function CodeSnippetViewer({
   theme = 'vscode',
   className
 }: CodeSnippetViewerProps) {
+  // Generate unique ID for export functionality (fixes issue with multiple viewers on same page)
+  const exportId = useMemo(() => `code-export-${Math.random().toString(36).substring(2, 11)}`, []);
+  
   const [copied, setCopied] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState(theme);
   const [selectedGradient, setSelectedGradient] = useState(1);
@@ -84,7 +87,7 @@ export function CodeSnippetViewer({
 
   const handleExport = async () => {
     setExporting(true);
-    const element = document.getElementById('code-snippet-export');
+    const element = document.getElementById(exportId);
     if (element) {
       try {
         // Wait for state update (hide controls)
@@ -112,7 +115,7 @@ export function CodeSnippetViewer({
     <div className={cn("relative group", className)}>
       {/* Export Container */}
       <div 
-        id="code-snippet-export"
+        id={exportId}
         className={cn(
           "relative transition-all duration-300 ease-in-out overflow-hidden rounded-xl",
           PADDINGS[selectedPadding].value
