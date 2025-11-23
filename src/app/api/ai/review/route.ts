@@ -15,17 +15,17 @@ export async function POST(request: NextRequest) {
   try {
     console.log('🔍 Processing review insights request...');
 
-    // Authenticate user (optional for testing)
-    let userId = 'test-user';
-    try {
-      const authResult = await authenticateRequest(request);
-      if (authResult.success && authResult.user) {
-        userId = authResult.user.id;
-      }
-    } catch (error) {
-      console.log('⚠️ Authentication failed, using test user for development');
+    // SECURITY: Authentication is now REQUIRED (no test user fallback)
+    const user = await authenticateRequest(request);
+    
+    if (!user) {
+      return NextResponse.json({
+        success: false,
+        error: 'Authentication required. Please log in to use AI features.'
+      }, { status: 401 });
     }
 
+    const userId = user.id;
     const body = await request.json();
 
     // Validate request body
