@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
 import html2canvas from 'html2canvas';
+import { toast } from 'sonner';
 
 interface CodeSnippetViewerProps {
   code: string;
@@ -79,36 +80,95 @@ export function CodeSnippetViewer({
   const currentTheme = THEMES[selectedTheme as keyof typeof THEMES] || THEMES.vscode;
   const isLight = ['tomorrow', 'light'].includes(selectedTheme);
 
+  // Fallback copy method for browsers without clipboard API
+  const fallbackCopyToClipboard = (text: string) => {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+      document.execCommand('copy');
+      toast.success('Copied to clipboard!');
+      setCopied(true);
+    } catch (err) {
+      toast.error('Failed to copy. Please copy manually.');
+    } finally {
+      document.body.removeChild(textArea);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      if (!navigator.clipboard) {
+        throw new Error('Clipboard API not available');
+      }
+      
+      await navigator.clipboard.writeText(code);
+      toast.success('Copied to clipboard!');
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Clipboard copy failed:', error);
+      
+      // Try fallback method
+      fallbackCopyToClipboard(code);
+    }
   };
 
   const handleExport = async () => {
     setExporting(true);
     const element = document.getElementById(exportId);
-    if (element) {
-      try {
-        // Wait for state update (hide controls)
-        await new Promise(resolve => setTimeout(resolve, 100));
+    
+    if (!element) {
+      toast.error('Export failed: Element not found');
+      setExporting(false);
+      return;
+    }
+    
+    try {
+      // Wait for state update (hide controls)
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      const canvas = await html2canvas(element, {
+        backgroundColor: null,
+        scale: 3, // Higher quality
+        useCORS: true,
+        logging: false,
+      });
+      
+      // Convert to blob to avoid memory leak from data URLs
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          toast.error('Export failed: Could not create image');
+          setExporting(false);
+          return;
+        }
         
-        const canvas = await html2canvas(element, {
-          backgroundColor: null,
-          scale: 3, // Higher quality
-          useCORS: true,
-          logging: false,
-        });
-        
+        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.download = `${filename || 'snippet'}-${new Date().getTime()}.png`;
-        link.href = canvas.toDataURL('image/png');
+        link.href = url;
         link.click();
-      } catch (error) {
-        console.error('Export failed:', error);
-      }
+        
+        // Cleanup to prevent memory leak
+        setTimeout(() => {
+          URL.revokeObjectURL(url);
+          link.remove();
+        }, 100);
+        
+        toast.success('Code snippet exported! 📸');
+        setExporting(false);
+      }, 'image/png');
+    } catch (error) {
+      console.error('Export failed:', error);
+      toast.error('Export failed. Please try again.');
+      setExporting(false);
     }
-    setExporting(false);
   };
 
   return (

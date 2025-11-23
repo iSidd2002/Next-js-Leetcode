@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
@@ -108,6 +108,8 @@ public:
 };`,
 };
 
+const MAX_CODE_LENGTH = 50000; // 50KB max
+
 export function CodeSnippetEditor({
   initialCode = '',
   initialLanguage = 'javascript',
@@ -120,6 +122,35 @@ export function CodeSnippetEditor({
   const [language, setLanguage] = useState(initialLanguage);
   const [filename, setFilename] = useState(initialFilename);
   const [showPreview, setShowPreview] = useState(false);
+  
+  const debounceTimer = useRef<NodeJS.Timeout | null>(null);
+
+  // Sync state when props change (fixes derived state issue)
+  useEffect(() => {
+    setCode(initialCode);
+    setLanguage(initialLanguage);
+    setFilename(initialFilename);
+  }, [initialCode, initialLanguage, initialFilename]);
+
+  // Debounced onChange to prevent excessive parent re-renders
+  const debouncedOnChange = useCallback((newCode: string, newLang: string, newFile: string) => {
+    if (debounceTimer.current) {
+      clearTimeout(debounceTimer.current);
+    }
+    
+    debounceTimer.current = setTimeout(() => {
+      onChange?.(newCode, newLang, newFile);
+    }, 500); // 500ms debounce
+  }, [onChange]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimer.current) {
+        clearTimeout(debounceTimer.current);
+      }
+    };
+  }, []);
 
   const handleSave = () => {
     if (onSave) {
@@ -132,8 +163,14 @@ export function CodeSnippetEditor({
     const template = CODE_TEMPLATES[language as keyof typeof CODE_TEMPLATES];
     if (template) {
       setCode(template);
+      // Immediate call for template loading
       onChange?.(template, language, filename);
     }
+  };
+
+  // Sanitize filename
+  const sanitizeFilename = (name: string) => {
+    return name.replace(/[^a-z0-9_.-]/gi, '_').substring(0, 100);
   };
 
   return (
@@ -171,7 +208,7 @@ export function CodeSnippetEditor({
                 value={language} 
                 onValueChange={(val) => {
                   setLanguage(val);
-                  onChange?.(code, val, filename);
+                  debouncedOnChange(code, val, filename);
                 }}
               >
                 <SelectTrigger>
@@ -191,10 +228,12 @@ export function CodeSnippetEditor({
               <Input
                 value={filename}
                 onChange={(e) => {
-                  setFilename(e.target.value);
-                  onChange?.(code, language, e.target.value);
+                  const sanitized = sanitizeFilename(e.target.value);
+                  setFilename(sanitized);
+                  debouncedOnChange(code, language, sanitized);
                 }}
                 placeholder="solution"
+                maxLength={100}
               />
             </div>
           </div>
@@ -218,12 +257,23 @@ export function CodeSnippetEditor({
             <Textarea
               value={code}
               onChange={(e) => {
-                setCode(e.target.value);
-                onChange?.(e.target.value, language, filename);
+                const newCode = e.target.value;
+                
+                // Validate code length
+                if (newCode.length > MAX_CODE_LENGTH) {
+                  toast.error(`Code too large! Maximum ${MAX_CODE_LENGTH.toLocaleString()} characters allowed.`);
+                  return;
+                }
+                
+                setCode(newCode);
+                debouncedOnChange(newCode, language, filename);
               }}
               placeholder="Paste your solution here..."
               className="font-mono text-sm min-h-[300px] resize-none"
             />
+            <p className="text-xs text-muted-foreground">
+              {code.length.toLocaleString()} / {MAX_CODE_LENGTH.toLocaleString()} characters
+            </p>
           </div>
 
           {/* Actions */}
