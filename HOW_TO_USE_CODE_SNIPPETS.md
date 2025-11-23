@@ -1,266 +1,117 @@
-# 🎨 How to Use Beautiful Code Snippets - Quick Guide
+# 🎨 Beautiful Code Snippets (Pika.Style) - The Complete Guide
 
-## ✨ **NOW INTEGRATED AND READY TO USE!**
+## ✨ **Overview**
 
-The pika.style inspired code snippet feature is now **fully integrated** into your app! Here's exactly how to use it:
-
----
-
-## 🚀 **How to Add Code Snippets**
-
-### Step 1: Open Add/Edit Problem Form
-
-1. Click **"+ Add Problem"** button (or edit an existing problem)
-2. You'll see a **new tabbed interface** with:
-   - 📄 **Details** tab (your existing form)
-   - 💻 **Code Solution** tab ← **THIS IS NEW!**
-
-### Step 2: Go to Code Solution Tab
-
-Click on the **"Code Solution"** tab to see the beautiful code editor
-
-### Step 3: Add Your Code
-
-You'll see a beautiful interface with:
-
-**Edit Mode** (default):
-- **Language Selector**: Choose from 14+ languages
-  - JavaScript, TypeScript, Python, Java, C++, Go, Rust, etc.
-- **Filename Input**: Name your file (e.g., "twosum-optimal")
-- **Code Editor**: Large textarea to paste your code
-- **Load Template** button: Click to load a sample template
-- **Preview** button: Toggle to see how it looks
-
-**Preview Mode**:
-- **Beautiful Code Display**: With syntax highlighting
-- **Mac-style Chrome**: Traffic light buttons (🔴 🟡 🟢)
-- **Theme Selector** (palette icon): Change color themes
-- **Copy Button**: Copy code to clipboard
-- **Download Button**: Export as PNG image
-
-### Step 4: Save Your Problem
-
-- Fill in the Details tab (title, difficulty, etc.)
-- Add your code in Code Solution tab
-- Click **"Add Problem"** or **"Update Problem"**
-- Done! ✅
+Turn your boring code solutions into **stunning, portfolio-ready images**. 
+Inspired by tools like `pika.style` and `carbon.now.sh`, this feature is now built directly into your LeetCode Tracker!
 
 ---
 
-## 👀 **How to View Code Snippets**
+## 🚀 **Quick Start**
 
-### In Problem List:
-
-1. Find any problem in your list
-2. Click the **chevron (▼)** next to the problem to expand
-3. You'll see two sections:
-   - 📝 **Notes**: Your problem notes
-   - 💻 **Solution Code**: Beautiful code snippet (if you added one)
-
-### Features You Can Use:
-
-**When viewing code:**
-- **Hover** over the code to see action buttons
-- **Click Palette** 🎨 to change themes or gradients
-- **Click Copy** 📋 to copy the code
-- **Click Download** 📥 to export as PNG image
+1. **Add a Problem**: Click **"+ Add Problem"** (or edit an existing one).
+2. **Go to "Code Solution" Tab**: It's right next to "Details".
+3. **Paste Code**: Select your language and paste.
+4. **Preview**: Click "Preview" to see the magic! ✨
 
 ---
 
-## 🎨 **Customize Appearance**
+## 💎 **Premium Aesthetic Features** (NEW!)
 
-### Change Theme:
-1. Hover over any code snippet
-2. Click the **palette icon** 🎨
-3. Choose from 6 themes:
-   - VS Code Dark (default)
-   - Atom Dark
-   - Tomorrow (light)
-   - One Light
-   - Night Owl (blue)
-   - Dracula (purple)
+We've upgraded the visual engine to make your code look incredible.
 
-### Change Background Gradient:
-1. In the palette menu
-2. Scroll to "Background" section
-3. Choose from 6 gradients:
-   - Sunset (orange/pink)
-   - Ocean (blue/teal)
-   - Forest (green)
-   - Purple (purple/pink)
-   - Night (gray)
-   - Aurora (cyan/purple)
+### 🌈 **8 Premium Gradients**
+Backgrounds that make your code pop:
+- 🍬 **Cotton Candy**: Soft pinks and purples (Playful)
+- ⚡ **Hyper**: Vibrant pink, red, yellow (Energetic)
+- 🦇 **Gotham**: Dark slate and purple (Moody/Professional)
+- 🍹 **Mojito**: Fresh emerald and teal (Clean)
+- 🌌 **Galaxy**: Deep indigo and pink (Space-y)
+- 🌅 **Sunset**: Warm orange and rose (Classic)
+- 🌊 **Ocean**: Deep blues and cyan (Calm)
+- 🔮 **Aurora**: Green, blue, purple (Magical)
 
----
-
-## 📸 **Export as Image**
-
-Perfect for:
-- 📚 Portfolio/Resume
-- 🐦 Twitter/LinkedIn posts
-- 📖 Blog posts
-- 💼 Interview prep documents
-
-**How to Export:**
-1. Hover over your code snippet
-2. Click the **Download button** 📥
-3. PNG image will be downloaded to your computer
-4. High-resolution (2x) for crisp quality!
+### 🎛️ **Layout Controls**
+Customize how your snippet looks:
+- **Padding**: Toggle between **Compact**, **Normal**, and **Spacious** layouts.
+- **Theme**: 6 Syntax themes (VS Code, Dracula, Night Owl, etc.).
+- **Glassmorphism**: Beautiful transparency and blur effects.
+- **Noise Texture**: Subtle grain overlay for a high-end tactile feel.
+- **Deep Shadows**: Realistic depth that lifts your code off the screen.
 
 ---
 
-## 💡 **Pro Tips**
+## 📸 **How to Export (Share Your Code)**
 
-### 1. **Use Templates**
+Want to share your solution on Twitter/X, LinkedIn, or your portfolio?
 
-When adding code, click **"Load Template"** to see a sample Two Sum solution in your selected language!
-
-### 2. **Edit Mode vs Preview Mode**
-
-- **Edit Mode**: For writing/pasting code
-- **Preview Mode**: See how it looks with syntax highlighting
-- Toggle anytime with the **Preview/Edit** button
-
-### 3. **Save Without Code**
-
-Code is optional! You can:
-- Save problems without code (like before)
-- Add code later by editing the problem
-- Mix and match - some with code, some without
-
-### 4. **Works Everywhere**
-
-Code snippets work with:
-- ✅ Manual problems
-- ✅ Company problems
-- ✅ POTD problems
-- ✅ Active and Learned problems
-
----
-
-## 🎯 **Example Workflow**
-
-### Adding a New Problem with Code:
-
-```
-1. Click "Add Problem"
-   ↓
-2. Fill Details tab:
-   - Title: "Two Sum"
-   - Platform: LeetCode
-   - Difficulty: Easy
-   - etc.
-   ↓
-3. Go to "Code Solution" tab
-   ↓
-4. Select Language: JavaScript
-   ↓
-5. Paste your solution code
-   ↓
-6. Click "Preview" to see how it looks
-   ↓
-7. Adjust theme/gradient if desired
-   ↓
-8. Click "Add Problem"
-   ↓
-9. Done! Now view it in your list
-   ↓
-10. Expand the problem to see beautiful code
-```
+1. **View the Code**: Expand the problem in your list.
+2. **Hover**: Move your mouse over the code block.
+3. **Customize**: 
+   - Click 🎨 **Palette** to choose the perfect gradient and theme.
+   - Click ◫ **Layout** to adjust padding.
+4. **Download**: Click 📥 **Download**.
+   - Generates a **high-resolution (3x)** PNG.
+   - Perfect for social media!
 
 ---
 
 ## 📍 **Where to Find It**
 
-### In the UI:
-
-**To Add Code:**
-- Add/Edit Problem → **"Code Solution" tab**
-
-**To View Code:**
-- Problem List → Expand problem (click ▼) → **"Solution Code" section**
-
----
-
-## 🎨 **Visual Guide**
-
-### In Problem Form:
+### 1. **Adding/Editing Code**
+In the **Add/Edit Problem** dialog:
 ```
 ┌────────────────────────────────────────┐
 │  Add New Problem                       │
 ├────────────────────────────────────────┤
-│  [Details]  [Code Solution] ← Click!   │
+│  [📄 Details]  [💻 Code Solution] 👈  │
 │                                         │
-│  Language:    [JavaScript ▼]           │
-│  Filename:    [solution ▼]             │
-│                                         │
-│  Code:                                  │
-│  ┌────────────────────────────────────┐│
-│  │ function twoSum(nums, target) {    ││
-│  │   // Your code here...             ││
-│  └────────────────────────────────────┘│
-│                                         │
-│  [Load Template]  [Preview]            │
-│                                         │
-│  [Cancel]            [Add Problem]     │
+│  Paste your code here...                │
+│  [Preview] to see the design!          │
 └────────────────────────────────────────┘
 ```
 
-### In Problem List (Expanded):
+### 2. **Viewing Solutions**
+In your **Problem List**:
 ```
 ┌────────────────────────────────────────┐
 │  Two Sum - Easy                        │
 │  [▼] Click to expand                   │
 ├────────────────────────────────────────┤
-│  📝 Notes                              │
-│  Hash map approach...                  │
+│  📝 Notes...                           │
 │                                         │
-│  💻 Solution Code • javascript         │
+│  💻 Solution Code                      │
 │  ┌──────────────────────────────────┐ │
 │  │ 🔴 🟡 🟢    solution.js          │ │
-│  ├──────────────────────────────────┤ │
-│  │  1  function twoSum(nums, target)│ │
-│  │  2    const map = new Map();     │ │
-│  │  3    // beautiful code...       │ │
+│  │                                  │ │
+│  │  const awesome = true;           │ │
+│  │                                  │ │
 │  └──────────────────────────────────┘ │
-│       [Beautiful with gradients!]      │
+│     [Hover for controls]               │
 └────────────────────────────────────────┘
 ```
 
 ---
 
-## ❓ **Common Questions**
+## 💡 **Pro Tips**
 
-### Q: Do I have to add code to every problem?
-**A:** No! It's completely optional. Works exactly like before if you don't add code.
-
-### Q: Can I edit the code later?
-**A:** Yes! Edit the problem and go to the "Code Solution" tab.
-
-### Q: Does it work on mobile?
-**A:** Yes! Fully responsive and beautiful on all devices.
-
-### Q: Can I have multiple code solutions?
-**A:** Currently one per problem. Add different approaches in the notes or comments.
-
-### Q: What happens to my existing problems?
-**A:** Nothing changes! They work exactly as before. Code is an optional addition.
+- **Templates**: Don't want to type? Click **"Load Template"** in the editor to get starter code.
+- **Live Preview**: You can save your code *while* in Preview mode. No need to switch back!
+- **Visual Picker**: The new gradient picker shows you the colors before you select them.
 
 ---
 
-## 🎉 **You're Ready!**
+## ❓ **FAQ**
 
-The feature is **now live in your app**!
+**Q: Does this add bloat to my app?**
+A: No! The code is stored efficiently text-only. The beautiful images are generated on-the-fly only when you export.
 
-**Next time you:**
-1. Add a new problem
-2. Edit an existing problem
-3. Look at **"Code Solution" tab**
-4. Add beautiful code
-5. View it in expanded problem view
-6. Export as PNG if you want!
+**Q: Can I change the font?**
+A: We use a premium coding font stack (JetBrains Mono, Fira Code) automatically for the best look.
+
+**Q: Is it mobile responsive?**
+A: Yes! Your code looks great on phones, tablets, and desktops.
 
 ---
 
-**Enjoy your beautiful code snippets! 🎨✨**
-
+**Enjoy your beautiful code! 🎨✨**
