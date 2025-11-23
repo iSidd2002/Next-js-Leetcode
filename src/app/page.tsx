@@ -207,7 +207,12 @@ export default function HomePage() {
   const handleToggleReview = async (id: string, updates: Partial<Problem>) => {
     try {
       let problem = problems.find(p => p.id === id);
-      if (!problem) problem = potdProblems.find(p => p.id === id);
+      let isPotdProblem = false;
+      
+      if (!problem) {
+        problem = potdProblems.find(p => p.id === id);
+        isPotdProblem = true;
+      }
 
       if (!problem) {
         toast.error('Problem not found');
@@ -218,6 +223,13 @@ export default function HomePage() {
 
       if (updates.isReview && !problem.isReview) {
         updatedProblem = initializeSpacedRepetition({ ...problem, ...updates }, true);
+        console.log('📌 Marking for review:', {
+          id: problem.id,
+          title: problem.title,
+          isPotdProblem,
+          isReview: true,
+          nextReviewDate: updatedProblem.nextReviewDate
+        });
         toast.success('Problem marked for review! First review scheduled.');
       } else if (!updates.isReview && problem.isReview) {
         updatedProblem = {
@@ -228,12 +240,35 @@ export default function HomePage() {
           nextReviewDate: null,
           isReview: false
         };
+        console.log('🔓 Unmarking from review:', {
+          id: problem.id,
+          title: problem.title,
+          isPotdProblem,
+          isReview: false
+        });
         toast.success('Problem unmarked from review.');
       } else {
         updatedProblem = { ...problem, ...updates };
       }
 
       await handleUpdateProblem(problem.id, updatedProblem);
+      
+      // Reload problem lists to ensure UI updates correctly
+      console.log('🔄 Reloading problems after review toggle...');
+      const [updatedProblems, updatedPotdProblems] = await Promise.all([
+        StorageService.getProblems(),
+        StorageService.getPotdProblems()
+      ]);
+      setProblems(updatedProblems);
+      setPotdProblems(updatedPotdProblems);
+      
+      const allProbs = [...updatedProblems, ...updatedPotdProblems];
+      const reviewCount = allProbs.filter(p => p.isReview).length;
+      console.log('✅ Problems reloaded after toggle:', {
+        totalProblems: updatedProblems.length,
+        totalPotd: updatedPotdProblems.length,
+        reviewCount: reviewCount
+      });
     } catch (error) {
       console.error('Failed to toggle review:', error);
       toast.error('Failed to update review status');
