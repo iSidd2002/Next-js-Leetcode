@@ -279,6 +279,15 @@ export default function HomePage() {
     moveToLearned?: boolean
   ) => {
     try {
+      console.log('🎯 handleProblemReviewed called with:', {
+        id,
+        quality,
+        moveToLearned,
+        customDays,
+        hasNotes: !!notes,
+        hasTags: !!tags
+      });
+      
       let problem = problems.find(p => p.id === id);
       let isPotdProblem = false;
       
@@ -294,6 +303,13 @@ export default function HomePage() {
 
       let updatedProblem;
       let intervalDays;
+
+      console.log('⚙️ Determining update path:', {
+        moveToLearned,
+        customDays,
+        willMoveToLearned: !!moveToLearned,
+        hasCustomDays: customDays !== undefined
+      });
 
       if (moveToLearned) {
         // Move to Learned - no review scheduling needed

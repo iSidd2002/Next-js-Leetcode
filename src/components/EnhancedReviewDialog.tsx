@@ -111,13 +111,26 @@ export function EnhancedReviewDialog({
   const handleSubmit = () => {
     if (!problem) return;
     
+    console.log('📤 EnhancedReviewDialog submitting:', {
+      reviewMode,
+      selectedQuality,
+      moveToLearned,
+      customDays
+    });
+    
     if (reviewMode === 'manual') {
       // Use custom days with a neutral quality score (3)
       onReview(problem.id, 3, notes, timeTaken, quickTags, customDays, moveToLearned);
     } else {
       // Use quality-based system
-      if (selectedQuality === null) return;
-      onReview(problem.id, selectedQuality, notes, timeTaken, quickTags, undefined, moveToLearned);
+      // If moveToLearned is checked, allow submission even without quality rating (use default 3)
+      if (selectedQuality === null && !moveToLearned) {
+        console.warn('⚠️ No quality selected and moveToLearned is false');
+        return;
+      }
+      const qualityToUse = selectedQuality !== null ? selectedQuality : 3;
+      console.log('✅ Submitting with quality:', qualityToUse, 'moveToLearned:', moveToLearned);
+      onReview(problem.id, qualityToUse, notes, timeTaken, quickTags, undefined, moveToLearned);
     }
     
     // Reset state
@@ -400,11 +413,15 @@ export function EnhancedReviewDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={reviewMode === 'quality' && selectedQuality === null}
+            disabled={reviewMode === 'quality' && selectedQuality === null && !moveToLearned}
             className="gap-2"
           >
             <Trophy className="h-4 w-4" />
-            {reviewMode === 'manual' ? `Review in ${customDays} days` : 'Complete Review'}
+            {moveToLearned && reviewMode === 'quality' && selectedQuality === null
+              ? 'Move to Learned'
+              : reviewMode === 'manual'
+              ? `Review in ${customDays} days`
+              : 'Complete Review'}
           </Button>
         </div>
       </DialogContent>
