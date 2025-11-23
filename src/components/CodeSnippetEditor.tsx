@@ -222,12 +222,21 @@ export function CodeSnippetEditor({
         /* Preview Mode */
         <div className="space-y-4">
           {code ? (
-            <CodeSnippetViewer
-              code={code}
-              language={language}
-              filename={filename}
-              showLineNumbers={true}
-            />
+            <>
+              <CodeSnippetViewer
+                code={code}
+                language={language}
+                filename={filename}
+                showLineNumbers={true}
+              />
+              {onSave && (
+                <div className="flex justify-end">
+                  <Button onClick={handleSave}>
+                    Save Snippet
+                  </Button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="border border-dashed border-white/10 rounded-xl p-12 text-center">
               <Code2 className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
