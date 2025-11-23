@@ -20,9 +20,8 @@ const publicRoutes = [
   '/api/daily-challenge',     // Allow public daily challenge
 ];
 
-// Debug/test routes - only available in development
+// Test routes - only available in development
 const devOnlyRoutes = [
-  '/api/debug',
   '/api/ai/test',
   '/api/ai/models',
   '/api/ai/verify',
