@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Problem from '@/models/Problem';
 import { authenticateRequest } from '@/lib/auth';
+import { validateProblemData, formatValidationErrors } from '@/lib/request-validation';
 
 export async function PUT(
   request: NextRequest,
@@ -21,6 +22,16 @@ export async function PUT(
 
     const problemData = await request.json();
     const { id } = await params;
+
+    // Validation - Request size limits
+    const sizeErrors = validateProblemData(problemData);
+    if (sizeErrors.length > 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request data exceeds size limits',
+        details: formatValidationErrors(sizeErrors)
+      }, { status: 413 }); // 413 Payload Too Large
+    }
 
     // Check if problem exists and belongs to user
     const existingProblem = await Problem.findOne({

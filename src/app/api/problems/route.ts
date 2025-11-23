@@ -4,6 +4,7 @@ import Problem from '@/models/Problem';
 import { authenticateRequest } from '@/lib/auth';
 import { sanitizeQueryParam, sanitizeString, sanitizeUrl, sanitizeInteger, sanitizeStringArray } from '@/lib/input-validation';
 import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
+import { validateProblemData, formatValidationErrors } from '@/lib/request-validation';
 
 export async function GET(request: NextRequest) {
   try {
@@ -133,12 +134,22 @@ export async function POST(request: NextRequest) {
 
     const problemData = await request.json();
 
-    // Validation
+    // Validation - Required fields
     if (!problemData.title || !problemData.platform) {
       return NextResponse.json({
         success: false,
         error: 'Title and platform are required'
       }, { status: 400 });
+    }
+
+    // Validation - Request size limits
+    const sizeErrors = validateProblemData(problemData);
+    if (sizeErrors.length > 0) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request data exceeds size limits',
+        details: formatValidationErrors(sizeErrors)
+      }, { status: 413 }); // 413 Payload Too Large
     }
 
     // Sanitize inputs

@@ -46,44 +46,17 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
-  // Headers for security and performance
-  async headers() {
-    return [
-      {
-        source: '/(.*)',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'X-Content-Type-Options',
-            value: 'nosniff',
-          },
-          {
-            key: 'Referrer-Policy',
-            value: 'strict-origin-when-cross-origin',
-          },
-          {
-            key: 'X-XSS-Protection',
-            value: '1; mode=block',
-          },
-          {
-            key: 'Strict-Transport-Security',
-            value: 'max-age=31536000; includeSubDomains',
-          },
-          {
-            key: 'Permissions-Policy',
-            value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://leetcode.com https://codeforces.com https://atcoder.jp https://codingninjas.com https://api.github.com;",
-          },
-        ],
-      },
-    ]
+  // API configuration - Request size limits for security
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb', // Limit request body size to 1MB
+    },
+    responseLimit: '4mb', // Limit response size to 4MB
+    externalResolver: true,
   },
+
+  // Headers moved to middleware.ts for more flexibility
+  // Security headers are now applied dynamically in middleware
 }
 
 module.exports = nextConfig
