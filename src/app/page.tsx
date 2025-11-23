@@ -356,6 +356,22 @@ export default function HomePage() {
       
       await handleUpdateProblem(problem.id, updatedProblem);
       
+      // If moving to learned, reload the problem lists to ensure UI updates
+      if (moveToLearned) {
+        console.log('🔄 Reloading problems after moving to learned...');
+        const [updatedProblems, updatedPotdProblems] = await Promise.all([
+          StorageService.getProblems(),
+          StorageService.getPotdProblems()
+        ]);
+        setProblems(updatedProblems);
+        setPotdProblems(updatedPotdProblems);
+        console.log('✅ Problems reloaded:', {
+          totalProblems: updatedProblems.length,
+          totalPotd: updatedPotdProblems.length,
+          learned: [...updatedProblems, ...updatedPotdProblems].filter(p => p.status === 'learned').length
+        });
+      }
+      
       // Success message
       if (moveToLearned) {
         toast.success(`🎓 Problem moved to Learned! You've mastered it!`);
