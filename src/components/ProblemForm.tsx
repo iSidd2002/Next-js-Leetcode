@@ -10,8 +10,11 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { MultiSelect, type Option } from '@/components/ui/multi-select';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
+import { Code2, FileText } from 'lucide-react';
 
 interface ProblemFormProps {
   open: boolean;
@@ -37,6 +40,9 @@ const INITIAL_FORM_STATE: FormData = {
   repetition: 0,
   interval: 0,
   nextReviewDate: null,
+  codeSnippet: '',
+  codeLanguage: 'javascript',
+  codeFilename: 'solution',
 };
 
 
@@ -119,8 +125,20 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
           {/* DialogDescription removed as per new_code */}
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
-          {/* Form fields remain the same */}
-          <div className="space-y-2">
+          <Tabs defaultValue="details" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="details" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value="code" className="gap-2">
+                <Code2 className="h-4 w-4" />
+                Code Solution
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details" className="space-y-4 mt-4">
+              <div className="space-y-2">
             <Label htmlFor="platform">Platform *</Label>
             <Select name="platform" onValueChange={(value: string) => handleSelectChange('platform', value)} value={formData.platform}>
               <SelectTrigger id="platform" data-testid="platform-select">
@@ -229,17 +247,35 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
             />
           </div>
 
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-                id="isReview"
-                name="isReview"
-                checked={formData.isReview}
-                onCheckedChange={(checked: boolean) => setFormData(prev => ({...prev, isReview: checked}))}
-            />
-            <Label htmlFor="isReview" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Mark for review later
-            </Label>
-          </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox 
+                    id="isReview"
+                    name="isReview"
+                    checked={formData.isReview}
+                    onCheckedChange={(checked: boolean) => setFormData(prev => ({...prev, isReview: checked}))}
+                />
+                <Label htmlFor="isReview" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Mark for review later
+                </Label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="code" className="mt-4">
+              <CodeSnippetEditor
+                initialCode={formData.codeSnippet || ''}
+                initialLanguage={formData.codeLanguage || 'javascript'}
+                initialFilename={formData.codeFilename || 'solution'}
+                onSave={(code, language, filename) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    codeSnippet: code,
+                    codeLanguage: language,
+                    codeFilename: filename
+                  }));
+                }}
+              />
+            </TabsContent>
+          </Tabs>
 
           <div className="flex justify-end space-x-2 pt-4">
             <Button type="button" variant="secondary" onClick={() => onOpenChange(false)}>

@@ -38,6 +38,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { CodeSnippetViewer } from './CodeSnippetViewer';
+import { Code2 } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import ReviewInsights from '@/components/ai/ReviewInsights';
 import SimilarProblems from '@/components/ai/SimilarProblems';
@@ -507,13 +509,38 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                     {expandedRows.has(problem.id) && (
                       <TableRow className="bg-muted/5 hover:bg-muted/5 border-white/5">
                         <TableCell colSpan={5} className="p-4">
-                          <div className="pl-9">
-                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
-                            <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground bg-background/50 p-4 rounded-lg border border-white/5">
-                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                {problem.notes || 'No notes recorded.'}
-                              </ReactMarkdown>
+                          <div className="pl-9 space-y-4">
+                            {/* Notes Section */}
+                            <div>
+                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
+                              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground bg-background/50 p-4 rounded-lg border border-white/5">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {problem.notes || 'No notes recorded.'}
+                                </ReactMarkdown>
+                              </div>
                             </div>
+                            
+                            {/* Code Snippet Section */}
+                            {problem.codeSnippet && (
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Code2 className="h-4 w-4 text-primary" />
+                                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                                    Solution Code
+                                  </h4>
+                                  <span className="text-xs text-muted-foreground">
+                                    • {problem.codeLanguage || 'javascript'}
+                                  </span>
+                                </div>
+                                <CodeSnippetViewer
+                                  code={problem.codeSnippet}
+                                  language={problem.codeLanguage || 'javascript'}
+                                  filename={problem.codeFilename || 'solution'}
+                                  title={problem.title}
+                                  showLineNumbers={true}
+                                />
+                              </div>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
