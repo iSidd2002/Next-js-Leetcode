@@ -46,17 +46,11 @@ const nextConfig = {
     formats: ['image/webp', 'image/avif'],
   },
 
-  // API configuration - Request size limits for security
-  api: {
-    bodyParser: {
-      sizeLimit: '1mb', // Limit request body size to 1MB
-    },
-    responseLimit: '4mb', // Limit response size to 4MB
-    externalResolver: true,
-  },
-
-  // Headers moved to middleware.ts for more flexibility
-  // Security headers are now applied dynamically in middleware
+  // Security Notes:
+  // - Request size limits: Handled in src/lib/request-validation.ts
+  // - Security headers: Applied dynamically in middleware.ts
+  // - CSRF protection: Implemented in src/lib/csrf.ts
+  // - Body parsing limits: Handled by Next.js Route Handlers (default 4MB)
 }
 
 module.exports = nextConfig
