@@ -265,6 +265,14 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 initialCode={formData.codeSnippet || ''}
                 initialLanguage={formData.codeLanguage || 'javascript'}
                 initialFilename={formData.codeFilename || 'solution'}
+                onChange={(code, language, filename) => {
+                  setFormData(prev => ({
+                    ...prev,
+                    codeSnippet: code,
+                    codeLanguage: language,
+                    codeFilename: filename
+                  }));
+                }}
                 onSave={(code, language, filename) => {
                   setFormData(prev => ({
                     ...prev,

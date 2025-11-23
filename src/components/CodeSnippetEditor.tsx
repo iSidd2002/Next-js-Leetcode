@@ -21,6 +21,7 @@ interface CodeSnippetEditorProps {
   initialLanguage?: string;
   initialFilename?: string;
   onSave?: (code: string, language: string, filename: string) => void;
+  onChange?: (code: string, language: string, filename: string) => void;
   className?: string;
 }
 
@@ -111,6 +112,7 @@ export function CodeSnippetEditor({
   initialLanguage = 'javascript',
   initialFilename = 'solution',
   onSave,
+  onChange,
   className
 }: CodeSnippetEditorProps) {
   const [code, setCode] = useState(initialCode);
@@ -128,6 +130,7 @@ export function CodeSnippetEditor({
     const template = CODE_TEMPLATES[language as keyof typeof CODE_TEMPLATES];
     if (template) {
       setCode(template);
+      onChange?.(template, language, filename);
     }
   };
 
@@ -162,7 +165,13 @@ export function CodeSnippetEditor({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Language</Label>
-              <Select value={language} onValueChange={setLanguage}>
+              <Select 
+                value={language} 
+                onValueChange={(val) => {
+                  setLanguage(val);
+                  onChange?.(code, val, filename);
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -179,7 +188,10 @@ export function CodeSnippetEditor({
               <Label>Filename</Label>
               <Input
                 value={filename}
-                onChange={(e) => setFilename(e.target.value)}
+                onChange={(e) => {
+                  setFilename(e.target.value);
+                  onChange?.(code, language, e.target.value);
+                }}
                 placeholder="solution"
               />
             </div>
@@ -203,7 +215,10 @@ export function CodeSnippetEditor({
             </div>
             <Textarea
               value={code}
-              onChange={(e) => setCode(e.target.value)}
+              onChange={(e) => {
+                setCode(e.target.value);
+                onChange?.(e.target.value, language, filename);
+              }}
               placeholder="Paste your solution here..."
               className="font-mono text-sm min-h-[300px] resize-none"
             />
