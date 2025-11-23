@@ -20,8 +20,10 @@ import {Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card } from '@/components/ui/card';
 
 interface EnhancedSettingsProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
   onSettingsSave: (intervals: number[]) => void;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Preset interval schemes
@@ -72,11 +74,15 @@ const INTERVAL_PRESETS = [
   }
 ];
 
-export function EnhancedSettings({ children, onSettingsSave }: EnhancedSettingsProps) {
-  const [open, setOpen] = useState(false);
+export function EnhancedSettings({ children, onSettingsSave, open: controlledOpen, onOpenChange: controlledOnOpenChange }: EnhancedSettingsProps) {
+  const [internalOpen, setInternalOpen] = useState(false);
   const [intervals, setIntervals] = useState<number[]>([]);
   const [selectedPreset, setSelectedPreset] = useState<string>('balanced');
   const [activeTab, setActiveTab] = useState<'presets' | 'custom'>('presets');
+
+  // Use controlled state if provided, otherwise use internal state
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = controlledOnOpenChange || setInternalOpen;
 
   useEffect(() => {
     if (open) {
@@ -150,7 +156,7 @@ export function EnhancedSettings({ children, onSettingsSave }: EnhancedSettingsP
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-2xl">Spaced Repetition Settings</DialogTitle>

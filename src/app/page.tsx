@@ -32,6 +32,7 @@ import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
+import { EnhancedSettings } from '@/components/EnhancedSettings';
 
 export default function HomePage() {
   const [problems, setProblems] = useState<Problem[]>([]);
@@ -41,6 +42,7 @@ export default function HomePage() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const { theme, setTheme } = useTheme();
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -740,7 +742,7 @@ export default function HomePage() {
                       <p className="text-xs text-muted-foreground truncate">{currentUser?.email || 'User'}</p>
                     </div>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowAuthModal(true)}>
+                    <DropdownMenuItem onClick={() => setShowSettingsModal(true)}>
                       <SettingsIcon className="h-4 w-4 mr-2" />
                       Settings
                     </DropdownMenuItem>
@@ -976,6 +978,15 @@ export default function HomePage() {
               await initializeApp();
             }
           }, 1000);
+        }}
+      />
+
+      {/* Enhanced Settings Dialog */}
+      <EnhancedSettings 
+        open={showSettingsModal}
+        onOpenChange={setShowSettingsModal}
+        onSettingsSave={(intervals) => {
+          toast.success(`Review intervals updated: ${intervals.join(', ')} days`);
         }}
       />
 
