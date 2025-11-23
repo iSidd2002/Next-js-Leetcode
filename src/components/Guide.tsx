@@ -360,6 +360,84 @@ const Guide = () => {
         </CardContent>
       </SpotlightCard>
 
+      {/* Beautiful Code Snippets - Artistic Card */}
+      <SpotlightCard className="border-pink-500/20 bg-gradient-to-br from-pink-500/5 via-background/50 to-purple-500/5 backdrop-blur-xl overflow-hidden relative group">
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-pink-500/10 to-purple-600/10 rounded-full blur-2xl" />
+        <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-orange-400/10 to-red-500/10 rounded-full blur-xl" />
+
+        <CardHeader className="relative z-10 pb-4 pt-6 px-6">
+          <CardTitle className="flex items-center gap-3 text-xl">
+            <div className="p-2 rounded-xl bg-pink-500/10 text-pink-500 ring-2 ring-pink-500/20 rotate-[-2deg] group-hover:rotate-0 transition-transform">
+              <Palette className="h-5 w-5" />
+            </div>
+            <span className="font-bold">Beautiful Code Snippets</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="relative z-10 px-6 pb-6 space-y-5">
+          <p className="text-muted-foreground leading-relaxed">
+            Turn your solutions into stunning, portfolio-ready images with our premium code visualization engine.
+          </p>
+
+          <div className="grid md:grid-cols-2 gap-6 mt-4">
+            {/* Visual Features */}
+            <div className="space-y-4">
+              <div className="p-4 bg-background/40 border border-white/10 rounded-xl backdrop-blur-sm">
+                <h4 className="font-semibold flex items-center gap-2 mb-3 text-pink-500">
+                  <Sparkles className="h-4 w-4" />
+                  Premium Aesthetics
+                </h4>
+                <ul className="space-y-2 text-xs text-muted-foreground">
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full" />
+                    <span>8 Premium Gradients (Hyper, Gotham, etc.)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-full" />
+                    <span>6 Syntax Themes (Dracula, Night Owl, etc.)</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-gradient-to-r from-emerald-500 to-green-500 rounded-full" />
+                    <span>Deep Shadows & Noise Textures</span>
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 bg-gradient-to-r from-orange-500 to-yellow-500 rounded-full" />
+                    <span>Mac-style Window Chrome</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* How to Use */}
+            <div className="space-y-4">
+              <div className="p-4 bg-background/40 border border-white/10 rounded-xl backdrop-blur-sm">
+                <h4 className="font-semibold flex items-center gap-2 mb-3 text-purple-500">
+                  <Code2 className="h-4 w-4" />
+                  How to Use
+                </h4>
+                <ol className="space-y-2 text-xs text-muted-foreground ml-1">
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-purple-500">1.</span>
+                    <span>Add/Edit a problem & go to <strong>"Code Solution"</strong> tab</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-purple-500">2.</span>
+                    <span>Paste code (supports 14+ languages)</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-purple-500">3.</span>
+                    <span>Hover over code in list to customize 🎨</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="font-bold text-purple-500">4.</span>
+                    <span>Click <strong>Download</strong> for high-res PNG export</span>
+                  </li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </SpotlightCard>
+
       {/* Quick Tips - Hand-written Style */}
       <div className="relative p-6 bg-gradient-to-br from-secondary/10 via-background/50 to-primary/10 border-2 border-secondary/20 rounded-3xl rotate-[-0.5deg]">
         <div className="absolute top-2 right-2 w-8 h-8 bg-secondary/10 rounded-full blur-sm" />
