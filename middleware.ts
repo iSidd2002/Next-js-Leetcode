@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, getTokenFromRequest } from '@/lib/auth';
+import { validateCSRFProtection, requiresCSRFProtection } from '@/lib/csrf';
 
 // Define protected routes that require authentication
 const protectedRoutes = [
@@ -108,6 +109,25 @@ function addSecurityHeaders(response: NextResponse): void {
 
 function handleAPIRoute(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const method = request.method;
+
+  // CSRF Protection: Validate origin/referer for state-changing requests
+  if (requiresCSRFProtection(method)) {
+    const csrfValidation = validateCSRFProtection(request, false); // Token not required yet, just origin check
+    
+    if (!csrfValidation.valid) {
+      const response = NextResponse.json(
+        { 
+          success: false, 
+          error: 'CSRF validation failed',
+          details: process.env.NODE_ENV === 'development' ? csrfValidation.reason : undefined
+        },
+        { status: 403 }
+      );
+      addSecurityHeaders(response);
+      return response;
+    }
+  }
 
   // Block debug/test routes in production
   if (process.env.NODE_ENV === 'production') {

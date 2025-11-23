@@ -79,10 +79,11 @@ export async function POST(request: NextRequest) {
     }, { status: 201 });
 
     // Set HTTP-only cookie with the token
+    // SECURITY: Using SameSite=strict for CSRF protection
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict', // Upgraded for CSRF protection
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });
@@ -91,7 +92,16 @@ export async function POST(request: NextRequest) {
     response.cookies.set('user-id', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      sameSite: 'strict', // Upgraded for CSRF protection
+      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
+      path: '/'
+    });
+
+    // Set authentication indicator cookie (for client-side checks)
+    response.cookies.set('auth-status', 'authenticated', {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax', // Keep as 'lax' for better UX
       maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
       path: '/'
     });
