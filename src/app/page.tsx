@@ -180,12 +180,22 @@ export default function HomePage() {
       }
 
       const updatedProblem = { ...existingProblem, ...updates };
+      console.log('📝 Updating problem:', {
+        id,
+        title: existingProblem.title,
+        isPotdProblem,
+        statusUpdate: updates.status,
+        updatedProblemStatus: updatedProblem.status
+      });
+      
       await StorageService.updateProblem(id, updates);
 
       if (isPotdProblem) {
         setPotdProblems(potdProblems.map(p => p.id === id ? updatedProblem : p));
+        console.log('✅ Updated in potdProblems state');
       } else {
         setProblems(problems.map(p => p.id === id ? updatedProblem : p));
+        console.log('✅ Updated in problems state');
       }
       toast.success('Problem updated successfully!');
     } catch (error) {
@@ -296,6 +306,14 @@ export default function HomePage() {
           repetition: (problem.repetition || 0) + 1,
           // Keep existing interval/nextReviewDate but not active since isReview is false
         };
+        console.log('🎓 Moving to Learned:', {
+          problemId: problem.id,
+          title: problem.title,
+          source: problem.source,
+          isPotd: isPotdProblem,
+          statusBefore: problem.status,
+          statusAfter: updatedProblem.status
+        });
         intervalDays = 0; // Not used for learned problems
       } else if (customDays !== undefined) {
         // Manual days mode - use custom interval directly
@@ -670,6 +688,14 @@ export default function HomePage() {
   const learnedProblemsFromMain = manualProblems.filter(p => p.status === 'learned');
   const learnedProblemsFromPotd = potdProblems.filter(p => p.status === 'learned');
   const learnedProblems = [...learnedProblemsFromMain, ...learnedProblemsFromPotd];
+  console.log('📚 Learned Problems Filter:', {
+    totalProblems: problems.length,
+    totalPotd: potdProblems.length,
+    learnedFromMain: learnedProblemsFromMain.length,
+    learnedFromPotd: learnedProblemsFromPotd.length,
+    totalLearned: learnedProblems.length,
+    learnedTitles: learnedProblems.map(p => ({ title: p.title, status: p.status, source: p.source }))
+  });
   const companyProblems = problems.filter(p => p.source === 'company');
 
   return (

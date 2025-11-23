@@ -520,12 +520,12 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                           <div className="pl-9 space-y-4">
                             {/* Notes Section */}
                             <div>
-                              <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
-                              <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground bg-background/50 p-4 rounded-lg border border-white/5">
-                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                  {problem.notes || 'No notes recorded.'}
-                                </ReactMarkdown>
-                              </div>
+                            <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>
+                            <div className="prose prose-sm dark:prose-invert max-w-none text-muted-foreground bg-background/50 p-4 rounded-lg border border-white/5">
+                              <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                {problem.notes || 'No notes recorded.'}
+                              </ReactMarkdown>
+                            </div>
                             </div>
                             
                             {/* Code Snippet Section */}
