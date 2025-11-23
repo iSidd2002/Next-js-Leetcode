@@ -60,8 +60,6 @@ export const dynamic = 'force-dynamic'; // Disable static optimization
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Processing similar problems request...');
-
     // SECURITY: Authentication is now REQUIRED (no test user fallback)
     const user = await authenticateRequest(request);
     

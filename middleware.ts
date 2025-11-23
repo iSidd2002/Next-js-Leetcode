@@ -66,7 +66,6 @@ function handleAPIRoute(request: NextRequest) {
   // Block debug/test routes in production
   if (process.env.NODE_ENV === 'production') {
     if (devOnlyRoutes.some(route => pathname.startsWith(route))) {
-      console.log(`🚫 Blocked access to dev-only route in production: ${pathname}`);
       return NextResponse.json(
         { success: false, error: 'Not found' },
         { status: 404 }
@@ -96,12 +95,9 @@ function handleAPIRoute(request: NextRequest) {
 
   // For protected routes, just check if token exists (don't verify in Edge Runtime)
   // JWT verification will be done in the API routes themselves using Node.js runtime
-  console.log(`🔍 Middleware: Processing protected route ${pathname}`);
   const token = getTokenFromRequest(request);
-  console.log(`🔍 Middleware: Token found: ${token ? 'YES' : 'NO'}`);
 
   if (!token) {
-    console.log(`🔒 Middleware: No token found for protected route: ${pathname}`);
     return NextResponse.json(
       { success: false, error: 'Access token required' },
       { status: 401 }
@@ -109,8 +105,6 @@ function handleAPIRoute(request: NextRequest) {
   }
 
   // Token exists, let the API route handle verification
-  // Pass the token through for the API route to verify
-  console.log(`✅ Middleware: Token found, passing to API route for verification`);
   return NextResponse.next();
 }
 
