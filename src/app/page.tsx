@@ -262,7 +262,8 @@ export default function HomePage() {
     quality: number = 4,
     notes?: string,
     timeTaken?: number,
-    tags?: string[]
+    tags?: string[],
+    customDays?: number
   ) => {
     try {
       let problem = problems.find(p => p.id === id);
@@ -278,34 +279,58 @@ export default function HomePage() {
         return;
       }
 
-      // Get current review intervals
-      const customIntervals = getReviewIntervals();
-      
-      // Use enhanced spaced repetition with quality tracking
-      const enhancedData = calculateNextReviewEnhanced(
-        problem,
-        quality,
-        customIntervals,
-        timeTaken,
-        notes,
-        tags
-      );
-      
-      const updatedProblem = {
-        ...problem,
-        ...enhancedData,
-        // Append new notes to existing notes if provided
-        notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-        dateSolved: new Date().toISOString()
-      };
+      let updatedProblem;
+      let intervalDays;
+
+      if (customDays !== undefined) {
+        // Manual days mode - use custom interval directly
+        const nextReviewDate = new Date();
+        nextReviewDate.setDate(nextReviewDate.getDate() + customDays);
+        
+        updatedProblem = {
+          ...problem,
+          interval: customDays,
+          nextReviewDate: nextReviewDate.toISOString(),
+          repetition: (problem.repetition || 0) + 1,
+          isReview: true,
+          notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
+          dateSolved: new Date().toISOString()
+        };
+        
+        intervalDays = customDays;
+      } else {
+        // Quality-based mode - use enhanced spaced repetition
+        const customIntervals = getReviewIntervals();
+        
+        const enhancedData = calculateNextReviewEnhanced(
+          problem,
+          quality,
+          customIntervals,
+          timeTaken,
+          notes,
+          tags
+        );
+        
+        updatedProblem = {
+          ...problem,
+          ...enhancedData,
+          notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
+          dateSolved: new Date().toISOString()
+        };
+        
+        intervalDays = updatedProblem.interval;
+      }
       
       await handleUpdateProblem(problem.id, updatedProblem);
       
-      // Success message with quality feedback
-      const qualityLabels = ['', 'Again', 'Hard', 'Good', 'Easy', 'Perfect'];
-      const qualityLabel = qualityLabels[quality] || 'Good';
-      
-      toast.success(`${qualityLabel} review! Next review in ${updatedProblem.interval} days. 🎯`);
+      // Success message
+      if (customDays !== undefined) {
+        toast.success(`Review scheduled! Next review in ${customDays} days. 📅`);
+      } else {
+        const qualityLabels = ['', 'Again', 'Hard', 'Good', 'Easy', 'Perfect'];
+        const qualityLabel = qualityLabels[quality] || 'Good';
+        toast.success(`${qualityLabel} review! Next review in ${intervalDays} days. 🎯`);
+      }
     } catch (error) {
       console.error('Failed to mark problem as reviewed:', error);
       toast.error('Failed to mark problem as reviewed');

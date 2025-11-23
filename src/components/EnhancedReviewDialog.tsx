@@ -23,17 +23,19 @@ import {
   Target,
   Sparkles,
   Edit3,
-  Tag
+  Tag,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface EnhancedReviewDialogProps {
   problem: Problem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onReview: (problemId: string, quality: number, notes?: string, timeTaken?: number, tags?: string[]) => void;
+  onReview: (problemId: string, quality: number, notes?: string, timeTaken?: number, tags?: string[], customDays?: number) => void;
 }
 
 // Quality ratings with descriptions
@@ -101,11 +103,20 @@ export function EnhancedReviewDialog({
   const [timeTaken, setTimeTaken] = useState<number>(0);
   const [quickTags, setQuickTags] = useState<string[]>([]);
   const [showQuickActions, setShowQuickActions] = useState(false);
+  const [reviewMode, setReviewMode] = useState<'quality' | 'manual'>('quality');
+  const [customDays, setCustomDays] = useState<number>(7);
 
   const handleSubmit = () => {
-    if (selectedQuality === null || !problem) return;
+    if (!problem) return;
     
-    onReview(problem.id, selectedQuality, notes, timeTaken, quickTags);
+    if (reviewMode === 'manual') {
+      // Use custom days with a neutral quality score (3)
+      onReview(problem.id, 3, notes, timeTaken, quickTags, customDays);
+    } else {
+      // Use quality-based system
+      if (selectedQuality === null) return;
+      onReview(problem.id, selectedQuality, notes, timeTaken, quickTags);
+    }
     
     // Reset state
     setSelectedQuality(null);
@@ -113,6 +124,8 @@ export function EnhancedReviewDialog({
     setTimeTaken(0);
     setQuickTags([]);
     setShowQuickActions(false);
+    setReviewMode('quality');
+    setCustomDays(7);
     onOpenChange(false);
   };
 
@@ -176,49 +189,110 @@ export function EnhancedReviewDialog({
         </DialogHeader>
 
         <div className="space-y-6 py-4">
-          {/* Quality Rating Selection */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Star className="h-4 w-4 text-muted-foreground" />
-              <Label className="text-sm font-semibold">How did you do?</Label>
-            </div>
-            <div className="grid grid-cols-5 gap-2">
-              {QUALITY_RATINGS.map((rating) => {
-                const Icon = rating.icon;
-                const isSelected = selectedQuality === rating.value;
-                
-                return (
-                  <button
-                    key={rating.value}
-                    onClick={() => handleQualitySelect(rating.value)}
-                    className={cn(
-                      "group relative flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
-                      rating.bgColor,
-                      rating.borderColor,
-                      isSelected && "ring-2 ring-offset-2 ring-offset-background",
-                      isSelected ? "scale-105 shadow-lg" : "hover:scale-102"
-                    )}
-                  >
-                    <Icon className={cn("h-5 w-5", rating.color)} />
-                    <span className={cn("text-xs font-medium", rating.color)}>
-                      {rating.label}
-                    </span>
-                    
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 hidden group-hover:block z-50">
-                      <div className="bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border text-xs whitespace-nowrap">
-                        <p className="font-medium">{rating.description}</p>
-                        <p className="text-muted-foreground mt-0.5">Next: {rating.nextInterval}</p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+          {/* Review Mode Selection */}
+          <Tabs value={reviewMode} onValueChange={(v) => setReviewMode(v as 'quality' | 'manual')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="quality" className="gap-2">
+                <Star className="h-4 w-4" />
+                Quality Based
+              </TabsTrigger>
+              <TabsTrigger value="manual" className="gap-2">
+                <Calendar className="h-4 w-4" />
+                Custom Days
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Quick Actions (show after quality selected) */}
-          {showQuickActions && (
+            <TabsContent value="quality" className="space-y-3 mt-4">
+              <div className="flex items-center gap-2">
+                <Star className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm font-semibold">How did you do?</Label>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {QUALITY_RATINGS.map((rating) => {
+                  const Icon = rating.icon;
+                  const isSelected = selectedQuality === rating.value;
+                  
+                  return (
+                    <button
+                      key={rating.value}
+                      onClick={() => handleQualitySelect(rating.value)}
+                      className={cn(
+                        "group relative flex flex-col items-center gap-2 p-3 rounded-lg border transition-all",
+                        rating.bgColor,
+                        rating.borderColor,
+                        isSelected && "ring-2 ring-offset-2 ring-offset-background",
+                        isSelected ? "scale-105 shadow-lg" : "hover:scale-102"
+                      )}
+                    >
+                      <Icon className={cn("h-5 w-5", rating.color)} />
+                      <span className={cn("text-xs font-medium", rating.color)}>
+                        {rating.label}
+                      </span>
+                      
+                      {/* Tooltip */}
+                      <div className="absolute bottom-full mb-2 hidden group-hover:block z-50">
+                        <div className="bg-popover text-popover-foreground px-3 py-2 rounded-md shadow-lg border text-xs whitespace-nowrap">
+                          <p className="font-medium">{rating.description}</p>
+                          <p className="text-muted-foreground mt-0.5">Next: {rating.nextInterval}</p>
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="manual" className="space-y-4 mt-4">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm font-semibold">Review this problem in</Label>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={customDays}
+                    onChange={(e) => setCustomDays(Number(e.target.value))}
+                    className="w-24 text-center text-lg font-semibold"
+                  />
+                  <span className="text-lg">days</span>
+                </div>
+
+                {/* Quick day presets */}
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Quick presets:</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {[1, 3, 7, 14, 30, 60, 90].map((days) => (
+                      <Button
+                        key={days}
+                        variant={customDays === days ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          setCustomDays(days);
+                          setShowQuickActions(true);
+                        }}
+                        className="h-8"
+                      >
+                        {days} {days === 1 ? 'day' : 'days'}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-muted/50 border">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Next review date:</strong> {new Date(Date.now() + customDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Quick Actions (show after quality selected or in manual mode) */}
+          {(showQuickActions || reviewMode === 'manual') && (
             <div className="space-y-4 animate-in fade-in duration-300">
               {/* Time Taken */}
               <div className="space-y-2">
@@ -297,11 +371,11 @@ export function EnhancedReviewDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={selectedQuality === null}
+            disabled={reviewMode === 'quality' && selectedQuality === null}
             className="gap-2"
           >
             <Trophy className="h-4 w-4" />
-            Complete Review
+            {reviewMode === 'manual' ? `Review in ${customDays} days` : 'Complete Review'}
           </Button>
         </div>
       </DialogContent>

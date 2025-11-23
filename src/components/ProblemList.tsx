@@ -43,6 +43,7 @@ import { Code2 } from 'lucide-react';
 import EmptyState from '@/components/EmptyState';
 import ReviewInsights from '@/components/ai/ReviewInsights';
 import SimilarProblems from '@/components/ai/SimilarProblems';
+import { EnhancedReviewDialog } from '@/components/EnhancedReviewDialog';
 import { cn } from '@/lib/utils';
 
 // Helper function to get difficulty badge variant
@@ -94,6 +95,10 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
   const [showReviewInsights, setShowReviewInsights] = useState(false);
   const [showSimilarProblems, setShowSimilarProblems] = useState(false);
   const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+  
+  // Enhanced Review Dialog state
+  const [showEnhancedReview, setShowEnhancedReview] = useState(false);
+  const [problemToReview, setProblemToReview] = useState<Problem | null>(null);
 
   const toggleRowExpansion = (id: string) => {
     setExpandedRows(prev => {
@@ -436,7 +441,10 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                             </Button>
                             <Button 
                                 size="sm" 
-                                onClick={() => onProblemReviewed(problem.id, 4)} 
+                                onClick={() => {
+                                  setProblemToReview(problem);
+                                  setShowEnhancedReview(true);
+                                }}
                                 disabled={!isDueForReview(problem)}
                                 className="h-8 text-xs bg-primary hover:bg-primary/90"
                             >
@@ -637,6 +645,16 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Enhanced Review Dialog */}
+      <EnhancedReviewDialog
+        problem={problemToReview}
+        open={showEnhancedReview}
+        onOpenChange={setShowEnhancedReview}
+        onReview={(id, quality, notes, timeTaken, tags, customDays) => {
+          onProblemReviewed(id, quality, notes, timeTaken, tags, customDays);
+        }}
+      />
     </Card>
   );
 };
