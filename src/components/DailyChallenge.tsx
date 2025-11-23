@@ -37,13 +37,15 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const fetchDailyChallenge = async () => {
+  const fetchDailyChallenge = async (forceRefresh = false) => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/daily-challenge', {
+      const url = forceRefresh ? '/api/daily-challenge?refresh=true' : '/api/daily-challenge';
+      const response = await fetch(url, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -58,8 +60,11 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
       
       if (result.success && result.problem) {
         setProblem(result.problem);
-        if (result.isCached) {
+        if (!forceRefresh && result.isCached) {
           console.log('Daily Challenge: Using cached problem');
+        }
+        if (forceRefresh) {
+          toast.success('Daily challenge refreshed!');
         }
       } else {
         throw new Error(result.error || "No daily challenge found");
@@ -67,9 +72,16 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
     } catch (err) {
       console.error('Failed to fetch Daily Challenge:', err);
       setError(err instanceof Error ? err.message : "An unknown error occurred");
+      toast.error('Failed to fetch daily challenge');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await fetchDailyChallenge(true);
+    setIsRefreshing(false);
   };
 
   useEffect(() => {
@@ -181,9 +193,9 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             <p className="text-sm text-amber-300/80 mb-3">
               Unable to load challenge
             </p>
-            <Button onClick={fetchDailyChallenge} variant="ghost" size="sm" className="h-8 text-xs border-amber-500/20 hover:bg-amber-500/10 text-amber-400">
-              <RefreshCw className="h-3 w-3 mr-1.5" />
-              Retry
+            <Button onClick={handleRefresh} variant="ghost" size="sm" className="h-8 text-xs border-amber-500/20 hover:bg-amber-500/10 text-amber-400" disabled={isRefreshing}>
+              <RefreshCw className={cn("h-3 w-3 mr-1.5", isRefreshing && "animate-spin")} />
+              {isRefreshing ? 'Retrying...' : 'Retry'}
             </Button>
           </div>
         </CardContent>
@@ -210,9 +222,21 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             </div>
             <span className="font-semibold tracking-tight text-foreground">Challenge</span>
           </div>
-          <Badge className={cn("text-[10px] h-6 px-2.5 font-medium", platformInfo.color)}>
-              {platformInfo.name}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={isRefreshing}
+              className="h-7 w-7 p-0 hover:bg-white/10"
+              title="Refresh daily challenge"
+            >
+              <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
+            </Button>
+            <Badge className={cn("text-[10px] h-6 px-2.5 font-medium", platformInfo.color)}>
+                {platformInfo.name}
+            </Badge>
+          </div>
         </CardTitle>
       </CardHeader>
       

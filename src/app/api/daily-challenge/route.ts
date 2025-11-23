@@ -176,6 +176,13 @@ const getTodayString = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
+// Helper for conditional logging
+const logDev = (...args: any[]) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.log(...args);
+  }
+};
+
 // Platform rotation logic - determines which platform to use for a given date
 const getPlatformForDate = (date: string): Platform => {
   const platforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'codingninjas', 'atcoder'];
@@ -234,7 +241,7 @@ const normalizeDifficulty = (difficulty: string | number, platform: Platform): s
 // Fetch random problem from CodeForces
 const fetchCodeForcesProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Fetching from CodeForces API');
+    logDev('Daily Challenge: 🔄 Fetching from CodeForces API');
 
     // Fetch recent problems from CodeForces API
     const response = await fetch('https://codeforces.com/api/problemset.problems?tags=implementation', {
@@ -282,34 +289,35 @@ const fetchCodeForcesProblem = async (): Promise<UnifiedProblem | null> => {
 
     return null;
   } catch (error) {
-    console.error('CodeForces API error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('CodeForces API error:', error);
+    }
     return null;
   }
 };
 
-// Fetch random problem from LeetCode
+// Fetch actual daily challenge from LeetCode
 const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Fetching from LeetCode API');
+    logDev('Daily Challenge: 🔄 Fetching LeetCode Daily Challenge');
 
-    const query = `
-      query randomQuestion {
-        randomQuestion {
-          acRate
-          difficulty
-          freqBar
-          frontendQuestionId: questionFrontendId
-          isFavor
-          paidOnly: isPaidOnly
-          status
-          title
-          titleSlug
-          hasVideoSolution
-          hasSolution
-          topicTags {
-            name
-            id
-            slug
+    // First, try to fetch the actual daily challenge
+    const dailyQuery = `
+      query questionOfToday {
+        activeDailyCodingChallengeQuestion {
+          date
+          link
+          question {
+            acRate
+            difficulty
+            frontendQuestionId: questionFrontendId
+            title
+            titleSlug
+            topicTags {
+              name
+              id
+              slug
+            }
           }
         }
       }
@@ -320,44 +328,45 @@ const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'application/json, text/plain, */*',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept': 'application/json',
         'Referer': 'https://leetcode.com/',
-        'Origin': 'https://leetcode.com',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-origin',
-        'Cache-Control': 'no-cache',
-        'Pragma': 'no-cache'
+        'Origin': 'https://leetcode.com'
       },
-      body: JSON.stringify({ query }),
-      signal: AbortSignal.timeout(8000)
+      body: JSON.stringify({ query: dailyQuery }),
+      signal: AbortSignal.timeout(10000)
     });
 
     if (!response.ok) {
+      logDev(`LeetCode API returned status: ${response.status}`);
       throw new Error(`LeetCode API error: ${response.status}`);
     }
 
     const data = await response.json();
 
-    if (data.data && data.data.randomQuestion) {
-      const leetcodeProblem = data.data.randomQuestion;
+    if (data.data && data.data.activeDailyCodingChallengeQuestion) {
+      const dailyChallenge = data.data.activeDailyCodingChallengeQuestion;
+      const problem = dailyChallenge.question;
+      
+      logDev(`✅ Fetched LeetCode Daily Challenge: ${problem.title}`);
+      
       return {
-        id: `leetcode-${leetcodeProblem.titleSlug}`,
+        id: `leetcode-daily-${problem.titleSlug}`,
         platform: 'leetcode',
-        title: leetcodeProblem.title,
-        difficulty: leetcodeProblem.difficulty,
-        url: `https://leetcode.com/problems/${leetcodeProblem.titleSlug}/`,
-        topics: leetcodeProblem.topicTags.map((tag: any) => tag.name),
-        acRate: leetcodeProblem.acRate,
+        title: problem.title,
+        difficulty: problem.difficulty,
+        url: `https://leetcode.com${dailyChallenge.link}`,
+        topics: problem.topicTags.map((tag: any) => tag.name),
+        acRate: problem.acRate,
         date: getTodayString()
       };
     }
 
+    logDev('LeetCode daily challenge not found in response');
     return null;
   } catch (error) {
-    console.error('LeetCode API error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('LeetCode API error:', error);
+    }
     return null;
   }
 };
@@ -365,7 +374,7 @@ const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
 // Fetch problem from GeeksforGeeks (using fallback approach due to limited API)
 const fetchGeeksforGeeksProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Using GeeksforGeeks fallback problems');
+    logDev('Daily Challenge: 🔄 Using GeeksforGeeks fallback problems');
 
     // GeeksforGeeks doesn't have a public API, so we use curated problems
     const gfgProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'geeksforgeeks');
@@ -379,7 +388,9 @@ const fetchGeeksforGeeksProblem = async (): Promise<UnifiedProblem | null> => {
 
     return null;
   } catch (error) {
-    console.error('GeeksforGeeks error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('GeeksforGeeks error:', error);
+    }
     return null;
   }
 };
@@ -387,7 +398,7 @@ const fetchGeeksforGeeksProblem = async (): Promise<UnifiedProblem | null> => {
 // Fetch problem from Coding Ninjas (using fallback approach)
 const fetchCodingNinjasProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Using Coding Ninjas fallback problems');
+    logDev('Daily Challenge: 🔄 Using Coding Ninjas fallback problems');
 
     // Coding Ninjas API requires authentication, so we use curated problems
     const codingNinjasProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'codingninjas');
@@ -401,7 +412,9 @@ const fetchCodingNinjasProblem = async (): Promise<UnifiedProblem | null> => {
 
     return null;
   } catch (error) {
-    console.error('Coding Ninjas error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Coding Ninjas error:', error);
+    }
     return null;
   }
 };
@@ -409,7 +422,7 @@ const fetchCodingNinjasProblem = async (): Promise<UnifiedProblem | null> => {
 // Fetch problem from AtCoder (using fallback approach)
 const fetchAtCoderProblem = async (): Promise<UnifiedProblem | null> => {
   try {
-    console.log('Daily Challenge: 🔄 Using AtCoder fallback problems');
+    logDev('Daily Challenge: 🔄 Using AtCoder fallback problems');
 
     // AtCoder API is complex, so we use curated problems
     const atCoderProblems = FALLBACK_PROBLEMS.filter(p => p.platform === 'atcoder');
@@ -423,14 +436,16 @@ const fetchAtCoderProblem = async (): Promise<UnifiedProblem | null> => {
 
     return null;
   } catch (error) {
-    console.error('AtCoder error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('AtCoder error:', error);
+    }
     return null;
   }
 };
 
 // Main function to fetch problem from the designated platform
 const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProblem | null> => {
-  console.log(`Daily Challenge: 🎯 Attempting to fetch from ${platform}`);
+  logDev(`Daily Challenge: 🎯 Attempting to fetch from ${platform}`);
 
   try {
     switch (platform) {
@@ -445,11 +460,13 @@ const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProb
       case 'atcoder':
         return await fetchAtCoderProblem();
       default:
-        console.warn(`Daily Challenge: ⚠️ Unknown platform: ${platform}`);
+        logDev(`Daily Challenge: ⚠️ Unknown platform: ${platform}`);
         return null;
     }
   } catch (error) {
-    console.error(`Daily Challenge: ❌ Error fetching from ${platform}:`, error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error(`Daily Challenge: ❌ Error fetching from ${platform}:`, error);
+    }
     return null;
   }
 };
@@ -457,10 +474,12 @@ const fetchProblemFromPlatform = async (platform: Platform): Promise<UnifiedProb
 export async function GET(request: NextRequest) {
   try {
     const today = getTodayString();
+    const { searchParams } = new URL(request.url);
+    const forceRefresh = searchParams.get('refresh') === 'true';
     
-    // Check if we have a cached problem for today
-    if (dailyCache && dailyCache.date === today) {
-      console.log('Daily Challenge: 📋 Returning cached problem for', today);
+    // Check if we have a cached problem for today (unless force refresh)
+    if (dailyCache && dailyCache.date === today && !forceRefresh) {
+      logDev('Daily Challenge: 📋 Returning cached problem for', today);
       return NextResponse.json({
         success: true,
         problem: dailyCache.problem,
@@ -468,11 +487,11 @@ export async function GET(request: NextRequest) {
       } as DailyChallengeResponse);
     }
 
-    console.log('Daily Challenge: 🔄 Fetching new problem for', today);
+    logDev('Daily Challenge: 🔄 Fetching new problem for', today, forceRefresh ? '(forced refresh)' : '');
 
     // Determine which platform to use for today
     const targetPlatform = getPlatformForDate(today);
-    console.log(`Daily Challenge: 🎯 Target platform for ${today}: ${targetPlatform}`);
+    logDev(`Daily Challenge: 🎯 Target platform for ${today}: ${targetPlatform}`);
 
     let problem: UnifiedProblem | null = null;
 
@@ -481,10 +500,10 @@ export async function GET(request: NextRequest) {
       problem = await fetchProblemFromPlatform(targetPlatform);
 
       if (problem) {
-        console.log(`Daily Challenge: ✅ Fetched from ${targetPlatform}:`, problem.title);
+        logDev(`Daily Challenge: ✅ Fetched from ${targetPlatform}:`, problem.title);
       }
     } catch (error) {
-      console.warn(`Daily Challenge: ⚠️ ${targetPlatform} failed, trying fallback platforms`);
+      logDev(`Daily Challenge: ⚠️ ${targetPlatform} failed, trying fallback platforms`);
     }
 
     // If target platform failed, try other platforms as fallback
@@ -494,15 +513,15 @@ export async function GET(request: NextRequest) {
 
       for (const fallbackPlatform of fallbackPlatforms) {
         try {
-          console.log(`Daily Challenge: 🔄 Trying fallback platform: ${fallbackPlatform}`);
+          logDev(`Daily Challenge: 🔄 Trying fallback platform: ${fallbackPlatform}`);
           problem = await fetchProblemFromPlatform(fallbackPlatform);
 
           if (problem) {
-            console.log(`Daily Challenge: ✅ Fetched from fallback ${fallbackPlatform}:`, problem.title);
+            logDev(`Daily Challenge: ✅ Fetched from fallback ${fallbackPlatform}:`, problem.title);
             break;
           }
         } catch (error) {
-          console.warn(`Daily Challenge: ⚠️ Fallback ${fallbackPlatform} also failed`);
+          logDev(`Daily Challenge: ⚠️ Fallback ${fallbackPlatform} also failed`);
           continue;
         }
       }
@@ -511,7 +530,7 @@ export async function GET(request: NextRequest) {
     // If all APIs failed, use deterministic fallback
     if (!problem) {
       problem = getDeterministicRandomProblem(today);
-      console.log('Daily Challenge: 🔄 Using deterministic fallback:', problem.title);
+      logDev('Daily Challenge: 🔄 Using deterministic fallback:', problem.title);
     }
     
     // Cache the problem for today
@@ -524,7 +543,9 @@ export async function GET(request: NextRequest) {
     } as DailyChallengeResponse);
     
   } catch (error) {
-    console.error('Daily Challenge API error:', error);
+    if (process.env.NODE_ENV === 'development') {
+      console.error('Daily Challenge API error:', error);
+    }
     
     // Return a fallback problem even on complete failure
     const today = getTodayString();
@@ -533,7 +554,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       problem: fallbackProblem,
-      error: 'API error, using fallback problem'
+      error: process.env.NODE_ENV === 'development' ? 'API error, using fallback problem' : undefined
     } as DailyChallengeResponse);
   }
 }
