@@ -285,7 +285,19 @@ export default function HomePage() {
       let updatedProblem;
       let intervalDays;
 
-      if (customDays !== undefined) {
+      if (moveToLearned) {
+        // Move to Learned - no review scheduling needed
+        updatedProblem = {
+          ...problem,
+          status: 'learned' as const,
+          isReview: false, // Remove from review queue
+          notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
+          dateSolved: new Date().toISOString(),
+          repetition: (problem.repetition || 0) + 1,
+          // Keep existing interval/nextReviewDate but not active since isReview is false
+        };
+        intervalDays = 0; // Not used for learned problems
+      } else if (customDays !== undefined) {
         // Manual days mode - use custom interval directly
         const nextReviewDate = new Date();
         nextReviewDate.setDate(nextReviewDate.getDate() + customDays);
@@ -297,8 +309,7 @@ export default function HomePage() {
           repetition: (problem.repetition || 0) + 1,
           isReview: true,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString(),
-          status: moveToLearned ? 'learned' : problem.status
+          dateSolved: new Date().toISOString()
         };
         
         intervalDays = customDays;
@@ -319,8 +330,7 @@ export default function HomePage() {
           ...problem,
           ...enhancedData,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString(),
-          status: moveToLearned ? 'learned' : problem.status
+          dateSolved: new Date().toISOString()
         };
         
         intervalDays = updatedProblem.interval;
