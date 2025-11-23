@@ -19,6 +19,9 @@ export interface IProblem extends Document {
   status: 'active' | 'learned';
   companies: string[];
   source: 'manual' | 'company' | 'potd';
+  codeSnippet?: string;
+  codeLanguage?: string;
+  codeFilename?: string;
 }
 
 const ProblemSchema = new Schema<IProblem>({
@@ -101,6 +104,18 @@ const ProblemSchema = new Schema<IProblem>({
     type: String,
     enum: ['manual', 'company', 'potd'],
     default: 'manual'
+  },
+  codeSnippet: {
+    type: String,
+    default: undefined
+  },
+  codeLanguage: {
+    type: String,
+    default: undefined
+  },
+  codeFilename: {
+    type: String,
+    default: undefined
   }
 }, {
   timestamps: true

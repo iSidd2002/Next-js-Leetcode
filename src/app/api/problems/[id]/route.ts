@@ -51,6 +51,9 @@ export async function PUT(
     if (problemData.topics !== undefined) updateData.topics = problemData.topics;
     if (problemData.status !== undefined) updateData.status = problemData.status;
     if (problemData.companies !== undefined) updateData.companies = problemData.companies;
+    if (problemData.codeSnippet !== undefined) updateData.codeSnippet = problemData.codeSnippet;
+    if (problemData.codeLanguage !== undefined) updateData.codeLanguage = problemData.codeLanguage;
+    if (problemData.codeFilename !== undefined) updateData.codeFilename = problemData.codeFilename;
 
     const updatedProblem = await Problem.findByIdAndUpdate(id, updateData, { new: true });
 
@@ -70,7 +73,10 @@ export async function PUT(
       nextReviewDate: updatedProblem!.nextReviewDate,
       topics: updatedProblem!.topics,
       status: updatedProblem!.status,
-      companies: updatedProblem!.companies
+      companies: updatedProblem!.companies,
+      codeSnippet: updatedProblem!.codeSnippet,
+      codeLanguage: updatedProblem!.codeLanguage,
+      codeFilename: updatedProblem!.codeFilename
     };
 
     return NextResponse.json({

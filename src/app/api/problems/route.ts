@@ -85,7 +85,10 @@ export async function GET(request: NextRequest) {
       topics: p.topics,
       status: p.status,
       companies: p.companies,
-      source: p.source || 'manual' // Default to manual for backward compatibility
+      source: p.source || 'manual', // Default to manual for backward compatibility
+      codeSnippet: p.codeSnippet,
+      codeLanguage: p.codeLanguage,
+      codeFilename: p.codeFilename
     }));
 
     return NextResponse.json({
@@ -152,6 +155,11 @@ export async function POST(request: NextRequest) {
       const topics = sanitizeStringArray(problemData.topics, 'Topics');
       const companies = sanitizeStringArray(problemData.companies, 'Companies');
 
+      // Sanitize code snippet fields
+      const codeSnippet = problemData.codeSnippet ? sanitizeString(problemData.codeSnippet, 'Code Snippet') : undefined;
+      const codeLanguage = problemData.codeLanguage ? sanitizeString(problemData.codeLanguage, 'Code Language') : undefined;
+      const codeFilename = problemData.codeFilename ? sanitizeString(problemData.codeFilename, 'Code Filename') : undefined;
+
       const problem = new Problem({
         userId: user.id,
         platform,
@@ -169,7 +177,10 @@ export async function POST(request: NextRequest) {
         topics,
         status: statusValue,
         companies,
-        source
+        source,
+        codeSnippet,
+        codeLanguage,
+        codeFilename
       });
 
       await problem.save();
@@ -191,7 +202,10 @@ export async function POST(request: NextRequest) {
       topics: problem.topics,
       status: problem.status,
       companies: problem.companies,
-      source: problem.source || 'manual'
+      source: problem.source || 'manual',
+      codeSnippet: problem.codeSnippet,
+      codeLanguage: problem.codeLanguage,
+      codeFilename: problem.codeFilename
     };
 
       return NextResponse.json({
