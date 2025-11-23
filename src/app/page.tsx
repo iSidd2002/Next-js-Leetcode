@@ -666,7 +666,10 @@ export default function HomePage() {
     p.nextReviewDate &&
     (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
   );
-  const learnedProblems = manualProblems.filter(p => p.status === 'learned');
+  // Include learned problems from both problems and potdProblems lists
+  const learnedProblemsFromMain = manualProblems.filter(p => p.status === 'learned');
+  const learnedProblemsFromPotd = potdProblems.filter(p => p.status === 'learned');
+  const learnedProblems = [...learnedProblemsFromMain, ...learnedProblemsFromPotd];
   const companyProblems = problems.filter(p => p.source === 'company');
 
   return (
