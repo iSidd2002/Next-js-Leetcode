@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 import {
   Select,
   SelectContent,
@@ -123,6 +124,7 @@ export function CodeSnippetEditor({
   const handleSave = () => {
     if (onSave) {
       onSave(code, language, filename);
+      toast.success('Code snippet saved! ✨');
     }
   };
 

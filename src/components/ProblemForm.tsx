@@ -106,6 +106,14 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
       url: formData.url.trim() || '', // Ensure URL is always a string
     };
 
+    // Debug: Log code snippet data
+    console.log('📝 Submitting problem with code snippet:', {
+      hasCode: !!problemData.codeSnippet,
+      codeLength: problemData.codeSnippet?.length || 0,
+      language: problemData.codeLanguage,
+      filename: problemData.codeFilename
+    });
+
     if (problemToEdit) {
       onUpdateProblem(problemToEdit.id, problemData);
     } else {
