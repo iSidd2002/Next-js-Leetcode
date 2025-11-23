@@ -1,3 +1,13 @@
+export interface ReviewEntry {
+  date: string;
+  quality: number; // 1-5
+  timeTaken?: number; // minutes
+  notes?: string;
+  tags?: string[];
+  nextReviewDate: string;
+  interval: number;
+}
+
 export interface Problem {
   id: string;
   platform: 'leetcode' | 'codeforces' | 'atcoder';
@@ -16,6 +26,9 @@ export interface Problem {
   status: 'active' | 'learned';
   companies: string[];
   source: 'manual' | 'company' | 'potd'; // Track the source of the problem
+  reviewHistory?: ReviewEntry[]; // Track review quality and progress
+  averageQuality?: number; // Average quality score
+  lastReviewQuality?: number; // Last review quality
 }
 
 export interface PlatformStats {

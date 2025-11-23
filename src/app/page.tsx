@@ -7,6 +7,8 @@ import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
 import { markAsReviewed, initializeSpacedRepetition } from '@/utils/spacedRepetition';
+import { calculateNextReviewEnhanced } from '@/utils/enhancedSpacedRepetition';
+import { getReviewIntervals } from '@/utils/settingsStorage';
 import { isToday, isPast } from 'date-fns';
 import Dashboard from '@/components/Dashboard';
 import ProblemForm from '@/components/ProblemForm';
@@ -255,19 +257,55 @@ export default function HomePage() {
     setIsFormOpen(true);
   };
 
-  const handleProblemReviewed = async (id: string, quality: number = 4) => {
+  const handleProblemReviewed = async (
+    id: string, 
+    quality: number = 4,
+    notes?: string,
+    timeTaken?: number,
+    tags?: string[]
+  ) => {
     try {
       let problem = problems.find(p => p.id === id);
-      if (!problem) problem = potdProblems.find(p => p.id === id);
+      let isPotdProblem = false;
+      
+      if (!problem) {
+        problem = potdProblems.find(p => p.id === id);
+        isPotdProblem = true;
+      }
 
       if (!problem) {
         toast.error('Problem not found');
         return;
       }
 
-      const updatedProblem = markAsReviewed(problem, quality);
+      // Get current review intervals
+      const customIntervals = getReviewIntervals();
+      
+      // Use enhanced spaced repetition with quality tracking
+      const enhancedData = calculateNextReviewEnhanced(
+        problem,
+        quality,
+        customIntervals,
+        timeTaken,
+        notes,
+        tags
+      );
+      
+      const updatedProblem = {
+        ...problem,
+        ...enhancedData,
+        // Append new notes to existing notes if provided
+        notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
+        dateSolved: new Date().toISOString()
+      };
+      
       await handleUpdateProblem(problem.id, updatedProblem);
-      toast.success(`Problem marked as reviewed! Next review in ${updatedProblem.interval} days.`);
+      
+      // Success message with quality feedback
+      const qualityLabels = ['', 'Again', 'Hard', 'Good', 'Easy', 'Perfect'];
+      const qualityLabel = qualityLabels[quality] || 'Good';
+      
+      toast.success(`${qualityLabel} review! Next review in ${updatedProblem.interval} days. 🎯`);
     } catch (error) {
       console.error('Failed to mark problem as reviewed:', error);
       toast.error('Failed to mark problem as reviewed');

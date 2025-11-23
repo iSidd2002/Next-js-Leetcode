@@ -53,6 +53,11 @@ model Problem {
   status         String   @default("active") // 'active' | 'learned'
   companies      String[]
   source         String   @default("manual") // 'manual' | 'company' | 'potd'
+  
+  // Enhanced spaced repetition tracking
+  reviewHistory     Json?    // Array of review entries with quality, time, notes, tags
+  averageQuality    Float?   // Average quality score across all reviews
+  lastReviewQuality Int?     // Most recent review quality (1-5)
 
   // Relations
   user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
