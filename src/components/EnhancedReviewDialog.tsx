@@ -24,7 +24,8 @@ import {
   Sparkles,
   Edit3,
   Tag,
-  Calendar
+  Calendar,
+  GraduationCap
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
@@ -35,7 +36,7 @@ interface EnhancedReviewDialogProps {
   problem: Problem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onReview: (problemId: string, quality: number, notes?: string, timeTaken?: number, tags?: string[], customDays?: number) => void;
+  onReview: (problemId: string, quality: number, notes?: string, timeTaken?: number, tags?: string[], customDays?: number, moveToLearned?: boolean) => void;
 }
 
 // Quality ratings with descriptions
@@ -105,17 +106,18 @@ export function EnhancedReviewDialog({
   const [showQuickActions, setShowQuickActions] = useState(false);
   const [reviewMode, setReviewMode] = useState<'quality' | 'manual'>('quality');
   const [customDays, setCustomDays] = useState<number>(7);
+  const [moveToLearned, setMoveToLearned] = useState(false);
 
   const handleSubmit = () => {
     if (!problem) return;
     
     if (reviewMode === 'manual') {
       // Use custom days with a neutral quality score (3)
-      onReview(problem.id, 3, notes, timeTaken, quickTags, customDays);
+      onReview(problem.id, 3, notes, timeTaken, quickTags, customDays, moveToLearned);
     } else {
       // Use quality-based system
       if (selectedQuality === null) return;
-      onReview(problem.id, selectedQuality, notes, timeTaken, quickTags);
+      onReview(problem.id, selectedQuality, notes, timeTaken, quickTags, undefined, moveToLearned);
     }
     
     // Reset state
@@ -126,6 +128,7 @@ export function EnhancedReviewDialog({
     setShowQuickActions(false);
     setReviewMode('quality');
     setCustomDays(7);
+    setMoveToLearned(false);
     onOpenChange(false);
   };
 
@@ -357,6 +360,32 @@ export function EnhancedReviewDialog({
                 <span className="text-sm font-medium">Previous Notes</span>
               </div>
               <p className="text-sm text-muted-foreground">{problem.notes}</p>
+            </div>
+          )}
+
+          {/* Move to Learned Section - Only show if problem is not already learned */}
+          {problem.status !== 'learned' && (
+            <div className="p-4 rounded-lg bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
+              <label className="flex items-start gap-3 cursor-pointer group">
+                <input
+                  type="checkbox"
+                  checked={moveToLearned}
+                  onChange={(e) => setMoveToLearned(e.target.checked)}
+                  className="mt-0.5 h-4 w-4 rounded border-emerald-500/30 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-0 cursor-pointer"
+                />
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="h-4 w-4 text-emerald-500" />
+                    <span className="text-sm font-semibold text-emerald-500 group-hover:text-emerald-400 transition-colors">
+                      Move to Learned
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Mark this problem as fully mastered and move it to the Learned section. 
+                    You can still review it later if needed.
+                  </p>
+                </div>
+              </label>
             </div>
           )}
         </div>

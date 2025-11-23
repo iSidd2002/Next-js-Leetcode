@@ -265,7 +265,8 @@ export default function HomePage() {
     notes?: string,
     timeTaken?: number,
     tags?: string[],
-    customDays?: number
+    customDays?: number,
+    moveToLearned?: boolean
   ) => {
     try {
       let problem = problems.find(p => p.id === id);
@@ -296,7 +297,8 @@ export default function HomePage() {
           repetition: (problem.repetition || 0) + 1,
           isReview: true,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString()
+          dateSolved: new Date().toISOString(),
+          status: moveToLearned ? 'learned' : problem.status
         };
         
         intervalDays = customDays;
@@ -317,7 +319,8 @@ export default function HomePage() {
           ...problem,
           ...enhancedData,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString()
+          dateSolved: new Date().toISOString(),
+          status: moveToLearned ? 'learned' : problem.status
         };
         
         intervalDays = updatedProblem.interval;
@@ -326,7 +329,9 @@ export default function HomePage() {
       await handleUpdateProblem(problem.id, updatedProblem);
       
       // Success message
-      if (customDays !== undefined) {
+      if (moveToLearned) {
+        toast.success(`🎓 Problem moved to Learned! You've mastered it!`);
+      } else if (customDays !== undefined) {
         toast.success(`Review scheduled! Next review in ${customDays} days. 📅`);
       } else {
         const qualityLabels = ['', 'Again', 'Hard', 'Good', 'Easy', 'Perfect'];
