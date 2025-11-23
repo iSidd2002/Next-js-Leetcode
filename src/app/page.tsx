@@ -684,8 +684,9 @@ export default function HomePage() {
     p.nextReviewDate &&
     (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
   );
-  // Include learned problems from both problems and potdProblems lists
-  const learnedProblemsFromMain = manualProblems.filter(p => p.status === 'learned');
+  // Include learned problems from ALL sources (problems + potdProblems)
+  // Check status='learned' regardless of source (manual, potd, company, etc.)
+  const learnedProblemsFromMain = problems.filter(p => p.status === 'learned');
   const learnedProblemsFromPotd = potdProblems.filter(p => p.status === 'learned');
   const learnedProblems = [...learnedProblemsFromMain, ...learnedProblemsFromPotd];
   console.log('📚 Learned Problems Filter:', {
