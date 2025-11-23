@@ -58,6 +58,11 @@ model Problem {
   reviewHistory     Json?    // Array of review entries with quality, time, notes, tags
   averageQuality    Float?   // Average quality score across all reviews
   lastReviewQuality Int?     // Most recent review quality (1-5)
+  
+  // Code snippet storage (pika.style inspired)
+  codeSnippet       String?  // The actual code solution
+  codeLanguage      String?  // Programming language (javascript, python, etc.)
+  codeFilename      String?  // Filename for the code snippet
 
   // Relations
   user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)

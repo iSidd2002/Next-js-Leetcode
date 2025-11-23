@@ -29,6 +29,9 @@ export interface Problem {
   reviewHistory?: ReviewEntry[]; // Track review quality and progress
   averageQuality?: number; // Average quality score
   lastReviewQuality?: number; // Last review quality
+  codeSnippet?: string; // Solution code (pika.style inspired)
+  codeLanguage?: string; // Programming language
+  codeFilename?: string; // Filename for code snippet
 }
 
 export interface PlatformStats {
