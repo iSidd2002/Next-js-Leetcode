@@ -4,6 +4,29 @@
  */
 
 /**
+ * Validate MongoDB ObjectId format
+ * Prevents invalid ID injection and database errors
+ */
+export function isValidObjectId(id: string): boolean {
+  if (typeof id !== 'string') {
+    return false;
+  }
+  // MongoDB ObjectId is a 24-character hex string
+  return /^[a-fA-F0-9]{24}$/.test(id);
+}
+
+/**
+ * Validate and sanitize MongoDB ObjectId
+ * Throws an error if invalid
+ */
+export function sanitizeObjectId(id: string, fieldName: string = 'ID'): string {
+  if (!isValidObjectId(id)) {
+    throw new Error(`Invalid ${fieldName} format`);
+  }
+  return id;
+}
+
+/**
  * Sanitize email input to prevent NoSQL injection
  */
 export function sanitizeEmail(email: string): string {

@@ -79,20 +79,8 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 
 export async function authenticateRequest(request: NextRequest): Promise<JWTPayload | null> {
   try {
-    // First try to get user info from middleware headers (preferred method)
-    const userId = request.headers.get('x-user-id');
-    const userEmail = request.headers.get('x-user-email');
-    const userUsername = request.headers.get('x-user-username');
-
-    if (userId && userEmail && userUsername) {
-      return {
-        id: userId,
-        email: userEmail,
-        username: userUsername
-      };
-    }
-
-    // Fallback to direct token extraction and verification
+    // SECURITY: Always verify the JWT token directly
+    // Never trust user-supplied headers - they can be spoofed by attackers
     const token = getTokenFromRequest(request);
     if (!token) {
       return null;

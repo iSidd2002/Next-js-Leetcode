@@ -6,6 +6,7 @@ import { PlatformAdapter, NormalizedProblem } from '@/lib/ai/platform-adapter';
 import { PromptTemplates, SimilarProblemsRequest, SimilarProblemsResponse } from '@/lib/ai/prompts';
 import { authenticateRequest } from '@/lib/auth';
 import AIDatabaseService from '@/lib/ai/database-service';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 // Fallback recommendations for when AI times out
 function generateFallbackRecommendations(problem: NormalizedProblem) {
@@ -60,6 +61,19 @@ export const dynamic = 'force-dynamic'; // Disable static optimization
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - Use strict AI rate limits (expensive operation)
+    const rateLimit = checkRateLimit(request, RateLimitPresets.AI);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.AI);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. AI features are limited to 10 requests per hour.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     // SECURITY: Authentication is now REQUIRED (no test user fallback)
     const user = await authenticateRequest(request);
     
@@ -236,11 +250,21 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint for testing with sample data
+// SECURITY: This endpoint is protected by middleware in production (devOnlyRoutes)
+// In development, it allows testing without authentication
 export async function GET(request: NextRequest) {
   try {
+    // Block in production - only allow in development
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({
+        success: false,
+        error: 'Not found'
+      }, { status: 404 });
+    }
+
     console.log('🧪 Testing similar problems API with sample data...');
 
-    // For testing, use a mock user ID
+    // For testing, use a mock user ID (only in development)
     const userId = 'test-user';
 
     // Sample problem data for testing

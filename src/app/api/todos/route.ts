@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Todo from '@/models/Todo';
 import { authenticateRequest } from '@/lib/auth';
+import { sanitizeQueryParam, sanitizeString, sanitizeInteger, sanitizeStringArray } from '@/lib/input-validation';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -17,14 +32,27 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
-    const category = searchParams.get('category');
-    const priority = searchParams.get('priority');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    
+    // Sanitize query parameters
+    const status = sanitizeQueryParam(searchParams.get('status'));
+    const category = sanitizeQueryParam(searchParams.get('category'));
+    const priority = sanitizeQueryParam(searchParams.get('priority'));
+    
+    // Sanitize and validate numeric parameters
+    let limit: number;
+    let offset: number;
+    try {
+      limit = sanitizeInteger(searchParams.get('limit') || '100', 1, 1000);
+      offset = sanitizeInteger(searchParams.get('offset') || '0', 0, 100000);
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Invalid parameters'
+      }, { status: 400 });
+    }
 
-    // Build filter
-    const filter: any = { userId: user.id };
+    // Build filter with proper typing
+    const filter: Record<string, unknown> = { userId: user.id };
     if (status) filter.status = status;
     if (category) filter.category = category;
     if (priority) filter.priority = priority;
@@ -68,6 +96,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -89,17 +130,52 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Sanitize inputs
+    let sanitizedTitle: string;
+    let sanitizedDescription: string | undefined;
+    let sanitizedNotes: string | undefined;
+    let sanitizedTags: string[];
+    let sanitizedPriority: string;
+    let sanitizedStatus: string;
+    let sanitizedCategory: string;
+    
+    try {
+      sanitizedTitle = sanitizeString(todoData.title, 'Title');
+      sanitizedDescription = todoData.description ? sanitizeString(todoData.description, 'Description') : undefined;
+      sanitizedNotes = todoData.notes ? sanitizeString(todoData.notes, 'Notes') : undefined;
+      sanitizedTags = sanitizeStringArray(todoData.tags, 'Tags');
+      sanitizedPriority = todoData.priority ? sanitizeString(todoData.priority, 'Priority') : 'medium';
+      sanitizedStatus = todoData.status ? sanitizeString(todoData.status, 'Status') : 'pending';
+      sanitizedCategory = todoData.category ? sanitizeString(todoData.category, 'Category') : 'other';
+      
+      // Validate title length
+      if (sanitizedTitle.length > 500) {
+        throw new Error('Title must not exceed 500 characters');
+      }
+      if (sanitizedDescription && sanitizedDescription.length > 5000) {
+        throw new Error('Description must not exceed 5000 characters');
+      }
+      if (sanitizedNotes && sanitizedNotes.length > 10000) {
+        throw new Error('Notes must not exceed 10000 characters');
+      }
+    } catch (validationError) {
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid input'
+      }, { status: 400 });
+    }
+
     const todo = new Todo({
       userId: user.id,
-      title: todoData.title,
-      description: todoData.description,
-      priority: todoData.priority || 'medium',
-      status: todoData.status || 'pending',
-      category: todoData.category || 'other',
+      title: sanitizedTitle,
+      description: sanitizedDescription,
+      priority: sanitizedPriority,
+      status: sanitizedStatus,
+      category: sanitizedCategory,
       dueDate: todoData.dueDate,
-      tags: todoData.tags || [],
+      tags: sanitizedTags,
       estimatedTime: todoData.estimatedTime,
-      notes: todoData.notes
+      notes: sanitizedNotes
     });
 
     await todo.save();

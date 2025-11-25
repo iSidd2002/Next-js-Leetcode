@@ -5,6 +5,7 @@ import { getCacheManager, CacheKeys } from '@/lib/ai/cache-manager';
 import { PlatformAdapter } from '@/lib/ai/platform-adapter';
 import { PromptTemplates, ReviewInsightsRequest, ReviewInsightsResponse } from '@/lib/ai/prompts';
 import { authenticateRequest } from '@/lib/auth';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 // Ensure this runs in Node.js runtime (not Edge Runtime)
 export const runtime = 'nodejs';
@@ -13,6 +14,19 @@ export const dynamic = 'force-dynamic'; // Disable static optimization
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting - Use strict AI rate limits (expensive operation)
+    const rateLimit = checkRateLimit(request, RateLimitPresets.AI);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.AI);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. AI features are limited to 10 requests per hour.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     // SECURITY: Authentication is now REQUIRED (no test user fallback)
     const user = await authenticateRequest(request);
     
@@ -188,8 +202,17 @@ export async function POST(request: NextRequest) {
 }
 
 // GET endpoint for testing with sample data
+// SECURITY: This endpoint is protected by middleware in production (devOnlyRoutes)
 export async function GET(request: NextRequest) {
   try {
+    // Block in production - only allow in development
+    if (process.env.NODE_ENV === 'production') {
+      return NextResponse.json({
+        success: false,
+        error: 'Not found'
+      }, { status: 404 });
+    }
+
     console.log('🧪 Testing review insights API with sample data...');
 
     // Sample problem and user history for testing

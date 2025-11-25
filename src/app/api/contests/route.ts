@@ -2,9 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Contest from '@/models/Contest';
 import { authenticateRequest } from '@/lib/auth';
+import { sanitizeQueryParam, sanitizeString, sanitizeUrl, sanitizeInteger } from '@/lib/input-validation';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -17,10 +32,23 @@ export async function GET(request: NextRequest) {
     }
 
     const { searchParams } = new URL(request.url);
-    const platform = searchParams.get('platform');
-    const status = searchParams.get('status');
-    const limit = parseInt(searchParams.get('limit') || '100');
-    const offset = parseInt(searchParams.get('offset') || '0');
+    
+    // Sanitize query parameters
+    const platform = sanitizeQueryParam(searchParams.get('platform'));
+    const status = sanitizeQueryParam(searchParams.get('status'));
+    
+    // Sanitize and validate numeric parameters
+    let limit: number;
+    let offset: number;
+    try {
+      limit = sanitizeInteger(searchParams.get('limit') || '100', 1, 1000);
+      offset = sanitizeInteger(searchParams.get('offset') || '0', 0, 100000);
+    } catch (error) {
+      return NextResponse.json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Invalid parameters'
+      }, { status: 400 });
+    }
 
     // Build filter
     const filter: Record<string, unknown> = { userId: user.id };
@@ -62,6 +90,19 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
 
     const user = await authenticateRequest(request);
@@ -83,17 +124,40 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Sanitize inputs
+    let sanitizedName: string;
+    let sanitizedPlatform: string;
+    let sanitizedUrl: string;
+    let sanitizedStatus: string;
+    
+    try {
+      sanitizedName = sanitizeString(contestData.name, 'Name');
+      sanitizedPlatform = sanitizeString(contestData.platform, 'Platform');
+      sanitizedUrl = contestData.url ? sanitizeUrl(contestData.url) : '';
+      sanitizedStatus = contestData.status ? sanitizeString(contestData.status, 'Status') : 'scheduled';
+      
+      // Validate lengths
+      if (sanitizedName.length > 500) {
+        throw new Error('Name must not exceed 500 characters');
+      }
+    } catch (validationError) {
+      return NextResponse.json({
+        success: false,
+        error: validationError instanceof Error ? validationError.message : 'Invalid input'
+      }, { status: 400 });
+    }
+
     const contest = new Contest({
       userId: user.id,
-      name: contestData.name,
-      platform: contestData.platform,
+      name: sanitizedName,
+      platform: sanitizedPlatform,
       startTime: contestData.startTime || new Date().toISOString(),
       duration: contestData.duration || 120, // Default 2 hours
-      url: contestData.url || '',
+      url: sanitizedUrl,
       rank: contestData.rank,
       problemsSolved: contestData.problemsSolved || 0,
       totalProblems: contestData.totalProblems,
-      status: contestData.status || 'scheduled'
+      status: sanitizedStatus
     });
 
     await contest.save();

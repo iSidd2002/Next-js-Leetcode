@@ -2,9 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Problem from '@/models/Problem';
 import { authenticateRequest } from '@/lib/auth';
+import { sanitizeString, sanitizeUrl, sanitizeStringArray } from '@/lib/input-validation';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
+
+// Maximum number of problems per bulk request
+const MAX_BULK_SIZE = 100;
 
 export async function POST(request: NextRequest) {
   try {
+    // Rate limiting
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { 
+        status: 429,
+        headers
+      });
+    }
+
     await connectDB();
     
     const user = await authenticateRequest(request);
@@ -25,16 +43,42 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // Limit bulk size to prevent DoS
+    if (problems.length > MAX_BULK_SIZE) {
+      return NextResponse.json({
+        success: false,
+        error: `Maximum ${MAX_BULK_SIZE} problems per bulk request`
+      }, { status: 400 });
+    }
+
     let created = 0;
     let skipped = 0;
     const createdProblems = [];
 
     for (const problemData of problems) {
       try {
+        // Sanitize inputs for each problem
+        const sanitizedPlatform = problemData.platform ? sanitizeString(problemData.platform, 'Platform') : 'leetcode';
+        const sanitizedTitle = problemData.title ? sanitizeString(problemData.title, 'Title') : '';
+        const sanitizedProblemId = problemData.problemId ? sanitizeString(problemData.problemId, 'Problem ID') : '';
+        const sanitizedDifficulty = problemData.difficulty ? sanitizeString(problemData.difficulty, 'Difficulty') : '';
+        let sanitizedUrl = '';
+        try {
+          sanitizedUrl = problemData.url ? sanitizeUrl(problemData.url) : '';
+        } catch {
+          // Skip problems with invalid URLs
+          skipped++;
+          continue;
+        }
+        const sanitizedNotes = problemData.notes ? sanitizeString(problemData.notes, 'Notes') : '';
+        const sanitizedTopics = sanitizeStringArray(problemData.topics, 'Topics');
+        const sanitizedCompanies = sanitizeStringArray(problemData.companies, 'Companies');
+        const sanitizedStatus = problemData.status ? sanitizeString(problemData.status, 'Status') : 'active';
+
         // Check if problem already exists for this user
         const existingProblem = await Problem.findOne({
           userId: user.id,
-          url: problemData.url
+          url: sanitizedUrl
         });
 
         if (existingProblem) {
@@ -42,24 +86,24 @@ export async function POST(request: NextRequest) {
           continue;
         }
 
-        // Create new problem
+        // Create new problem with sanitized data
         const problem = new Problem({
           userId: user.id,
-          platform: problemData.platform || 'leetcode',
-          title: problemData.title || '',
-          problemId: problemData.problemId || '',
-          difficulty: problemData.difficulty || '',
-          url: problemData.url || '',
+          platform: sanitizedPlatform,
+          title: sanitizedTitle,
+          problemId: sanitizedProblemId,
+          difficulty: sanitizedDifficulty,
+          url: sanitizedUrl,
           dateSolved: problemData.dateSolved || new Date().toISOString(),
           createdAt: new Date().toISOString(),
-          notes: problemData.notes || '',
-          isReview: problemData.isReview || false,
-          repetition: problemData.repetition || 0,
-          interval: problemData.interval || 0,
+          notes: sanitizedNotes,
+          isReview: Boolean(problemData.isReview),
+          repetition: typeof problemData.repetition === 'number' ? problemData.repetition : 0,
+          interval: typeof problemData.interval === 'number' ? problemData.interval : 0,
           nextReviewDate: problemData.nextReviewDate || null,
-          topics: problemData.topics || [],
-          status: problemData.status || 'active',
-          companies: problemData.companies || []
+          topics: sanitizedTopics,
+          status: sanitizedStatus,
+          companies: sanitizedCompanies
         });
 
         await problem.save();
