@@ -788,13 +788,15 @@ export default function HomePage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-3">
               <div className="relative group cursor-pointer">
-                <div className="w-10 h-10 bg-gradient-to-br from-primary to-rose-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary/20 group-hover:shadow-primary/40 transition-all duration-300">
-                  <span className="text-white font-bold text-lg">LC</span>
-                </div>
+                <img 
+                  src="/logo.png" 
+                  alt="LeetCode Tracker" 
+                  className="h-10 w-auto object-contain drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300"
+                />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
               </div>
               <div>
-                <h1 className="text-xl font-bold tracking-tight hidden sm:block">
+                <h1 className="text-xl font-bold tracking-tight hidden sm:block bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
                   Tracker
                 </h1>
               </div>
