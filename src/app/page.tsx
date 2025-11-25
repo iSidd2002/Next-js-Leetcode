@@ -546,6 +546,8 @@ export default function HomePage() {
       toast.info('Problem of the day already exists in your POTD list.');
       return;
     }
+    // Note: dateSolved is empty - the problem is tracked but NOT solved yet
+    // dateSolved will be set when the user moves it to the Problems section
     const newProblem: Problem = {
       id: generateId(),
       platform: 'leetcode',
@@ -553,7 +555,7 @@ export default function HomePage() {
       problemId: potd.question.titleSlug,
       difficulty: potd.question.difficulty,
       url: `https://leetcode.com${potd.link}`,
-      dateSolved: new Date().toISOString(),
+      dateSolved: '', // Empty = not solved yet, just tracked
       createdAt: new Date().toISOString(),
       notes: '',
       isReview: false,
@@ -568,7 +570,7 @@ export default function HomePage() {
     const updatedPotdProblems = [...potdProblems, newProblem];
     setPotdProblems(updatedPotdProblems);
     StorageService.savePotdProblems(updatedPotdProblems);
-    toast.success('Problem of the day added to your list!');
+    toast.success('Problem of the day added to your tracking list!');
   };
 
   const handleAddDailyChallengeToPotd = async (dailyProblem: any) => {
@@ -578,6 +580,8 @@ export default function HomePage() {
         toast.info('Daily challenge already exists in your POTD archive.');
         return;
       }
+      // Note: dateSolved is empty - the problem is tracked but NOT solved yet
+      // dateSolved will be set when the user moves it to the Problems section
       const newProblem: Problem = {
         id: generateId(),
         platform: dailyProblem.platform,
@@ -585,7 +589,7 @@ export default function HomePage() {
         problemId: dailyProblem.id,
         difficulty: dailyProblem.difficulty,
         url: dailyProblem.url,
-        dateSolved: new Date().toISOString(),
+        dateSolved: '', // Empty = not solved yet, just tracked
         createdAt: new Date().toISOString(),
         notes: '',
         isReview: false,
@@ -600,7 +604,9 @@ export default function HomePage() {
       const updatedPotdProblems = [...potdProblems, newProblem];
       setPotdProblems(updatedPotdProblems);
       await StorageService.savePotdProblems(updatedPotdProblems);
-      await StorageService.addProblem(newProblem);
+      // Note: NOT adding to main problems - only to POTD tracking
+      // User should explicitly move to Problems when solved
+      toast.success('Daily challenge added to POTD tracking!');
     } catch (error) {
       console.error('Failed to add daily challenge to POTD:', error);
       throw error;
@@ -655,11 +661,14 @@ export default function HomePage() {
         toast.info(`Problem already exists in ${sectionName} section`);
         return;
       }
+      // When moving to Problems section, NOW it's considered "solved"
+      // Set dateSolved to current date since user is marking it as solved
       const newProblemForProblems: Problem = {
         ...potdProblem,
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         source: 'manual',
         status: targetStatus,
+        dateSolved: new Date().toISOString(), // Set solved date when moving to Problems
         createdAt: new Date().toISOString()
       };
       await StorageService.addProblem(newProblemForProblems);
@@ -667,7 +676,7 @@ export default function HomePage() {
       setProblems(updatedProblems);
       await StorageService.saveProblems(updatedProblems);
       const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
-      toast.success(`Problem added to ${sectionName} section successfully!`);
+      toast.success(`Problem marked as solved and added to ${sectionName}!`);
     } catch (error) {
       console.error('Failed to add POTD problem to Problems:', error);
       const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';

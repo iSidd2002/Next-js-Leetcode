@@ -289,6 +289,19 @@ class StorageService {
   }
 
   static async deleteProblem(id: string): Promise<boolean> {
+    // First, check if it's a POTD problem (stored locally only)
+    const potdProblems = await this.getPotdProblems();
+    const isPotdProblem = potdProblems.some(p => p.id === id);
+    
+    if (isPotdProblem) {
+      // Delete from POTD storage
+      const filteredPotdProblems = potdProblems.filter(p => p.id !== id);
+      await this.savePotdProblems(filteredPotdProblems);
+      console.log('✅ Deleted POTD problem:', id);
+      return true;
+    }
+
+    // Not a POTD problem, delete from main problems
     if (this.isOfflineMode()) {
       const problems = await this.getProblems();
       const filteredProblems = problems.filter(p => p.id !== id);
@@ -334,10 +347,6 @@ class StorageService {
   // Utility methods for offline/online mode
   static setOfflineMode(offline: boolean): void {
     localStorage.setItem(OFFLINE_MODE_KEY, offline.toString());
-  }
-
-  static getOfflineMode(): boolean {
-    return this.isOfflineMode();
   }
 
   // Sync methods
