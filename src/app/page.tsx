@@ -26,6 +26,7 @@ import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
+import { TopicGroupedProblemList } from '@/components/TopicGroupedProblemList';
 import { EnhancedSettings } from '@/components/EnhancedSettings';
 import ClientOnly from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
@@ -866,20 +867,18 @@ export default function HomePage() {
                 </TabsContent>
 
                 <TabsContent value="problems" className="mt-0">
-                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
-                    <ErrorBoundary>
-                      <ProblemList
-                        problems={activeProblems}
-                        onUpdateProblem={handleUpdateProblem}
-                        onToggleReview={handleToggleReview}
-                        onDeleteProblem={handleDeleteProblem}
-                        onEditProblem={handleEditProblem}
-                        onProblemReviewed={handleProblemReviewed}
-                        onClearAll={handleClearAllProblems}
-                        isReviewList={false}
-                      />
-                    </ErrorBoundary>
-                  </div>
+                  <ErrorBoundary>
+                    <TopicGroupedProblemList
+                      problems={activeProblems}
+                      onUpdateProblem={handleUpdateProblem}
+                      onToggleReview={handleToggleReview}
+                      onDeleteProblem={handleDeleteProblem}
+                      onEditProblem={handleEditProblem}
+                      onProblemReviewed={handleProblemReviewed}
+                      isLearnedList={false}
+                      title="Problems by Topic"
+                    />
+                  </ErrorBoundary>
                 </TabsContent>
 
                 <TabsContent value="companies" className="mt-0 space-y-6">
@@ -957,19 +956,18 @@ export default function HomePage() {
                 </TabsContent>
 
                 <TabsContent value="learned" className="mt-0">
-                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
-                    <ErrorBoundary>
-                      <ProblemList
-                        problems={learnedProblems}
-                        onUpdateProblem={handleUpdateProblem}
-                        onToggleReview={handleToggleReview}
-                        onDeleteProblem={handleDeleteProblem}
-                        onEditProblem={handleEditProblem}
-                        onProblemReviewed={handleProblemReviewed}
-                        isReviewList={false}
-                      />
-                    </ErrorBoundary>
-                  </div>
+                  <ErrorBoundary>
+                    <TopicGroupedProblemList
+                      problems={learnedProblems}
+                      onUpdateProblem={handleUpdateProblem}
+                      onToggleReview={handleToggleReview}
+                      onDeleteProblem={handleDeleteProblem}
+                      onEditProblem={handleEditProblem}
+                      onProblemReviewed={handleProblemReviewed}
+                      isLearnedList={true}
+                      title="Learned Problems by Topic"
+                    />
+                  </ErrorBoundary>
                 </TabsContent>
 
                 <TabsContent value="analytics" className="mt-0">
