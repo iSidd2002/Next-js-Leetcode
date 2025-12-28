@@ -207,37 +207,23 @@ const AllContestsList = () => {
 
   if (!contests) {
     return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">All Contests</h2>
-          <Button onClick={fetchAllContests} disabled={loading}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            {loading ? 'Loading...' : 'Load All Contests'}
-          </Button>
-        </div>
-        {loading && (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-2 text-muted-foreground">Fetching contests from all platforms...</p>
-          </div>
-        )}
+      <div className="flex flex-col items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mb-4"></div>
+        <p className="text-muted-foreground">Fetching contests from all platforms...</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
-        <div>
-          <h2 className="text-xl sm:text-2xl font-bold">All Contests</h2>
-          <p className="text-sm sm:text-base text-muted-foreground">
-            {contests.summary.total} contests from {contests.summary.platforms.length} platforms
-          </p>
-        </div>
-        <Button onClick={fetchAllContests} disabled={loading} size="sm">
-          <RefreshCw className={`h-4 w-4 sm:mr-2 ${loading ? 'animate-spin' : ''}`} />
-          <span className="hidden sm:inline">Refresh</span>
+    <div className="space-y-5">
+      {/* Summary Stats + Refresh */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          {contests.summary.total} contests from {contests.summary.platforms.length} platforms
+        </p>
+        <Button onClick={fetchAllContests} disabled={loading} size="sm" variant="outline">
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+          Refresh
         </Button>
       </div>
 
