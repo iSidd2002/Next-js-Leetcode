@@ -4,7 +4,7 @@ import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon } from 'lucide-react';
+import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon, Sparkles } from 'lucide-react';
 import { isToday, isPast, subMonths } from 'date-fns';
 import ProblemOfTheDay from './ProblemOfTheDay';
 import DailyChallenge from './DailyChallenge';
@@ -16,6 +16,8 @@ import { cn } from '@/lib/utils';
 import Greeting from './Greeting';
 import StatsCounter from './StatsCounter';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { GlowCard } from '@/components/ui/glow-card';
+import { BorderBeam } from '@/components/ui/border-beam';
 
 
 interface DashboardProps {
@@ -206,73 +208,103 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
       {/* Welcome Section */}
       <Greeting />
 
-      {/* Top Stats Row - Hero Stats */}
+      {/* Top Stats Row - Hero Stats with Glow Effects */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-cyan-500/10 to-rose-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <GlowCard 
+          className="relative overflow-hidden border-orange-500/20" 
+          glowColor="rgb(249 115 22)"
+          showBorderBeam={currentStreak >= 7}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 via-transparent to-rose-500/10" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Current Streak</CardTitle>
-            <Flame className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
-                <StatsCounter value={currentStreak} /> 
-                <span className="text-sm font-normal text-muted-foreground"> days</span>
+            <div className="relative">
+              <Flame className={cn("h-5 w-5 text-orange-500", currentStreak >= 7 && "animate-pulse")} />
+              {currentStreak >= 7 && (
+                <Sparkles className="absolute -top-1 -right-1 h-3 w-3 text-yellow-400 animate-bounce" />
+              )}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              Best: <span className="text-foreground font-medium">{longestStreak} days</span>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className="text-4xl font-bold tracking-tight">
+                <StatsCounter value={currentStreak} /> 
+                <span className="text-base font-normal text-muted-foreground"> days</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              Best: <span className="text-orange-500 font-semibold">{longestStreak} days</span>
             </p>
           </CardContent>
-          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-orange-500/10 blur-2xl group-hover:bg-orange-500/20 transition-colors" />
-        </Card>
+          <div className="absolute -right-8 -bottom-8 h-32 w-32 rounded-full bg-orange-500/20 blur-3xl animate-glow-pulse" />
+        </GlowCard>
 
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-emerald-500/10 to-teal-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <GlowCard 
+          className="relative overflow-hidden border-emerald-500/20" 
+          glowColor="rgb(16 185 129)"
+          showBorderBeam={totalProblems >= 100}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-teal-500/10" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Solved</CardTitle>
-            <Trophy className="h-4 w-4 text-emerald-500" />
+            <Trophy className="h-5 w-5 text-emerald-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
+          <CardContent className="relative">
+            <div className="text-4xl font-bold tracking-tight">
                 <StatsCounter value={totalProblems} />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-emerald-500 font-medium">+{thisWeek}</span> this week
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="text-emerald-500 font-semibold">+{thisWeek}</span> this week
             </p>
           </CardContent>
-          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl group-hover:bg-emerald-500/20 transition-colors" />
-        </Card>
+          <div className="absolute -right-8 -bottom-8 h-32 w-32 rounded-full bg-emerald-500/20 blur-3xl animate-glow-pulse" />
+        </GlowCard>
 
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-blue-500/10 to-cyan-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <GlowCard 
+          className="relative overflow-hidden border-blue-500/20" 
+          glowColor="rgb(59 130 246)"
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-transparent to-cyan-500/10" />
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Days</CardTitle>
-            <Activity className="h-4 w-4 text-blue-500" />
+            <Activity className="h-5 w-5 text-blue-500" />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
+          <CardContent className="relative">
+            <div className="text-4xl font-bold tracking-tight">
                 <StatsCounter value={activeDays} />
-                <span className="text-sm font-normal text-muted-foreground"> / 365</span>
+                <span className="text-base font-normal text-muted-foreground"> / 365</span>
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
-              <span className="text-foreground font-medium">{activePercentage}%</span> consistency
+            <p className="text-xs text-muted-foreground mt-2">
+              <span className="text-blue-500 font-semibold">{activePercentage}%</span> consistency
             </p>
           </CardContent>
-          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl group-hover:bg-blue-500/20 transition-colors" />
-        </Card>
+          <div className="absolute -right-8 -bottom-8 h-32 w-32 rounded-full bg-blue-500/20 blur-3xl animate-glow-pulse" />
+        </GlowCard>
 
-        <Card className="relative overflow-hidden border-none bg-gradient-to-br from-amber-500/10 to-yellow-500/10 backdrop-blur-sm group hover:scale-[1.02] transition-transform duration-300">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <GlowCard 
+          className={cn(
+            "relative overflow-hidden",
+            dueForReview > 0 ? "border-amber-500/30" : "border-amber-500/20"
+          )}
+          glowColor="rgb(245 158 11)"
+          showBorderBeam={dueForReview > 0}
+        >
+          <div className="absolute inset-0 bg-gradient-to-br from-amber-500/10 via-transparent to-yellow-500/10" />
+          {dueForReview > 0 && (
+            <div className="absolute inset-0 bg-amber-500/5 animate-pulse" />
+          )}
+          <CardHeader className="relative flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Due Review</CardTitle>
-            <Clock className="h-4 w-4 text-amber-500" />
+            <Clock className={cn("h-5 w-5 text-amber-500", dueForReview > 0 && "animate-bounce")} />
           </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">
+          <CardContent className="relative">
+            <div className="text-4xl font-bold tracking-tight">
                 <StatsCounter value={dueForReview} />
             </div>
-            <p className="text-xs text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-2">
               {forReview} total for review
             </p>
           </CardContent>
-          <div className="absolute -right-4 -bottom-4 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl group-hover:bg-amber-500/20 transition-colors" />
-        </Card>
+          <div className="absolute -right-8 -bottom-8 h-32 w-32 rounded-full bg-amber-500/20 blur-3xl animate-glow-pulse" />
+        </GlowCard>
       </div>
 
       {/* Main Content Grid */}
@@ -281,11 +313,13 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
         {/* Heatmap & Activity - Spans 2 columns */}
         <div className="lg:col-span-2 space-y-6">
           {/* Activity Chart */}
-            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+            <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm card-shine">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <TrendingUp className="h-5 w-5 text-primary" />
-                        30 Day Activity
+                        <span className="bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent">
+                          30 Day Activity
+                        </span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -326,11 +360,13 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </Card>
 
 
-          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm card-shine">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <CalendarDays className="h-5 w-5 text-primary" />
-                Activity Heatmap
+                <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-500">
+                  Activity Heatmap
+                </span>
               </CardTitle>
               <CardDescription>Your submission history over the last year</CardDescription>
             </CardHeader>
