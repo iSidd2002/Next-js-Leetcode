@@ -63,6 +63,14 @@ model Problem {
   codeSnippet       String?  // The actual code solution
   codeLanguage      String?  // Programming language (javascript, python, etc.)
   codeFilename      String?  // Filename for the code snippet
+  
+  // Enhanced tracking fields (inspired by comprehensive LeetCode tracking)
+  subPatterns       String[] // Sub-patterns within topics (e.g., "Monotonic Stack" under "Stack")
+  struggles         String[] // What the user struggled with on this problem
+  learnings         String[] // Key learnings/takeaways from solving this problem
+  solutionSummary   String?  // Brief 1-2 sentence summary of the approach in own words
+  timeComplexity    String?  // Time complexity of the solution (e.g., "O(n)", "O(n log n)")
+  spaceComplexity   String?  // Space complexity of the solution (e.g., "O(1)", "O(n)")
 
   // Relations
   user        User                      @relation(fields: [userId], references: [id], onDelete: Cascade)

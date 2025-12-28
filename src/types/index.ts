@@ -32,6 +32,13 @@ export interface Problem {
   codeSnippet?: string; // Solution code (pika.style inspired)
   codeLanguage?: string; // Programming language
   codeFilename?: string; // Filename for code snippet
+  // Enhanced tracking fields (comprehensive LeetCode tracking)
+  subPatterns?: string[]; // Sub-patterns within topics (e.g., "Monotonic Stack" under "Stack")
+  struggles?: string[]; // What the user struggled with on this problem
+  learnings?: string[]; // Key learnings/takeaways from solving this problem
+  solutionSummary?: string; // Brief 1-2 sentence summary of the approach in own words
+  timeComplexity?: string; // Time complexity (e.g., "O(n)", "O(n log n)")
+  spaceComplexity?: string; // Space complexity (e.g., "O(1)", "O(n)")
 }
 
 export interface PlatformStats {
@@ -164,6 +171,13 @@ export interface DBProblem {
   topics: string[];
   status: 'active' | 'learned';
   companies: string[];
+  // Enhanced tracking fields
+  subPatterns?: string[];
+  struggles?: string[];
+  learnings?: string[];
+  solutionSummary?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
 }
 
 export interface DBContest {

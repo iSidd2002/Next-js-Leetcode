@@ -79,11 +79,19 @@ interface ProblemListProps {
   onToggleReview?: (id: string, updates: Partial<Problem>) => void;
   onDeleteProblem: (id: string) => void;
   onEditProblem: (problem: Problem) => void;
-  onProblemReviewed: (id: string, quality?: number) => void;
+  onProblemReviewed: (
+    id: string, 
+    quality?: number, 
+    notes?: string, 
+    timeTaken?: number, 
+    tags?: string[], 
+    customDays?: number,
+    moveToLearned?: boolean
+  ) => void;
   onClearAll?: () => void;
   isReviewList?: boolean;
-  onAddToProblem?: (id: string) => void; // New handler for adding POTD to Problems
-  isPotdInProblems?: (problem: Problem) => boolean; // Check if POTD problem exists in Problems
+  onAddToProblem?: (id: string) => void;
+  isPotdInProblems?: (problem: Problem) => boolean;
 }
 
 const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProblem, onEditProblem, onProblemReviewed, onClearAll, isReviewList = false, onAddToProblem, isPotdInProblems }: ProblemListProps) => {
@@ -518,6 +526,72 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                       <TableRow className="bg-muted/5 hover:bg-muted/5 border-white/5">
                         <TableCell colSpan={5} className="p-4">
                           <div className="pl-9 space-y-4">
+                            {/* Solution Summary & Complexity */}
+                            {(problem.solutionSummary || problem.timeComplexity || problem.spaceComplexity) && (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {problem.solutionSummary && (
+                                  <div className="md:col-span-2">
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Solution Summary</h4>
+                                    <p className="text-sm text-muted-foreground bg-background/50 p-3 rounded-lg border border-white/5">
+                                      {problem.solutionSummary}
+                                    </p>
+                                  </div>
+                                )}
+                                {(problem.timeComplexity || problem.spaceComplexity) && (
+                                  <div className="flex gap-4">
+                                    {problem.timeComplexity && (
+                                      <div>
+                                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Time</h4>
+                                        <Badge variant="outline" className="font-mono text-xs">{problem.timeComplexity}</Badge>
+                                      </div>
+                                    )}
+                                    {problem.spaceComplexity && (
+                                      <div>
+                                        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1">Space</h4>
+                                        <Badge variant="outline" className="font-mono text-xs">{problem.spaceComplexity}</Badge>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
+                            {/* Sub-Patterns, Struggles, Learnings */}
+                            {(problem.subPatterns?.length || problem.struggles?.length || problem.learnings?.length) && (
+                              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                {problem.subPatterns && problem.subPatterns.length > 0 && (
+                                  <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sub-Patterns</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {problem.subPatterns.map((pattern, idx) => (
+                                        <Badge key={idx} variant="secondary" className="text-xs bg-blue-500/10 text-blue-600 dark:text-blue-400">{pattern}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {problem.struggles && problem.struggles.length > 0 && (
+                                  <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Struggled With</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {problem.struggles.map((struggle, idx) => (
+                                        <Badge key={idx} variant="secondary" className="text-xs bg-red-500/10 text-red-600 dark:text-red-400">{struggle}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                                {problem.learnings && problem.learnings.length > 0 && (
+                                  <div>
+                                    <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Key Learnings</h4>
+                                    <div className="flex flex-wrap gap-1">
+                                      {problem.learnings.map((learning, idx) => (
+                                        <Badge key={idx} variant="secondary" className="text-xs bg-green-500/10 text-green-600 dark:text-green-400">{learning}</Badge>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+
                             {/* Notes Section */}
                             <div>
                             <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Notes</h4>

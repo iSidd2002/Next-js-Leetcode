@@ -22,6 +22,13 @@ export interface IProblem extends Document {
   codeSnippet?: string;
   codeLanguage?: string;
   codeFilename?: string;
+  // Enhanced tracking fields
+  subPatterns: string[];
+  struggles: string[];
+  learnings: string[];
+  solutionSummary?: string;
+  timeComplexity?: string;
+  spaceComplexity?: string;
 }
 
 const ProblemSchema = new Schema<IProblem>({
@@ -116,6 +123,34 @@ const ProblemSchema = new Schema<IProblem>({
   codeFilename: {
     type: String,
     default: undefined
+  },
+  // Enhanced tracking fields
+  subPatterns: [{
+    type: String,
+    trim: true
+  }],
+  struggles: [{
+    type: String,
+    trim: true
+  }],
+  learnings: [{
+    type: String,
+    trim: true
+  }],
+  solutionSummary: {
+    type: String,
+    default: undefined,
+    maxlength: 1000
+  },
+  timeComplexity: {
+    type: String,
+    default: undefined,
+    trim: true
+  },
+  spaceComplexity: {
+    type: String,
+    default: undefined,
+    trim: true
   }
 }, {
   timestamps: true

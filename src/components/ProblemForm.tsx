@@ -14,7 +14,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
-import { Code2, FileText } from 'lucide-react';
+import { Code2, FileText, Brain } from 'lucide-react';
+import { TagInput } from '@/components/ui/tag-input';
+import { Textarea } from '@/components/ui/textarea';
 
 interface ProblemFormProps {
   open: boolean;
@@ -43,6 +45,14 @@ const INITIAL_FORM_STATE: FormData = {
   codeSnippet: '',
   codeLanguage: 'javascript',
   codeFilename: 'solution',
+  source: 'manual',
+  // Enhanced tracking fields
+  subPatterns: [],
+  struggles: [],
+  learnings: [],
+  solutionSummary: '',
+  timeComplexity: '',
+  spaceComplexity: '',
 };
 
 
@@ -55,6 +65,13 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         ...problemToEdit,
         companies: problemToEdit.companies || [],
         dateSolved: problemToEdit.dateSolved ? problemToEdit.dateSolved.split('T')[0] : new Date().toISOString().split('T')[0],
+        // Enhanced tracking fields
+        subPatterns: problemToEdit.subPatterns || [],
+        struggles: problemToEdit.struggles || [],
+        learnings: problemToEdit.learnings || [],
+        solutionSummary: problemToEdit.solutionSummary || '',
+        timeComplexity: problemToEdit.timeComplexity || '',
+        spaceComplexity: problemToEdit.spaceComplexity || '',
       });
     } else {
       setFormData(INITIAL_FORM_STATE);
@@ -134,14 +151,18 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <Tabs defaultValue="details" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="details" className="gap-2">
                 <FileText className="h-4 w-4" />
                 Details
               </TabsTrigger>
+              <TabsTrigger value="analysis" className="gap-2">
+                <Brain className="h-4 w-4" />
+                Analysis
+              </TabsTrigger>
               <TabsTrigger value="code" className="gap-2">
                 <Code2 className="h-4 w-4" />
-                Code Solution
+                Code
               </TabsTrigger>
             </TabsList>
 
@@ -265,6 +286,83 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 <Label htmlFor="isReview" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                   Mark for review later
                 </Label>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="analysis" className="space-y-4 mt-4">
+              {/* Solution Summary */}
+              <div className="space-y-2">
+                <Label htmlFor="solutionSummary">Solution Summary</Label>
+                <Textarea
+                  id="solutionSummary"
+                  name="solutionSummary"
+                  value={formData.solutionSummary || ''}
+                  onChange={handleInputChange}
+                  placeholder="Brief 1-2 sentence summary of your approach in your own words..."
+                  rows={3}
+                  className="resize-none"
+                />
+                <p className="text-xs text-muted-foreground">Explain the solution approach in your own words</p>
+              </div>
+
+              {/* Time & Space Complexity */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="timeComplexity">Time Complexity</Label>
+                  <Input
+                    id="timeComplexity"
+                    name="timeComplexity"
+                    value={formData.timeComplexity || ''}
+                    onChange={handleInputChange}
+                    placeholder="e.g., O(n), O(n log n)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="spaceComplexity">Space Complexity</Label>
+                  <Input
+                    id="spaceComplexity"
+                    name="spaceComplexity"
+                    value={formData.spaceComplexity || ''}
+                    onChange={handleInputChange}
+                    placeholder="e.g., O(1), O(n)"
+                  />
+                </div>
+              </div>
+
+              {/* Sub-Patterns */}
+              <div className="space-y-2">
+                <Label>Sub-Patterns</Label>
+                <TagInput
+                  value={formData.subPatterns || []}
+                  onChange={(tags) => setFormData(prev => ({ ...prev, subPatterns: tags }))}
+                  placeholder="e.g., Monotonic Stack, Sliding Window Max..."
+                  maxTags={10}
+                />
+                <p className="text-xs text-muted-foreground">Specific patterns within broader topics (e.g., &quot;Monotonic Stack&quot; under Stack)</p>
+              </div>
+
+              {/* Struggles */}
+              <div className="space-y-2">
+                <Label>What I Struggled With</Label>
+                <TagInput
+                  value={formData.struggles || []}
+                  onChange={(tags) => setFormData(prev => ({ ...prev, struggles: tags }))}
+                  placeholder="e.g., Edge cases, Time optimization..."
+                  maxTags={10}
+                />
+                <p className="text-xs text-muted-foreground">Record what was difficult about this problem</p>
+              </div>
+
+              {/* Learnings */}
+              <div className="space-y-2">
+                <Label>Key Learnings</Label>
+                <TagInput
+                  value={formData.learnings || []}
+                  onChange={(tags) => setFormData(prev => ({ ...prev, learnings: tags }))}
+                  placeholder="e.g., Two pointer technique, HashMap for O(1) lookup..."
+                  maxTags={10}
+                />
+                <p className="text-xs text-muted-foreground">What new things you learned from solving this</p>
               </div>
             </TabsContent>
 

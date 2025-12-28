@@ -18,20 +18,7 @@ class ApiService {
     return false;
   }
 
-  // Reliable authentication check using API call
-  static async checkAuthStatus(): Promise<boolean> {
-    try {
-      console.log('🔍 ApiService.checkAuthStatus: Making profile request...');
-      const response = await this.request('/auth/profile');
-      console.log('✅ ApiService.checkAuthStatus: Profile request successful');
-      return true; // If profile call succeeds, user is authenticated
-    } catch (error: any) {
-      console.log('❌ ApiService.checkAuthStatus: Profile request failed:', error.message);
-      return false; // If profile call fails, user is not authenticated
-    }
-  }
-
-  // More reliable authentication check by making an API call
+  // Reliable authentication check by making an API call
   static async checkAuthStatus(): Promise<boolean> {
     try {
       // First check if we have cookies
@@ -46,12 +33,9 @@ class ApiService {
       if (error.status === 401 || error.status === 404 || error.message?.includes('User not found')) {
         return false;
       }
-      // Only log unexpected errors
-      console.log('Unexpected auth check error:', error.message);
 
       // If it's a "User not found" error, clear any stale tokens
       if (error.message === 'User not found' || error.status === 404) {
-        console.log('User not found in database, clearing stale authentication');
         // Only clear auth state in browser environment
         if (typeof window !== 'undefined') {
           this.clearAuthState();

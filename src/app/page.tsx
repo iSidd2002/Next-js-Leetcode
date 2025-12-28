@@ -6,10 +6,13 @@ import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
-import { markAsReviewed, initializeSpacedRepetition } from '@/utils/spacedRepetition';
+import { initializeSpacedRepetition } from '@/utils/spacedRepetition';
 import { calculateNextReviewEnhanced } from '@/utils/enhancedSpacedRepetition';
 import { getReviewIntervals } from '@/utils/settingsStorage';
 import { isToday, isPast } from 'date-fns';
+import { logger } from '@/utils/logger';
+
+// Components
 import Dashboard from '@/components/Dashboard';
 import ProblemForm from '@/components/ProblemForm';
 import ProblemList from '@/components/ProblemList';
@@ -17,24 +20,34 @@ import CompanyGroupedProblemList from '@/components/CompanyGroupedProblemList';
 import CompanyDashboard from '@/components/CompanyDashboard';
 import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
-import MoreProjects from '@/components/MoreProjects';
-import { Home as HomeIcon, Plus, List, BarChart3, Moon, Sun, Star, Settings as SettingsIcon, LogOut, User, CheckSquare, ExternalLink, BookOpen, Briefcase, Trophy, Building2, History, Archive as LearnedIcon, Command, HelpCircle, BookMarked } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useTheme } from '@/components/theme-provider';
-import { toast } from 'sonner';
 import ContestTracker from '@/components/ContestTracker';
-import { Badge } from '@/components/ui/badge';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import ClientOnly from '@/components/client-only';
 import TodoList from '@/components/TodoList';
 import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
 import { EnhancedSettings } from '@/components/EnhancedSettings';
+import ClientOnly from '@/components/client-only';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { AppLoadingScreen } from '@/components/ui/loading';
+
+// UI Components
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useTheme } from '@/components/theme-provider';
+import { toast } from 'sonner';
+
+// Icons
+import { 
+  Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
+  LayoutDashboard, ListTodo, Building2, Calendar, Trophy, RefreshCcw,
+  CheckCircle, BookOpen, BarChart3, Compass, Library
+} from 'lucide-react';
 
 export default function HomePage() {
+  // State
   const [problems, setProblems] = useState<Problem[]>([]);
   const [potdProblems, setPotdProblems] = useState<Problem[]>([]);
   const [contests, setContests] = useState<Contest[]>([]);
@@ -48,18 +61,17 @@ export default function HomePage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [problemToEdit, setProblemToEdit] = useState<Problem | null>(null);
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-  // Load data on component mount
+  // Initialize app
   useEffect(() => {
     initializeApp();
   }, []);
 
-  // Reliable app initialization with hybrid authentication check
   const initializeApp = async () => {
-    console.log('🚀 App initialization started');
+    logger.info('App initialization started');
 
     try {
-      // First, check if auth-status cookie indicates authentication
       const hasAuthCookie = ApiService.isAuthenticated();
       
       if (!hasAuthCookie) {
@@ -69,34 +81,28 @@ export default function HomePage() {
         return;
       }
 
-      // Auth cookie present, verify with server
       try {
         const userProfile = await ApiService.getProfile();
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
-
-        // Load user data
         await loadUserData();
-
       } catch (error: any) {
-        console.error('❌ Server verification failed:', error);
+        logger.error('Server verification failed', error);
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowAuthModal(true);
         ApiService.clearAuthState();
       }
-
     } catch (error) {
-      console.error('❌ App initialization failed:', error);
+      logger.error('App initialization failed', error);
       setIsAuthenticated(false);
       setShowAuthModal(true);
     } finally {
       setIsLoaded(true);
-      console.log('🏁 App initialization completed');
+      logger.info('App initialization completed');
     }
   };
 
-  // Load user data after authentication is verified
   const loadUserData = async () => {
     try {
       const [problemsData, potdData, contestsData, todosData] = await Promise.all([
@@ -106,7 +112,6 @@ export default function HomePage() {
         StorageService.getTodos()
       ]);
 
-      // Clean up any invalid dates before setting state
       const cleanedProblems = cleanupInvalidDates(problemsData);
       const cleanedPotdProblems = cleanupInvalidDates(potdData);
 
@@ -115,31 +120,26 @@ export default function HomePage() {
       setContests(contestsData);
       setTodos(todosData);
 
-      // Automatic POTD cleanup - remove expired POTD problems (keeps saved ones forever)
+      // Auto POTD cleanup
       try {
         const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
-        if (cleanupResult.removedCount > 0 || cleanupResult.preservedCount > 0) {
-          // Reload POTD problems after cleanup
+        if (cleanupResult.removedCount > 0) {
           const updatedPotdProblems = await StorageService.getPotdProblems();
           setPotdProblems(updatedPotdProblems);
-          
-          if (cleanupResult.removedCount > 0) {
-            toast.info(`🧹 Cleaned up ${cleanupResult.removedCount} old POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}${cleanupResult.preservedCount > 0 ? `, kept ${cleanupResult.preservedCount} saved` : ''}`);
-          }
+          toast.info(`Cleaned up ${cleanupResult.removedCount} old POTD problems`);
         }
       } catch (error) {
-        console.error('POTD Auto-cleanup failed:', error);
+        logger.error('POTD Auto-cleanup failed', error);
       }
 
-      // Auto-sync with server if online
+      // Auto-sync
       if (!StorageService.getOfflineMode()) {
         StorageService.syncWithServer().catch(error => {
-          console.warn('Auto-sync failed:', error);
+          logger.warn('Auto-sync failed', error);
         });
       }
-
     } catch (error) {
-      console.error('Failed to load user data:', error);
+      logger.error('Failed to load user data', error);
       setProblems([]);
       setPotdProblems([]);
       setContests([]);
@@ -147,7 +147,7 @@ export default function HomePage() {
     }
   };
 
-  // ... [Keep existing handler functions: handleAddProblem, handleUpdateProblem, etc. unchanged]
+  // Problem handlers
   const handleAddProblem = async (problem: Omit<Problem, 'id' | 'createdAt'>) => {
     try {
       if (!isAuthenticated) {
@@ -156,11 +156,11 @@ export default function HomePage() {
         return;
       }
       const newProblem = await StorageService.addProblem(problem);
-      setProblems(prevProblems => [newProblem, ...prevProblems]);
+      setProblems(prev => [newProblem, ...prev]);
       toast.success('Problem added successfully!');
     } catch (error) {
-      console.error('Failed to add problem:', error);
-      toast.error('Failed to add problem. Please try again.');
+      logger.error('Failed to add problem', error);
+      toast.error('Failed to add problem');
     }
   };
 
@@ -180,39 +180,23 @@ export default function HomePage() {
       }
 
       const updatedProblem = { ...existingProblem, ...updates };
-      console.log('📝 Updating problem:', {
-        id,
-        title: existingProblem.title,
-        isPotdProblem,
-        statusUpdate: updates.status,
-        updatedProblemStatus: updatedProblem.status
-      });
-      
       await StorageService.updateProblem(id, updates);
 
       if (isPotdProblem) {
-        setPotdProblems(potdProblems.map(p => p.id === id ? updatedProblem : p));
-        console.log('✅ Updated in potdProblems state');
+        setPotdProblems(prev => prev.map(p => p.id === id ? updatedProblem : p));
       } else {
-        setProblems(problems.map(p => p.id === id ? updatedProblem : p));
-        console.log('✅ Updated in problems state');
+        setProblems(prev => prev.map(p => p.id === id ? updatedProblem : p));
       }
-      toast.success('Problem updated successfully!');
+      toast.success('Problem updated!');
     } catch (error) {
-      console.error('Failed to update problem:', error);
+      logger.error('Failed to update problem', error);
       toast.error('Failed to update problem');
     }
   };
 
   const handleToggleReview = async (id: string, updates: Partial<Problem>) => {
     try {
-      let problem = problems.find(p => p.id === id);
-      let isPotdProblem = false;
-      
-      if (!problem) {
-        problem = potdProblems.find(p => p.id === id);
-        isPotdProblem = true;
-      }
+      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
@@ -223,14 +207,7 @@ export default function HomePage() {
 
       if (updates.isReview && !problem.isReview) {
         updatedProblem = initializeSpacedRepetition({ ...problem, ...updates }, true);
-        console.log('📌 Marking for review:', {
-          id: problem.id,
-          title: problem.title,
-          isPotdProblem,
-          isReview: true,
-          nextReviewDate: updatedProblem.nextReviewDate
-        });
-        toast.success('Problem marked for review! First review scheduled.');
+        toast.success('Problem marked for review!');
       } else if (!updates.isReview && problem.isReview) {
         updatedProblem = {
           ...problem,
@@ -240,37 +217,21 @@ export default function HomePage() {
           nextReviewDate: null,
           isReview: false
         };
-        console.log('🔓 Unmarking from review:', {
-          id: problem.id,
-          title: problem.title,
-          isPotdProblem,
-          isReview: false
-        });
-        toast.success('Problem unmarked from review.');
+        toast.success('Problem unmarked from review');
       } else {
         updatedProblem = { ...problem, ...updates };
       }
 
       await handleUpdateProblem(problem.id, updatedProblem);
-      
-      // Reload problem lists to ensure UI updates correctly
-      console.log('🔄 Reloading problems after review toggle...');
+
       const [updatedProblems, updatedPotdProblems] = await Promise.all([
         StorageService.getProblems(),
         StorageService.getPotdProblems()
       ]);
       setProblems(updatedProblems);
       setPotdProblems(updatedPotdProblems);
-      
-      const allProbs = [...updatedProblems, ...updatedPotdProblems];
-      const reviewCount = allProbs.filter(p => p.isReview).length;
-      console.log('✅ Problems reloaded after toggle:', {
-        totalProblems: updatedProblems.length,
-        totalPotd: updatedPotdProblems.length,
-        reviewCount: reviewCount
-      });
     } catch (error) {
-      console.error('Failed to toggle review:', error);
+      logger.error('Failed to toggle review', error);
       toast.error('Failed to update review status');
     }
   };
@@ -281,15 +242,15 @@ export default function HomePage() {
       await StorageService.deleteProblem(id);
 
       if (isPotdProblem) {
-        const refreshedPotdProblems = await StorageService.getPotdProblems();
-        setPotdProblems(refreshedPotdProblems);
+        const refreshed = await StorageService.getPotdProblems();
+        setPotdProblems(refreshed);
       } else {
-        const refreshedProblems = await StorageService.getProblems();
-        setProblems(refreshedProblems);
+        const refreshed = await StorageService.getProblems();
+        setProblems(refreshed);
       }
-      toast.success('Problem deleted successfully!');
+      toast.success('Problem deleted!');
     } catch (error) {
-      console.error('Failed to delete problem:', error);
+      logger.error('Failed to delete problem', error);
       toast.error('Failed to delete problem');
     }
   };
@@ -305,7 +266,7 @@ export default function HomePage() {
   };
 
   const handleProblemReviewed = async (
-    id: string, 
+    id: string,
     quality: number = 4,
     notes?: string,
     timeTaken?: number,
@@ -314,22 +275,7 @@ export default function HomePage() {
     moveToLearned?: boolean
   ) => {
     try {
-      console.log('🎯 handleProblemReviewed called with:', {
-        id,
-        quality,
-        moveToLearned,
-        customDays,
-        hasNotes: !!notes,
-        hasTags: !!tags
-      });
-      
-      let problem = problems.find(p => p.id === id);
-      let isPotdProblem = false;
-      
-      if (!problem) {
-        problem = potdProblems.find(p => p.id === id);
-        isPotdProblem = true;
-      }
+      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
@@ -339,38 +285,20 @@ export default function HomePage() {
       let updatedProblem;
       let intervalDays;
 
-      console.log('⚙️ Determining update path:', {
-        moveToLearned,
-        customDays,
-        willMoveToLearned: !!moveToLearned,
-        hasCustomDays: customDays !== undefined
-      });
-
       if (moveToLearned) {
-        // Move to Learned - no review scheduling needed
         updatedProblem = {
           ...problem,
           status: 'learned' as const,
-          isReview: false, // Remove from review queue
+          isReview: false,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
           dateSolved: new Date().toISOString(),
           repetition: (problem.repetition || 0) + 1,
-          // Keep existing interval/nextReviewDate but not active since isReview is false
         };
-        console.log('🎓 Moving to Learned:', {
-          problemId: problem.id,
-          title: problem.title,
-          source: problem.source,
-          isPotd: isPotdProblem,
-          statusBefore: problem.status,
-          statusAfter: updatedProblem.status
-        });
-        intervalDays = 0; // Not used for learned problems
+        intervalDays = 0;
       } else if (customDays !== undefined) {
-        // Manual days mode - use custom interval directly
         const nextReviewDate = new Date();
         nextReviewDate.setDate(nextReviewDate.getDate() + customDays);
-        
+
         updatedProblem = {
           ...problem,
           interval: customDays,
@@ -380,65 +308,43 @@ export default function HomePage() {
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
           dateSolved: new Date().toISOString()
         };
-        
         intervalDays = customDays;
       } else {
-        // Quality-based mode - use enhanced spaced repetition
         const customIntervals = getReviewIntervals();
-        
-        const enhancedData = calculateNextReviewEnhanced(
-          problem,
-          quality,
-          customIntervals,
-          timeTaken,
-          notes,
-          tags
-        );
-        
+        const enhancedData = calculateNextReviewEnhanced(problem, quality, customIntervals, timeTaken, notes, tags);
+
         updatedProblem = {
           ...problem,
           ...enhancedData,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
           dateSolved: new Date().toISOString()
         };
-        
         intervalDays = updatedProblem.interval;
       }
-      
+
       await handleUpdateProblem(problem.id, updatedProblem);
-      
-      // If moving to learned, reload the problem lists to ensure UI updates
+
       if (moveToLearned) {
-        console.log('🔄 Reloading problems after moving to learned...');
         const [updatedProblems, updatedPotdProblems] = await Promise.all([
           StorageService.getProblems(),
           StorageService.getPotdProblems()
         ]);
         setProblems(updatedProblems);
         setPotdProblems(updatedPotdProblems);
-        console.log('✅ Problems reloaded:', {
-          totalProblems: updatedProblems.length,
-          totalPotd: updatedPotdProblems.length,
-          learned: [...updatedProblems, ...updatedPotdProblems].filter(p => p.status === 'learned').length
-        });
-      }
-      
-      // Success message
-      if (moveToLearned) {
-        toast.success(`🎓 Problem moved to Learned! You've mastered it!`);
+        toast.success('Problem moved to Learned!');
       } else if (customDays !== undefined) {
-        toast.success(`Review scheduled! Next review in ${customDays} days. 📅`);
+        toast.success(`Next review in ${customDays} days`);
       } else {
         const qualityLabels = ['', 'Again', 'Hard', 'Good', 'Easy', 'Perfect'];
-        const qualityLabel = qualityLabels[quality] || 'Good';
-        toast.success(`${qualityLabel} review! Next review in ${intervalDays} days. 🎯`);
+        toast.success(`${qualityLabels[quality]} review! Next in ${intervalDays} days`);
       }
     } catch (error) {
-      console.error('Failed to mark problem as reviewed:', error);
-      toast.error('Failed to mark problem as reviewed');
+      logger.error('Failed to mark as reviewed', error);
+      toast.error('Failed to mark as reviewed');
     }
   };
 
+  // Contest handlers
   const handleAddContest = async (contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const newContest: Contest = {
@@ -447,49 +353,50 @@ export default function HomePage() {
         createdAt: new Date(),
         updatedAt: new Date()
       };
-      const updatedContests = [...contests, newContest];
-      setContests(updatedContests);
-      await StorageService.saveContests(updatedContests);
-      toast.success('Contest added successfully!');
+      const updated = [...contests, newContest];
+      setContests(updated);
+      await StorageService.saveContests(updated);
+      toast.success('Contest added!');
     } catch (error) {
-      console.error('Failed to add contest:', error);
+      logger.error('Failed to add contest', error);
       toast.error('Failed to add contest');
     }
   };
 
   const handleUpdateContest = async (updatedContest: Contest) => {
     try {
-      const updatedContests = contests.map(c =>
+      const updated = contests.map(c =>
         c.id === updatedContest.id ? { ...updatedContest, updatedAt: new Date() } : c
       );
-      setContests(updatedContests);
-      await StorageService.saveContests(updatedContests);
-      toast.success('Contest updated successfully!');
+      setContests(updated);
+      await StorageService.saveContests(updated);
+      toast.success('Contest updated!');
     } catch (error) {
-      console.error('Failed to update contest:', error);
+      logger.error('Failed to update contest', error);
       toast.error('Failed to update contest');
     }
   };
 
   const handleDeleteContest = async (id: string) => {
     try {
-      const updatedContests = contests.filter(c => c.id !== id);
-      setContests(updatedContests);
-      await StorageService.saveContests(updatedContests);
-      toast.success('Contest deleted successfully!');
+      const updated = contests.filter(c => c.id !== id);
+      setContests(updated);
+      await StorageService.saveContests(updated);
+      toast.success('Contest deleted!');
     } catch (error) {
-      console.error('Failed to delete contest:', error);
+      logger.error('Failed to delete contest', error);
       toast.error('Failed to delete contest');
     }
   };
 
+  // Todo handlers
   const handleAddTodo = async (todoData: Omit<Todo, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
       const newTodo = await StorageService.addTodo(todoData);
-      setTodos([...todos, newTodo]);
-      toast.success('Todo added successfully!');
+      setTodos(prev => [...prev, newTodo]);
+      toast.success('Todo added!');
     } catch (error) {
-      console.error('Failed to add todo:', error);
+      logger.error('Failed to add todo', error);
       toast.error('Failed to add todo');
     }
   };
@@ -497,10 +404,10 @@ export default function HomePage() {
   const handleUpdateTodo = async (id: string, updates: Partial<Todo>) => {
     try {
       const updatedTodo = await StorageService.updateTodo(id, updates);
-      setTodos(todos.map(t => t.id === id ? updatedTodo : t));
-      toast.success('Todo updated successfully!');
+      setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+      toast.success('Todo updated!');
     } catch (error) {
-      console.error('Failed to update todo:', error);
+      logger.error('Failed to update todo', error);
       toast.error('Failed to update todo');
     }
   };
@@ -508,46 +415,22 @@ export default function HomePage() {
   const handleDeleteTodo = async (id: string) => {
     try {
       await StorageService.deleteTodo(id);
-      setTodos(todos.filter(t => t.id !== id));
-      toast.success('Todo deleted successfully!');
+      setTodos(prev => prev.filter(t => t.id !== id));
+      toast.success('Todo deleted!');
     } catch (error) {
-      console.error('Failed to delete todo:', error);
+      logger.error('Failed to delete todo', error);
       toast.error('Failed to delete todo');
     }
   };
 
-  const handleClearAllProblems = async () => {
-    try {
-      const problemsToClear = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
-      if (problemsToClear.length === 0) {
-        toast.info('No problems to clear');
-        return;
-      }
-      for (const problem of problemsToClear) {
-        try {
-          if (!StorageService.getOfflineMode()) await ApiService.deleteProblem(problem.id);
-        } catch (error) {
-          console.warn(`Failed to delete problem ${problem.id} from server:`, error);
-        }
-      }
-      const remainingProblems = problems.filter(p => p.source === 'company');
-      setProblems(remainingProblems);
-      await StorageService.saveProblems(remainingProblems);
-      toast.success(`Successfully cleared ${problemsToClear.length} problems!`);
-    } catch (error) {
-      console.error('Failed to clear problems:', error);
-      toast.error('Failed to clear problems');
-    }
-  };
-
+  // POTD handlers
   const handleAddPotdProblem = (potd: ActiveDailyCodingChallengeQuestion) => {
     const isDuplicate = potdProblems.some(p => p.problemId === potd.question.titleSlug);
     if (isDuplicate) {
-      toast.info('Problem of the day already exists in your POTD list.');
+      toast.info('Problem already exists in POTD list');
       return;
     }
-    // Note: dateSolved is empty - the problem is tracked but NOT solved yet
-    // dateSolved will be set when the user moves it to the Problems section
+
     const newProblem: Problem = {
       id: generateId(),
       platform: 'leetcode',
@@ -555,7 +438,7 @@ export default function HomePage() {
       problemId: potd.question.titleSlug,
       difficulty: potd.question.difficulty,
       url: `https://leetcode.com${potd.link}`,
-      dateSolved: '', // Empty = not solved yet, just tracked
+      dateSolved: '',
       createdAt: new Date().toISOString(),
       notes: '',
       isReview: false,
@@ -567,21 +450,21 @@ export default function HomePage() {
       companies: [],
       source: 'potd',
     };
-    const updatedPotdProblems = [...potdProblems, newProblem];
-    setPotdProblems(updatedPotdProblems);
-    StorageService.savePotdProblems(updatedPotdProblems);
-    toast.success('Problem of the day added to your tracking list!');
+
+    const updated = [...potdProblems, newProblem];
+    setPotdProblems(updated);
+    StorageService.savePotdProblems(updated);
+    toast.success('POTD added!');
   };
 
   const handleAddDailyChallengeToPotd = async (dailyProblem: any) => {
     try {
       const isDuplicate = potdProblems.some(p => p.url === dailyProblem.url);
       if (isDuplicate) {
-        toast.info('Daily challenge already exists in your POTD archive.');
+        toast.info('Daily challenge already exists');
         return;
       }
-      // Note: dateSolved is empty - the problem is tracked but NOT solved yet
-      // dateSolved will be set when the user moves it to the Problems section
+
       const newProblem: Problem = {
         id: generateId(),
         platform: dailyProblem.platform,
@@ -589,7 +472,7 @@ export default function HomePage() {
         problemId: dailyProblem.id,
         difficulty: dailyProblem.difficulty,
         url: dailyProblem.url,
-        dateSolved: '', // Empty = not solved yet, just tracked
+        dateSolved: '',
         createdAt: new Date().toISOString(),
         notes: '',
         isReview: false,
@@ -601,44 +484,35 @@ export default function HomePage() {
         companies: [],
         source: 'potd',
       };
-      const updatedPotdProblems = [...potdProblems, newProblem];
-      setPotdProblems(updatedPotdProblems);
-      await StorageService.savePotdProblems(updatedPotdProblems);
-      // Note: NOT adding to main problems - only to POTD tracking
-      // User should explicitly move to Problems when solved
-      toast.success('Daily challenge added to POTD tracking!');
+
+      const updated = [...potdProblems, newProblem];
+      setPotdProblems(updated);
+      await StorageService.savePotdProblems(updated);
+      toast.success('Daily challenge added!');
     } catch (error) {
-      console.error('Failed to add daily challenge to POTD:', error);
+      logger.error('Failed to add daily challenge', error);
       throw error;
     }
   };
 
   const handleCleanupPotd = async () => {
     try {
-      const cleanupResult = await StorageService.cleanupExpiredPotdProblems();
-      
-      // Reload POTD problems after cleanup
-      const updatedPotdProblems = await StorageService.getPotdProblems();
-      setPotdProblems(updatedPotdProblems);
+      const result = await StorageService.cleanupExpiredPotdProblems();
+      const updated = await StorageService.getPotdProblems();
+      setPotdProblems(updated);
 
-      if (cleanupResult.removedCount > 0) {
-        let message = `🧹 Cleaned up ${cleanupResult.removedCount} old POTD problem${cleanupResult.removedCount === 1 ? '' : 's'}`;
-        if (cleanupResult.preservedCount > 0) {
-          message += `\n✨ Kept ${cleanupResult.preservedCount} saved problem${cleanupResult.preservedCount === 1 ? '' : 's'} forever (with notes/reviews)`;
-        }
-        toast.success(message);
-      } else if (cleanupResult.preservedCount > 0) {
-        toast.success(`✨ No cleanup needed - all ${cleanupResult.preservedCount} old problem${cleanupResult.preservedCount === 1 ? ' is' : 's are'} saved by you!`);
+      if (result.removedCount > 0) {
+        toast.success(`Cleaned up ${result.removedCount} old POTD problems`);
       } else {
-        toast.info('✅ No expired POTD problems found - everything is current!');
+        toast.info('No expired POTD problems found');
       }
     } catch (error) {
-      console.error('POTD cleanup failed:', error);
-      toast.error('Failed to cleanup POTD problems');
+      logger.error('POTD cleanup failed', error);
+      toast.error('Failed to cleanup POTD');
     }
   };
 
-  const isPotdInProblems = (potdProblem: Problem): { inProblems: boolean; inLearned: boolean; status: string } => {
+  const isPotdInProblems = (potdProblem: Problem) => {
     const inProblems = problems.some(p => p.url === potdProblem.url && p.status === 'active');
     const inLearned = problems.some(p => p.url === potdProblem.url && p.status === 'learned');
     let status = '';
@@ -655,41 +529,63 @@ export default function HomePage() {
         toast.error('POTD problem not found');
         return;
       }
-      const existsWithTargetStatus = problems.some(p => p.url === potdProblem.url && p.status === targetStatus);
-      if (existsWithTargetStatus) {
-        const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
-        toast.info(`Problem already exists in ${sectionName} section`);
+
+      const existsWithStatus = problems.some(p => p.url === potdProblem.url && p.status === targetStatus);
+      if (existsWithStatus) {
+        toast.info(`Problem already exists in ${targetStatus === 'active' ? 'Problems' : 'Learned'}`);
         return;
       }
-      // When moving to Problems section, NOW it's considered "solved"
-      // Set dateSolved to current date since user is marking it as solved
-      const newProblemForProblems: Problem = {
+
+      const newProblem: Problem = {
         ...potdProblem,
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         source: 'manual',
         status: targetStatus,
-        dateSolved: new Date().toISOString(), // Set solved date when moving to Problems
+        dateSolved: new Date().toISOString(),
         createdAt: new Date().toISOString()
       };
-      await StorageService.addProblem(newProblemForProblems);
-      const updatedProblems = [...problems, newProblemForProblems];
-      setProblems(updatedProblems);
-      await StorageService.saveProblems(updatedProblems);
-      const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
-      toast.success(`Problem marked as solved and added to ${sectionName}!`);
+
+      await StorageService.addProblem(newProblem);
+      const updated = [...problems, newProblem];
+      setProblems(updated);
+      await StorageService.saveProblems(updated);
+      toast.success(`Problem added to ${targetStatus === 'active' ? 'Problems' : 'Learned'}!`);
     } catch (error) {
-      console.error('Failed to add POTD problem to Problems:', error);
-      const sectionName = targetStatus === 'active' ? 'Problems' : 'Learned';
-      toast.error(`Failed to add problem to ${sectionName} section`);
+      logger.error('Failed to add POTD to problems', error);
+      toast.error('Failed to add problem');
+    }
+  };
+
+  const handleClearAllProblems = async () => {
+    try {
+      const problemsToClear = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
+      if (problemsToClear.length === 0) {
+        toast.info('No problems to clear');
+        return;
+      }
+
+      for (const problem of problemsToClear) {
+        try {
+          await StorageService.deleteProblem(problem.id);
+        } catch (error) {
+          logger.warn(`Failed to delete problem ${problem.id}`, error);
+        }
+      }
+
+      const remaining = problems.filter(p => p.source === 'company');
+      setProblems(remaining);
+      await StorageService.saveProblems(remaining);
+      toast.success(`Cleared ${problemsToClear.length} problems!`);
+    } catch (error) {
+      logger.error('Failed to clear problems', error);
+      toast.error('Failed to clear problems');
     }
   };
 
   const handleImportProblems = async (companyName: string, problemsToImport: any[]) => {
     try {
       const newProblems: Problem[] = [];
-      const duplicateProblems: string[] = [];
-      const failedProblems: string[] = [];
-      console.log(`Starting import of ${problemsToImport.length} problems from ${companyName}`);
+      const duplicates: string[] = [];
 
       for (const problem of problemsToImport) {
         const problemData = {
@@ -697,9 +593,9 @@ export default function HomePage() {
           title: problem.title,
           problemId: problem.titleSlug || problem.title.toLowerCase().replace(/\s+/g, '-'),
           difficulty: problem.difficulty,
-          url: problem.url || `https://leetcode.com/problems/${problem.titleSlug || problem.title.toLowerCase().replace(/\s+/g, '-')}/`,
+          url: problem.url || `https://leetcode.com/problems/${problem.titleSlug}/`,
           dateSolved: '',
-          notes: `Imported from ${companyName} problems`,
+          notes: `Imported from ${companyName}`,
           isReview: false,
           repetition: 0,
           interval: 0,
@@ -711,418 +607,436 @@ export default function HomePage() {
         };
 
         try {
-          const createdProblem = await StorageService.addProblem(problemData);
-          newProblems.push(createdProblem);
+          const created = await StorageService.addProblem(problemData);
+          newProblems.push(created);
         } catch (error: any) {
-           const isDuplicate = error.message && (
-            error.message.includes('already exists') ||
-            error.message.includes('HTTP error! status: 409') ||
-            error.status === 409
-          );
-          if (isDuplicate) duplicateProblems.push(problem.title);
-          else failedProblems.push(problem.title);
+          if (error.message?.includes('already exists')) {
+            duplicates.push(problem.title);
+          }
         }
       }
 
-      const refreshedProblems = await StorageService.getProblems();
-      setProblems(refreshedProblems);
+      const refreshed = await StorageService.getProblems();
+      setProblems(refreshed);
 
-      let message = '';
-      if (newProblems.length > 0) message += `Successfully imported ${newProblems.length} new problems!`;
-      if (duplicateProblems.length > 0) message += ` ${duplicateProblems.length} duplicates skipped.`;
-      if (failedProblems.length > 0) message += ` ${failedProblems.length} failed.`;
-
-      if (newProblems.length > 0) toast.success(message);
-      else if (duplicateProblems.length > 0) toast.info(message);
-      else toast.error(message || 'No problems were imported.');
+      if (newProblems.length > 0) {
+        toast.success(`Imported ${newProblems.length} problems!`);
+      } else if (duplicates.length > 0) {
+        toast.info(`${duplicates.length} duplicates skipped`);
+      }
     } catch (error) {
-      console.error('Failed to import problems:', error);
+      logger.error('Failed to import problems', error);
       toast.error('Failed to import problems');
     }
   };
 
-  if (!isLoaded) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading your data...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Computed values
   const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
   const activeProblems = manualProblems.filter(p => p.status === 'active');
   const allProblemsForReview = [...problems, ...potdProblems];
   const reviewProblems = allProblemsForReview.filter(p => p.isReview);
   const dueReviewProblems = reviewProblems.filter(p =>
-    p.nextReviewDate &&
-    (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
+    p.nextReviewDate && (isToday(new Date(p.nextReviewDate)) || isPast(new Date(p.nextReviewDate)))
   );
-  // Include learned problems from ALL sources (problems + potdProblems)
-  // Check status='learned' regardless of source (manual, potd, company, etc.)
-  const learnedProblemsFromMain = problems.filter(p => p.status === 'learned');
-  const learnedProblemsFromPotd = potdProblems.filter(p => p.status === 'learned');
-  const learnedProblems = [...learnedProblemsFromMain, ...learnedProblemsFromPotd];
-  console.log('📚 Learned Problems Filter:', {
-    totalProblems: problems.length,
-    totalPotd: potdProblems.length,
-    learnedFromMain: learnedProblemsFromMain.length,
-    learnedFromPotd: learnedProblemsFromPotd.length,
-    totalLearned: learnedProblems.length,
-    learnedTitles: learnedProblems.map(p => ({ title: p.title, status: p.status, source: p.source }))
-  });
+  const learnedProblems = [
+    ...problems.filter(p => p.status === 'learned'),
+    ...potdProblems.filter(p => p.status === 'learned')
+  ];
   const companyProblems = problems.filter(p => p.source === 'company');
 
+  // Loading state
+  if (!isLoaded) {
+    return <AppLoadingScreen />;
+  }
+
   return (
-    <div className="min-h-screen font-sans antialiased pb-8">
-      <CommandMenu 
-        open={isCommandMenuOpen} 
-        onOpenChange={setIsCommandMenuOpen} 
-        onAddProblem={() => handleOpenForm()}
-      />
-      
-      <header className="sticky top-0 z-50 w-full border-b border-white/10 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-3">
-              <div className="relative group cursor-pointer">
-                <img 
-                  src="/logo.png" 
-                  alt="LeetCode Tracker" 
-                  className="h-10 w-auto object-contain drop-shadow-lg group-hover:drop-shadow-xl transition-all duration-300"
-                />
-                <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-background animate-pulse"></div>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight hidden sm:block bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
-                  Tracker
-                </h1>
-              </div>
-            </div>
+    <ErrorBoundary>
+      <div className="min-h-screen font-sans antialiased">
+        {/* Command Menu */}
+        <CommandMenu
+          open={isCommandMenuOpen}
+          onOpenChange={setIsCommandMenuOpen}
+          onAddProblem={() => handleOpenForm()}
+        />
 
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              
-              {/* Search Trigger Button for Desktop */}
-              <Button
-                variant="outline"
-                size="sm"
-                className="hidden md:flex w-64 justify-start text-muted-foreground bg-muted/50 hover:bg-muted/80"
-                onClick={() => setIsCommandMenuOpen(true)}
-              >
-                 <Command className="mr-2 h-4 w-4" />
-                 <span className="inline-flex">Search...</span>
-                 <kbd className="pointer-events-none absolute right-1.5 top-1.5 hidden h-6 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+        {/* Header */}
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container mx-auto px-4">
+            <div className="flex h-16 items-center justify-between">
+              {/* Logo */}
+              <div className="flex items-center gap-3">
+                <div className="relative group">
+                  <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-300" />
+                  <div className="relative">
+                    <img
+                      src="/logo.png"
+                      alt="LeetCode Tracker"
+                      className="h-10 w-auto object-contain"
+                    />
+                  </div>
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-xl font-bold gradient-text-static">Tracker</h1>
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-2">
+                {/* Search Button - Desktop */}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="hidden md:flex w-64 justify-start text-muted-foreground"
+                  onClick={() => setIsCommandMenuOpen(true)}
+                >
+                  <Command className="mr-2 h-4 w-4" />
+                  <span>Search...</span>
+                  <kbd className="ml-auto pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium">
                     <span className="text-xs">⌘</span>K
-                 </kbd>
-              </Button>
+                  </kbd>
+                </Button>
 
-              {/* Search Trigger Button for Mobile */}
-              <Button
-                 variant="ghost"
-                 size="icon"
-                 className="md:hidden"
-                 onClick={() => setIsCommandMenuOpen(true)}
-              >
-                <Command className="h-5 w-5" />
-              </Button>
+                {/* Search Button - Mobile */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  onClick={() => setIsCommandMenuOpen(true)}
+                >
+                  <Command className="h-5 w-5" />
+                </Button>
 
-              {isAuthenticated && (
-                <div className="hidden md:flex items-center space-x-2 mr-4">
-                   <Button
+                {/* Add Problem - Desktop */}
+                {isAuthenticated && (
+                  <Button
                     onClick={() => handleOpenForm()}
-                    className="hidden lg:flex shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-all"
                     size="sm"
+                    className="hidden lg:flex gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
                   >
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus className="h-4 w-4" />
                     New Problem
                   </Button>
-                </div>
-              )}
+                )}
 
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
-                className="rounded-full"
-              >
-                {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-              </Button>
-
-              {isAuthenticated ? (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                      <div className="w-9 h-9 bg-gradient-to-br from-cyan-500 to-rose-600 rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform">
-                        <User className="h-4 w-4" />
-                      </div>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56">
-                    <div className="px-2 py-1.5">
-                      <p className="text-sm font-medium">Signed in as</p>
-                      <p className="text-xs text-muted-foreground truncate">{currentUser?.email || 'User'}</p>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => setShowSettingsModal(true)}>
-                      <SettingsIcon className="h-4 w-4 mr-2" />
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={async () => {
-                      try {
-                        await ApiService.logout();
-                        setIsAuthenticated(false);
-                        setCurrentUser(null);
-                        toast.success('Logged out successfully');
-                        loadDataUserData();
-                      } catch (error) {
-                        console.error('Logout error:', error);
-                        toast.error('Logout failed');
-                      }
-                    }} className="text-red-500 focus:text-red-500">
-                      <LogOut className="h-4 w-4 mr-2" />
-                      Logout
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              ) : (
-                <Button onClick={() => setShowAuthModal(true)}>
-                  Login
+                {/* Theme Toggle */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  className="rounded-full"
+                >
+                  {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                 </Button>
-              )}
+
+                {/* User Menu */}
+                {isAuthenticated ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="rounded-full">
+                        <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform">
+                          <User className="h-4 w-4" />
+                        </div>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-56">
+                      <div className="px-2 py-1.5">
+                        <p className="text-sm font-medium">Signed in as</p>
+                        <p className="text-xs text-muted-foreground truncate">{currentUser?.email || 'User'}</p>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setShowSettingsModal(true)}>
+                        <SettingsIcon className="h-4 w-4 mr-2" />
+                        Settings
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={async () => {
+                          try {
+                            await ApiService.logout();
+                            setIsAuthenticated(false);
+                            setCurrentUser(null);
+                            toast.success('Logged out successfully');
+                          } catch (error) {
+                            logger.error('Logout error', error);
+                            toast.error('Logout failed');
+                          }
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        <LogOut className="h-4 w-4 mr-2" />
+                        Logout
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <Button onClick={() => setShowAuthModal(true)}>Login</Button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="container mx-auto px-4 py-8">
-        <ClientOnly>
-          <Tabs defaultValue="dashboard" className="space-y-8">
-            
-            {/* Navigation Tabs - Floating Pill Style */}
-            <div className="overflow-x-auto pb-2 hide-scrollbar">
-               <TabsList className="inline-flex h-12 items-center justify-center rounded-full bg-muted/50 p-1 text-muted-foreground backdrop-blur-sm">
-                <TabsTrigger value="dashboard" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Dashboard
-                </TabsTrigger>
-                <TabsTrigger value="problems" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Problems
-                   {activeProblems.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{activeProblems.length}</Badge>}
-                </TabsTrigger>
-                <TabsTrigger value="companies" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Companies
-                </TabsTrigger>
-                <TabsTrigger value="potd" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   POTD
-                   {potdProblems.length > 0 && <Badge variant="secondary" className="ml-2 h-5 px-1.5 text-[10px]">{potdProblems.length}</Badge>}
-                </TabsTrigger>
-                <TabsTrigger value="contests" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Contests
-                </TabsTrigger>
-                 <TabsTrigger value="review" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Review
-                   {dueReviewProblems.length > 0 && <Badge variant="destructive" className="ml-2 h-5 px-1.5 text-[10px]">{dueReviewProblems.length}</Badge>}
-                </TabsTrigger>
-                <TabsTrigger value="todos" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Tasks
-                </TabsTrigger>
-                 <TabsTrigger value="learned" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Learned
-                </TabsTrigger>
-                 <TabsTrigger value="analytics" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Analytics
-                </TabsTrigger>
-                 <TabsTrigger value="guide" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Guide
-                </TabsTrigger>
-                 <TabsTrigger value="resources" className="rounded-full px-6 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all">
-                   Resources
-                </TabsTrigger>
-              </TabsList>
-            </div>
+        {/* Main Content */}
+        <main className="container mx-auto px-4 py-6">
+          <ClientOnly>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+              {/* Tab Navigation */}
+              <div className="overflow-x-auto pb-2 hide-scrollbar">
+                <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-muted/50 p-1.5 text-muted-foreground">
+                  <TabsTrigger value="dashboard" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <LayoutDashboard className="h-4 w-4" />
+                    <span className="hidden sm:inline">Dashboard</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="problems" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <ListTodo className="h-4 w-4" />
+                    <span className="hidden sm:inline">Problems</span>
+                    {activeProblems.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{activeProblems.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="companies" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <Building2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Companies</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="potd" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="hidden sm:inline">POTD</span>
+                    {potdProblems.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{potdProblems.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="contests" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <Trophy className="h-4 w-4" />
+                    <span className="hidden sm:inline">Contests</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="review" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <RefreshCcw className="h-4 w-4" />
+                    <span className="hidden sm:inline">Review</span>
+                    {dueReviewProblems.length > 0 && (
+                      <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">{dueReviewProblems.length}</Badge>
+                    )}
+                  </TabsTrigger>
+                  <TabsTrigger value="todos" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="hidden sm:inline">Tasks</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="learned" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    <span className="hidden sm:inline">Learned</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="analytics" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <BarChart3 className="h-4 w-4" />
+                    <span className="hidden sm:inline">Analytics</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="guide" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <Compass className="h-4 w-4" />
+                    <span className="hidden sm:inline">Guide</span>
+                  </TabsTrigger>
+                  <TabsTrigger value="resources" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
+                    <Library className="h-4 w-4" />
+                    <span className="hidden sm:inline">Resources</span>
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
-            <div className="animate-fade-in">
-              <TabsContent value="dashboard" className="mt-0">
-                <Dashboard
-                  problems={manualProblems}
-                  todos={todos}
-                  onUpdateProblem={handleUpdateProblem}
-                  onAddPotd={handleAddPotdProblem}
-                  onImportProblems={handleImportProblems}
-                  onCleanupPotd={handleCleanupPotd}
-                  onAddDailyChallenge={handleAddDailyChallengeToPotd}
-                />
-              </TabsContent>
+              {/* Tab Content */}
+              <div className="animate-fade-in">
+                <TabsContent value="dashboard" className="mt-0">
+                  <ErrorBoundary>
+                    <Dashboard
+                      problems={manualProblems}
+                      todos={todos}
+                      onUpdateProblem={handleUpdateProblem}
+                      onAddPotd={handleAddPotdProblem}
+                      onImportProblems={handleImportProblems}
+                      onCleanupPotd={handleCleanupPotd}
+                      onAddDailyChallenge={handleAddDailyChallengeToPotd}
+                    />
+                  </ErrorBoundary>
+                </TabsContent>
 
-              <TabsContent value="companies" className="mt-0 space-y-6">
-                <CompanyDashboard problems={companyProblems} />
-                <CompanyGroupedProblemList
-                  problems={companyProblems}
-                  onUpdateProblem={handleUpdateProblem}
-                  onToggleReview={handleToggleReview}
-                  onDeleteProblem={handleDeleteProblem}
-                  onEditProblem={handleEditProblem}
-                  onProblemReviewed={handleProblemReviewed}
-                  onImportProblems={handleImportProblems}
-                  isReviewList={false}
-                  title="Problems by Company"
-                />
-              </TabsContent>
+                <TabsContent value="problems" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <ErrorBoundary>
+                      <ProblemList
+                        problems={activeProblems}
+                        onUpdateProblem={handleUpdateProblem}
+                        onToggleReview={handleToggleReview}
+                        onDeleteProblem={handleDeleteProblem}
+                        onEditProblem={handleEditProblem}
+                        onProblemReviewed={handleProblemReviewed}
+                        onClearAll={handleClearAllProblems}
+                        isReviewList={false}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="potd" className="mt-0 space-y-6">
-                <MonthlyPotdList
-                  problems={potdProblems}
-                  onUpdateProblem={handleUpdateProblem}
-                  onToggleReview={handleToggleReview}
-                  onDeleteProblem={handleDeleteProblem}
-                  onEditProblem={handleEditProblem}
-                  onProblemReviewed={handleProblemReviewed}
-                  onAddToProblem={handleAddPotdToProblem}
-                  isPotdInProblems={isPotdInProblems}
-                />
-              </TabsContent>
+                <TabsContent value="companies" className="mt-0 space-y-6">
+                  <ErrorBoundary>
+                    <CompanyDashboard problems={companyProblems} />
+                    <CompanyGroupedProblemList
+                      problems={companyProblems}
+                      onUpdateProblem={handleUpdateProblem}
+                      onToggleReview={handleToggleReview}
+                      onDeleteProblem={handleDeleteProblem}
+                      onEditProblem={handleEditProblem}
+                      onProblemReviewed={handleProblemReviewed}
+                      onImportProblems={handleImportProblems}
+                      isReviewList={false}
+                      title="Problems by Company"
+                    />
+                  </ErrorBoundary>
+                </TabsContent>
 
-              <TabsContent value="contests" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
-                  <ContestTracker
-                    contests={contests}
-                    onAddContest={handleAddContest}
-                    onUpdateContest={handleUpdateContest}
-                    onDeleteContest={handleDeleteContest}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="potd" className="mt-0">
+                  <ErrorBoundary>
+                    <MonthlyPotdList
+                      problems={potdProblems}
+                      onUpdateProblem={handleUpdateProblem}
+                      onToggleReview={handleToggleReview}
+                      onDeleteProblem={handleDeleteProblem}
+                      onEditProblem={handleEditProblem}
+                      onProblemReviewed={handleProblemReviewed}
+                      onAddToProblem={handleAddPotdToProblem}
+                      isPotdInProblems={isPotdInProblems}
+                    />
+                  </ErrorBoundary>
+                </TabsContent>
 
-              <TabsContent value="todos" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
-                  <TodoList
-                    todos={todos}
-                    onAddTodo={handleAddTodo}
-                    onUpdateTodo={handleUpdateTodo}
-                    onDeleteTodo={handleDeleteTodo}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="contests" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <ErrorBoundary>
+                      <ContestTracker
+                        contests={contests}
+                        onAddContest={handleAddContest}
+                        onUpdateContest={handleUpdateContest}
+                        onDeleteContest={handleDeleteContest}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="problems" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
-                  <ProblemList
-                    problems={activeProblems}
-                    onUpdateProblem={handleUpdateProblem}
-                    onToggleReview={handleToggleReview}
-                    onDeleteProblem={handleDeleteProblem}
-                    onEditProblem={handleEditProblem}
-                    onProblemReviewed={handleProblemReviewed}
-                    onClearAll={handleClearAllProblems}
-                    isReviewList={false}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="review" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <ErrorBoundary>
+                      <ProblemList
+                        problems={reviewProblems}
+                        onUpdateProblem={handleUpdateProblem}
+                        onToggleReview={handleToggleReview}
+                        onDeleteProblem={handleDeleteProblem}
+                        onEditProblem={handleEditProblem}
+                        onProblemReviewed={handleProblemReviewed}
+                        isReviewList={true}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="review" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
-                  <ProblemList
-                    problems={reviewProblems}
-                    onUpdateProblem={handleUpdateProblem}
-                    onToggleReview={handleToggleReview}
-                    onDeleteProblem={handleDeleteProblem}
-                    onEditProblem={handleEditProblem}
-                    onProblemReviewed={handleProblemReviewed}
-                    isReviewList={true}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="todos" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                    <ErrorBoundary>
+                      <TodoList
+                        todos={todos}
+                        onAddTodo={handleAddTodo}
+                        onUpdateTodo={handleUpdateTodo}
+                        onDeleteTodo={handleDeleteTodo}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="learned" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
-                  <ProblemList
-                    problems={learnedProblems}
-                    onUpdateProblem={handleUpdateProblem}
-                    onToggleReview={handleToggleReview}
-                    onDeleteProblem={handleDeleteProblem}
-                    onEditProblem={handleEditProblem}
-                    onProblemReviewed={handleProblemReviewed}
-                    isReviewList={false}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="learned" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <ErrorBoundary>
+                      <ProblemList
+                        problems={learnedProblems}
+                        onUpdateProblem={handleUpdateProblem}
+                        onToggleReview={handleToggleReview}
+                        onDeleteProblem={handleDeleteProblem}
+                        onEditProblem={handleEditProblem}
+                        onProblemReviewed={handleProblemReviewed}
+                        isReviewList={false}
+                      />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="analytics" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-1">
-                  <Analytics
-                    problems={manualProblems}
-                  />
-                </div>
-              </TabsContent>
+                <TabsContent value="analytics" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <ErrorBoundary>
+                      <Analytics problems={manualProblems} />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="guide" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
-                  <Guide />
-                </div>
-              </TabsContent>
+                <TabsContent value="guide" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                    <ErrorBoundary>
+                      <Guide />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
 
-              <TabsContent value="resources" className="mt-0 space-y-6">
-                <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
-                  <ExternalResources />
-                </div>
-              </TabsContent>
-            </div>
-          </Tabs>
-        </ClientOnly>
-      </main>
+                <TabsContent value="resources" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                    <ErrorBoundary>
+                      <ExternalResources />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
+          </ClientOnly>
+        </main>
 
-      {/* Problem Form Modal */}
-      {isFormOpen && (
-        <ProblemForm
-          open={isFormOpen}
-          onOpenChange={setIsFormOpen}
-          onAddProblem={handleAddProblem}
-          onUpdateProblem={(id: string, updates: Partial<Problem>) => {
-            handleUpdateProblem(id, updates);
+        {/* Modals */}
+        {isFormOpen && (
+          <ProblemForm
+            open={isFormOpen}
+            onOpenChange={setIsFormOpen}
+            onAddProblem={handleAddProblem}
+            onUpdateProblem={(id: string, updates: Partial<Problem>) => handleUpdateProblem(id, updates)}
+            problemToEdit={problemToEdit}
+          />
+        )}
+
+        <AuthModal
+          open={showAuthModal}
+          onOpenChange={setShowAuthModal}
+          onAuthSuccess={async () => {
+            setIsAuthenticated(true);
+            setTimeout(async () => {
+              try {
+                const userProfile = await ApiService.getProfile();
+                setCurrentUser(userProfile);
+                await loadUserData();
+              } catch (error) {
+                logger.error('Post-auth data loading failed', error);
+                await initializeApp();
+              }
+            }, 1000);
           }}
-          problemToEdit={problemToEdit}
         />
-      )}
 
-      {/* Auth Modal */}
-      <AuthModal
-        open={showAuthModal}
-        onOpenChange={setShowAuthModal}
-        onAuthSuccess={async () => {
-          setIsAuthenticated(true);
-          setTimeout(async () => {
-            try {
-              const userProfile = await ApiService.getProfile();
-              setCurrentUser(userProfile);
-              await loadUserData();
-            } catch (error: any) {
-              console.error('Post-auth data loading failed:', error);
-              await initializeApp();
-            }
-          }, 1000);
-        }}
-      />
+        <EnhancedSettings
+          open={showSettingsModal}
+          onOpenChange={setShowSettingsModal}
+          onSettingsSave={(intervals) => {
+            toast.success(`Review intervals updated: ${intervals.join(', ')} days`);
+          }}
+        />
 
-      {/* Enhanced Settings Dialog */}
-      <EnhancedSettings 
-        open={showSettingsModal}
-        onOpenChange={setShowSettingsModal}
-        onSettingsSave={(intervals) => {
-          toast.success(`Review intervals updated: ${intervals.join(', ')} days`);
-        }}
-      />
-
-      {/* Floating Action Button */}
-      {isAuthenticated && (
-        <Button
-          onClick={() => handleOpenForm()}
-          className="fixed bottom-8 right-8 h-14 w-14 rounded-full bg-primary hover:bg-primary/90 shadow-lg hover:shadow-xl shadow-primary/20 transition-all duration-300 z-50"
-          size="icon"
-        >
-          <Plus className="h-6 w-6 text-white" />
-        </Button>
-      )}
-    </div>
+        {/* Floating Action Button */}
+        {isAuthenticated && (
+          <Button
+            onClick={() => handleOpenForm()}
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-xl hover:shadow-2xl shadow-primary/25 hover:shadow-primary/40 transition-all duration-300 z-50 lg:hidden"
+            size="icon"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        )}
+      </div>
+    </ErrorBoundary>
   );
 }
