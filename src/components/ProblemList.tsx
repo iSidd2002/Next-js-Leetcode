@@ -725,8 +725,8 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
         problem={problemToReview}
         open={showEnhancedReview}
         onOpenChange={setShowEnhancedReview}
-        onReview={(id, quality, notes, timeTaken, tags, customDays) => {
-          onProblemReviewed(id, quality, notes, timeTaken, tags, customDays);
+        onReview={(id, quality, notes, timeTaken, tags, customDays, moveToLearned) => {
+          onProblemReviewed(id, quality, notes, timeTaken, tags, customDays, moveToLearned);
         }}
       />
     </Card>

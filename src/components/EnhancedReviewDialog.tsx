@@ -206,7 +206,13 @@ export function EnhancedReviewDialog({
 
         <div className="space-y-6 py-4">
           {/* Review Mode Selection */}
-          <Tabs value={reviewMode} onValueChange={(v) => setReviewMode(v as 'quality' | 'manual')}>
+          <Tabs value={reviewMode} onValueChange={(v) => {
+            setReviewMode(v as 'quality' | 'manual');
+            // Reset moveToLearned when switching to manual mode
+            if (v === 'manual') {
+              setMoveToLearned(false);
+            }
+          }}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="quality" className="gap-2">
                 <Star className="h-4 w-4" />
@@ -376,8 +382,8 @@ export function EnhancedReviewDialog({
             </div>
           )}
 
-          {/* Move to Learned Section - Only show if problem is not already learned */}
-          {problem.status !== 'learned' && (
+          {/* Move to Learned Section - Only show if problem is not already learned AND not in manual mode */}
+          {problem.status !== 'learned' && reviewMode !== 'manual' && (
             <div className="p-4 rounded-lg bg-gradient-to-r from-emerald-500/10 to-green-500/10 border border-emerald-500/20">
               <label className="flex items-start gap-3 cursor-pointer group">
                 <input
@@ -399,6 +405,15 @@ export function EnhancedReviewDialog({
                   </p>
                 </div>
               </label>
+            </div>
+          )}
+          
+          {/* Info message when in manual mode */}
+          {problem.status !== 'learned' && reviewMode === 'manual' && (
+            <div className="p-3 rounded-lg bg-muted/50 border border-muted-foreground/20">
+              <p className="text-xs text-muted-foreground">
+                <strong>Tip:</strong> To move this problem to the Learned section, switch to &quot;Quality Based&quot; mode and check the &quot;Move to Learned&quot; option.
+              </p>
             </div>
           )}
         </div>
