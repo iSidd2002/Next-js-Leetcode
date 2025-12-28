@@ -34,6 +34,8 @@ import {
   Brain,
   Lightbulb,
   Star,
+  Bell,
+  AlertTriangle,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isToday, isPast, isFuture } from 'date-fns';
@@ -151,6 +153,23 @@ export function TopicGroupedProblemList({
     [filteredProblems]
   );
 
+  // Count due reviews
+  const dueReviewsCount = useMemo(() => {
+    return problems.filter(p => {
+      if (!p.isReview || !p.nextReviewDate) return false;
+      const reviewDate = new Date(p.nextReviewDate);
+      return isToday(reviewDate) || isPast(reviewDate);
+    }).length;
+  }, [problems]);
+
+  const overdueCount = useMemo(() => {
+    return problems.filter(p => {
+      if (!p.isReview || !p.nextReviewDate) return false;
+      const reviewDate = new Date(p.nextReviewDate);
+      return isPast(reviewDate) && !isToday(reviewDate);
+    }).length;
+  }, [problems]);
+
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty.toLowerCase()) {
       case 'easy':
@@ -175,16 +194,29 @@ export function TopicGroupedProblemList({
 
   const renderProblemRow = (problem: Problem) => {
     const reviewStatus = getReviewStatus(problem);
+    const isDue = reviewStatus === 'due-today' || reviewStatus === 'overdue';
     
     return (
       <div
         key={problem.id}
         className={cn(
-          "flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors border-b border-border/50 last:border-b-0",
-          reviewStatus === 'overdue' && "bg-red-500/5",
-          reviewStatus === 'due-today' && "bg-amber-500/5"
+          "relative flex items-center gap-3 p-3 hover:bg-muted/50 transition-all duration-300 border-b border-border/50 last:border-b-0",
+          // Overdue - Red pulsing background
+          reviewStatus === 'overdue' && "bg-gradient-to-r from-red-500/10 via-red-500/5 to-transparent border-l-4 border-l-red-500",
+          // Due today - Amber/Orange attention-grabbing
+          reviewStatus === 'due-today' && "bg-gradient-to-r from-amber-500/15 via-amber-500/5 to-transparent border-l-4 border-l-amber-500",
         )}
       >
+        {/* Pulsing indicator for due reviews */}
+        {isDue && (
+          <div className="absolute left-0 top-0 bottom-0 w-1">
+            <div className={cn(
+              "absolute inset-0 animate-pulse",
+              reviewStatus === 'overdue' ? "bg-red-500" : "bg-amber-500"
+            )} />
+          </div>
+        )}
+
         {/* Difficulty Badge */}
         <Badge 
           variant="outline" 
@@ -195,27 +227,48 @@ export function TopicGroupedProblemList({
 
         {/* Title */}
         <div className="flex-1 min-w-0">
-          <a
-            href={problem.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="font-medium hover:text-primary transition-colors truncate block"
-          >
-            {problem.title}
-          </a>
+          <div className="flex items-center gap-2">
+            <a
+              href={problem.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={cn(
+                "font-medium hover:text-primary transition-colors truncate",
+                isDue && "text-foreground"
+              )}
+            >
+              {problem.title}
+            </a>
+            {/* Urgent indicator */}
+            {reviewStatus === 'overdue' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-500 text-white animate-pulse">
+                Overdue
+              </span>
+            )}
+            {reviewStatus === 'due-today' && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-amber-500 text-white">
+                Due Today
+              </span>
+            )}
+          </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-muted-foreground capitalize">
               {problem.platform}
             </span>
             {problem.isReview && problem.nextReviewDate && (
               <span className={cn(
-                "text-xs",
-                reviewStatus === 'overdue' && "text-red-500",
-                reviewStatus === 'due-today' && "text-amber-500",
+                "text-xs flex items-center gap-1",
+                reviewStatus === 'overdue' && "text-red-600 dark:text-red-400 font-medium",
+                reviewStatus === 'due-today' && "text-amber-600 dark:text-amber-400 font-medium",
                 reviewStatus === 'upcoming' && "text-muted-foreground"
               )}>
-                <Clock className="h-3 w-3 inline mr-1" />
-                {format(new Date(problem.nextReviewDate), 'MMM d')}
+                <Clock className="h-3 w-3" />
+                {reviewStatus === 'overdue' 
+                  ? `${Math.abs(Math.floor((new Date().getTime() - new Date(problem.nextReviewDate).getTime()) / (1000 * 60 * 60 * 24)))} days overdue`
+                  : reviewStatus === 'due-today'
+                  ? 'Review now!'
+                  : format(new Date(problem.nextReviewDate), 'MMM d')
+                }
               </span>
             )}
           </div>
@@ -223,7 +276,7 @@ export function TopicGroupedProblemList({
 
         {/* Status Badges */}
         <div className="flex items-center gap-1 shrink-0">
-          {problem.isReview && (
+          {problem.isReview && !isDue && (
             <Badge variant="secondary" className="text-xs bg-purple-500/10 text-purple-600 dark:text-purple-400">
               <RefreshCcw className="h-3 w-3 mr-1" />
               Review
@@ -231,16 +284,20 @@ export function TopicGroupedProblemList({
           )}
         </div>
 
-        {/* Review Button for due problems */}
-        {problem.isReview && reviewStatus && (reviewStatus === 'due-today' || reviewStatus === 'overdue') && (
+        {/* Review Button for due problems - Made more prominent */}
+        {isDue && (
           <Button
             size="sm"
-            variant="default"
-            className="h-7 text-xs shrink-0"
             onClick={() => handleStartReview(problem)}
+            className={cn(
+              "shrink-0 font-semibold shadow-lg transition-all duration-300 hover:scale-105",
+              reviewStatus === 'overdue' 
+                ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/25 animate-pulse" 
+                : "bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/25"
+            )}
           >
-            <Star className="h-3 w-3 mr-1" />
-            Review
+            <Star className="h-4 w-4 mr-1.5 fill-current" />
+            Review Now
           </Button>
         )}
 
@@ -339,6 +396,70 @@ export function TopicGroupedProblemList({
 
   return (
     <div className="space-y-4">
+      {/* Due Reviews Alert Banner */}
+      {dueReviewsCount > 0 && (
+        <div className={cn(
+          "relative overflow-hidden rounded-xl p-4 border-2",
+          overdueCount > 0 
+            ? "bg-gradient-to-r from-red-500/10 via-red-500/5 to-orange-500/10 border-red-500/30" 
+            : "bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-yellow-500/10 border-amber-500/30"
+        )}>
+          {/* Animated background */}
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+          
+          <div className="relative flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={cn(
+                "p-2 rounded-full",
+                overdueCount > 0 ? "bg-red-500/20" : "bg-amber-500/20"
+              )}>
+                <Bell className={cn(
+                  "h-5 w-5 animate-bounce",
+                  overdueCount > 0 ? "text-red-500" : "text-amber-500"
+                )} />
+              </div>
+              <div>
+                <h3 className={cn(
+                  "font-bold text-lg",
+                  overdueCount > 0 ? "text-red-600 dark:text-red-400" : "text-amber-600 dark:text-amber-400"
+                )}>
+                  {dueReviewsCount} Problem{dueReviewsCount !== 1 ? 's' : ''} Due for Review!
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {overdueCount > 0 && (
+                    <span className="text-red-500 font-medium">{overdueCount} overdue</span>
+                  )}
+                  {overdueCount > 0 && dueReviewsCount - overdueCount > 0 && ' • '}
+                  {dueReviewsCount - overdueCount > 0 && (
+                    <span className="text-amber-500 font-medium">{dueReviewsCount - overdueCount} due today</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            <Button
+              onClick={() => {
+                // Find first due problem and start review
+                const dueProblem = problems.find(p => {
+                  if (!p.isReview || !p.nextReviewDate) return false;
+                  const reviewDate = new Date(p.nextReviewDate);
+                  return isToday(reviewDate) || isPast(reviewDate);
+                });
+                if (dueProblem) handleStartReview(dueProblem);
+              }}
+              className={cn(
+                "font-bold shadow-lg hover:scale-105 transition-all",
+                overdueCount > 0 
+                  ? "bg-red-500 hover:bg-red-600 shadow-red-500/25" 
+                  : "bg-amber-500 hover:bg-amber-600 shadow-amber-500/25"
+              )}
+            >
+              <Star className="h-4 w-4 mr-2 fill-current" />
+              Start Reviewing
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
