@@ -14,6 +14,12 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   ExternalLink,
   MoreHorizontal,
   Edit,
@@ -27,9 +33,13 @@ import {
   Clock,
   Brain,
   Lightbulb,
+  Star,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format, isToday, isPast, isFuture } from 'date-fns';
+import ReviewInsights from '@/components/ai/ReviewInsights';
+import SimilarProblems from '@/components/ai/SimilarProblems';
+import { EnhancedReviewDialog } from '@/components/EnhancedReviewDialog';
 
 interface TopicGroupedProblemListProps {
   problems: Problem[];
@@ -98,6 +108,31 @@ export function TopicGroupedProblemList({
 }: TopicGroupedProblemListProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'folders' | 'list'>('folders');
+  
+  // AI Modal states
+  const [showReviewInsights, setShowReviewInsights] = useState(false);
+  const [showSimilarProblems, setShowSimilarProblems] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<Problem | null>(null);
+  
+  // Enhanced Review Dialog state
+  const [showEnhancedReview, setShowEnhancedReview] = useState(false);
+  const [problemToReview, setProblemToReview] = useState<Problem | null>(null);
+
+  // AI Modal handlers
+  const handleShowReviewInsights = (problem: Problem) => {
+    setSelectedProblem(problem);
+    setShowReviewInsights(true);
+  };
+
+  const handleShowSimilarProblems = (problem: Problem) => {
+    setSelectedProblem(problem);
+    setShowSimilarProblems(true);
+  };
+
+  const handleStartReview = (problem: Problem) => {
+    setProblemToReview(problem);
+    setShowEnhancedReview(true);
+  };
 
   // Filter problems by search query
   const filteredProblems = useMemo(() => {
@@ -196,6 +231,19 @@ export function TopicGroupedProblemList({
           )}
         </div>
 
+        {/* Review Button for due problems */}
+        {problem.isReview && reviewStatus && (reviewStatus === 'due-today' || reviewStatus === 'overdue') && (
+          <Button
+            size="sm"
+            variant="default"
+            className="h-7 text-xs shrink-0"
+            onClick={() => handleStartReview(problem)}
+          >
+            <Star className="h-3 w-3 mr-1" />
+            Review
+          </Button>
+        )}
+
         {/* Actions */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -212,7 +260,28 @@ export function TopicGroupedProblemList({
               <Edit className="mr-2 h-4 w-4" />
               Edit
             </DropdownMenuItem>
+            
             <DropdownMenuSeparator />
+            
+            {/* AI Features */}
+            <DropdownMenuItem onClick={() => handleShowReviewInsights(problem)}>
+              <Brain className="mr-2 h-4 w-4 text-blue-500" />
+              AI Insights
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleShowSimilarProblems(problem)}>
+              <Lightbulb className="mr-2 h-4 w-4 text-amber-500" />
+              Similar Problems
+            </DropdownMenuItem>
+            
+            <DropdownMenuSeparator />
+            
+            {/* Start Review */}
+            {problem.isReview && (
+              <DropdownMenuItem onClick={() => handleStartReview(problem)}>
+                <Star className="mr-2 h-4 w-4 text-orange-500" />
+                Start Review
+              </DropdownMenuItem>
+            )}
             
             {/* Toggle Review */}
             {!problem.isReview ? (
@@ -340,6 +409,63 @@ export function TopicGroupedProblemList({
           </div>
         </div>
       )}
+
+      {/* AI Review Insights Modal */}
+      <Dialog open={showReviewInsights} onOpenChange={setShowReviewInsights}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5 text-blue-600" />
+              AI Insights
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProblem && (
+            <ReviewInsights
+              problem={selectedProblem}
+              userHistory={{
+                previousAttempts: selectedProblem.repetition || 0,
+                lastSolved: selectedProblem.dateSolved || new Date().toISOString(),
+                timeSpent: 30,
+                mistakes: selectedProblem.notes ? [selectedProblem.notes] : [],
+                successRate: selectedProblem.repetition > 0 ? 0.8 : 0.5
+              }}
+              reviewContext={{
+                daysSinceLastReview: selectedProblem.nextReviewDate ?
+                  Math.floor((new Date().getTime() - new Date(selectedProblem.nextReviewDate).getTime()) / (1000 * 60 * 60 * 24)) :
+                  1,
+                currentStreak: selectedProblem.repetition || 0,
+                upcomingInterviews: false,
+                targetDifficulty: selectedProblem.difficulty
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* AI Similar Problems Modal */}
+      <Dialog open={showSimilarProblems} onOpenChange={setShowSimilarProblems}>
+        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="h-5 w-5 text-amber-500" />
+              Similar Problems
+            </DialogTitle>
+          </DialogHeader>
+          {selectedProblem && (
+            <SimilarProblems problem={selectedProblem} />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Enhanced Review Dialog */}
+      <EnhancedReviewDialog
+        problem={problemToReview}
+        open={showEnhancedReview}
+        onOpenChange={setShowEnhancedReview}
+        onReview={(id, quality, notes, timeTaken, tags, customDays, moveToLearned) => {
+          onProblemReviewed(id, quality, notes, timeTaken, tags, customDays, moveToLearned);
+        }}
+      />
     </div>
   );
 }
