@@ -391,6 +391,40 @@
   50% { transform: translateY(-4px); }
 }
 
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+@keyframes aurora {
+  from {
+    background-position: 50% 50%, 50% 50%;
+  }
+  to {
+    background-position: 350% 50%, 350% 50%;
+  }
+}
+
+@keyframes meteor {
+  0% {
+    transform: rotate(215deg) translateX(0);
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    transform: rotate(215deg) translateX(-500px);
+    opacity: 0;
+  }
+}
+
 /* Animation utilities */
 .animate-fade-in {
   animation: fadeIn 0.4s ease-out forwards;
@@ -434,6 +468,22 @@
 
 .animate-bounce-subtle {
   animation: bounce-subtle 2s ease-in-out infinite;
+}
+
+.animate-spotlight {
+  animation: spotlight 2s ease 0.75s 1 forwards;
+}
+
+.animate-aurora {
+  animation: aurora 60s linear infinite;
+}
+
+.animate-meteor {
+  animation: meteor 5s linear infinite;
+}
+
+.animate-meteor-effect {
+  animation: meteor 5s linear infinite;
 }
 
 /* Stagger animations for lists */

@@ -30,6 +30,7 @@ import { EnhancedSettings } from '@/components/EnhancedSettings';
 import ClientOnly from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLoadingScreen } from '@/components/ui/loading';
+import { Spotlight } from '@/components/ui/spotlight';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -651,7 +652,17 @@ export default function HomePage() {
 
   return (
     <ErrorBoundary>
-      <div className="min-h-screen font-sans antialiased">
+      <div className="min-h-screen font-sans antialiased relative overflow-hidden">
+        {/* Aceternity UI Spotlight Effect */}
+        <Spotlight
+          className="-top-40 left-0 md:left-60 md:-top-20"
+          fill="hsl(var(--primary))"
+        />
+        <Spotlight
+          className="top-10 left-full -translate-x-[50%] md:hidden"
+          fill="hsl(var(--accent))"
+        />
+        
         {/* Command Menu */}
         <CommandMenu
           open={isCommandMenuOpen}
