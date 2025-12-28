@@ -6,11 +6,6 @@ const nextConfig = {
   compress: true,
 
   // Build configuration
-  eslint: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has ESLint errors.
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     // Warning: This allows production builds to successfully complete even if
     // your project has type errors.
@@ -20,29 +15,17 @@ const nextConfig = {
   // External packages
   serverExternalPackages: ['mongoose'],
 
-  // Webpack configuration
-  webpack: (config, { isServer }) => {
-    config.experiments = {
-      ...config.experiments,
-      topLevelAwait: true,
-    }
-
-    // Optimize bundle size
-    if (!isServer) {
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-      }
-    }
-
-    return config
-  },
+  // Turbopack configuration (Next.js 16+)
+  turbopack: {},
 
   // Image optimization
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      },
+    ],
     formats: ['image/webp', 'image/avif'],
   },
 
