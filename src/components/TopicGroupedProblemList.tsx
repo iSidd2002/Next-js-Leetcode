@@ -405,7 +405,7 @@ export function TopicGroupedProblemList({
             : "bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-yellow-500/10 border-amber-500/30"
         )}>
           {/* Animated background */}
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent animate-pulse" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-foreground/5 to-transparent animate-pulse" />
           
           <div className="relative flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">

@@ -141,7 +141,7 @@
 
   /* Glass Panel */
   .glass-panel {
-    @apply bg-background/60 backdrop-blur-2xl border border-white/10 shadow-2xl;
+    @apply bg-background/60 backdrop-blur-2xl border border-border/50 shadow-2xl;
   }
   
   /* Gradient Text */
@@ -218,7 +218,7 @@
     background: linear-gradient(
       90deg,
       transparent,
-      rgba(255, 255, 255, 0.1),
+      hsl(var(--foreground) / 0.1),
       transparent
     );
     animation: shimmer 2s infinite;
@@ -591,11 +591,11 @@
 
 /* Glassmorphism effects */
 .glass {
-  @apply bg-background/60 backdrop-blur-xl border border-white/10;
+  @apply bg-background/60 backdrop-blur-xl border border-border/50;
 }
 
 .glass-card {
-  @apply bg-card/30 backdrop-blur-md border border-white/5 shadow-xl;
+  @apply bg-card/30 backdrop-blur-md border border-border/30 shadow-xl;
 }
 
 /* Neon glow effects */
@@ -619,7 +619,7 @@
 
 .card-shine::before {
   content: '';
-  @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent transition-transform duration-700;
+  @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-foreground/5 to-transparent transition-transform duration-700;
 }
 
 .card-shine:hover::before {
