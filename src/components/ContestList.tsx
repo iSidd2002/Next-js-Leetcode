@@ -61,7 +61,7 @@ export default function ContestList({ contests, onEditContest, onDeleteContest }
         const platformStyle = getPlatformColor(contest.platform);
         
         return (
-          <SpotlightCard key={contest.id} className="group hover:shadow-lg transition-all duration-300 border-white/10 bg-card/50 backdrop-blur-sm">
+          <SpotlightCard key={contest.id} className="group hover:shadow-lg transition-all duration-300 border-border/30 bg-card/50 backdrop-blur-sm">
             <div className="p-5 flex flex-col h-full">
               <div className="flex justify-between items-start mb-4">
                 <Badge variant="outline" className={cn("capitalize font-medium", platformStyle)}>
@@ -110,7 +110,7 @@ export default function ContestList({ contests, onEditContest, onDeleteContest }
                 </div>
               </div>
 
-              <div className="pt-4 mt-auto border-t border-white/5 flex items-center justify-between text-xs text-muted-foreground">
+              <div className="pt-4 mt-auto border-t border-border/30 flex items-center justify-between text-xs text-muted-foreground">
                  <span>
                     {new Date(contest.startTime) > new Date() 
                         ? `Starts ${formatDistanceToNow(new Date(contest.startTime), { addSuffix: true })}`

@@ -94,7 +94,7 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
                   <span className="sm:hidden">All</span>
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-white/10">
+              <DialogContent className="max-w-[95vw] sm:max-w-7xl max-h-[90vh] overflow-y-auto bg-background/95 backdrop-blur-xl border-border/50">
                 <DialogHeader>
                   <DialogTitle className="text-lg sm:text-xl flex items-center gap-2">
                       <Globe className="h-5 w-5 text-primary" />
