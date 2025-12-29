@@ -390,10 +390,14 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
                   {/* Heatmap grid */}
                   <div className="flex gap-2">
-                    <div className="flex flex-col justify-between text-xs text-muted-foreground font-medium h-[100px] pb-1">
+                    <div className="flex flex-col justify-around text-[10px] text-muted-foreground font-medium h-[91px]">
+                      <span>Sun</span>
                       <span>Mon</span>
+                      <span>Tue</span>
                       <span>Wed</span>
+                      <span>Thu</span>
                       <span>Fri</span>
+                      <span>Sat</span>
                     </div>
 
                     <div className="flex-1 grid grid-flow-col gap-[3px] auto-cols-fr">
@@ -401,19 +405,29 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                         <div key={weekIdx} className="grid grid-rows-7 gap-[3px]">
                           {week.map((cell, dayIdx) => {
                             const isOutOfRange = !cell.isInDataRange;
-                            const dayName = format(cell.date, 'EEEE'); // Full day name (Monday, Tuesday, etc.)
+                            const dayName = format(cell.date, 'EEEE');
+                            const fullDate = format(cell.date, 'MMMM d, yyyy');
+                            const tooltipText = `${cell.count} problem${cell.count !== 1 ? 's' : ''} solved`;
                             return (
                               <div
                                 key={dayIdx}
-                                className={cn(
-                                  "h-[10px] w-[10px] rounded-[2px] transition-all duration-300",
-                                  isOutOfRange ? "bg-transparent" : getColor(cell.count),
-                                  !isOutOfRange && cell.count > 0 && "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background cursor-pointer shadow-sm hover:scale-125 z-10"
+                                className="relative group"
+                              >
+                                <div
+                                  className={cn(
+                                    "h-[10px] w-[10px] rounded-[2px] transition-all duration-300",
+                                    isOutOfRange ? "bg-transparent" : getColor(cell.count),
+                                    !isOutOfRange && cell.count > 0 && "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background cursor-pointer shadow-sm hover:scale-125"
+                                  )}
+                                />
+                                {!isOutOfRange && (
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover border border-border rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
+                                    <div className="text-xs font-medium text-foreground">{dayName}, {fullDate}</div>
+                                    <div className="text-xs text-muted-foreground">{tooltipText}</div>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
+                                  </div>
                                 )}
-                                title={isOutOfRange 
-                                  ? "Out of range" 
-                                  : `${dayName}, ${format(cell.date, 'MMMM d, yyyy')}\n${cell.count} problem${cell.count !== 1 ? 's' : ''} solved`}
-                              />
+                              </div>
                             );
                           })}
                         </div>
