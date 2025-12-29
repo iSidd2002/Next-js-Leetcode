@@ -431,6 +431,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                             const dayName = format(cell.date, 'EEEE');
                             const fullDate = format(cell.date, 'MMMM d, yyyy');
                             const tooltipText = `${cell.count} problem${cell.count !== 1 ? 's' : ''} solved`;
+                            // Show tooltip below for top 3 rows (Sun, Mon, Tue), above for rest
+                            const showTooltipBelow = dayIdx < 3;
                             return (
                               <div
                                 key={dayIdx}
@@ -444,7 +446,10 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                   )}
                                 />
                                 {!isOutOfRange && (
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 whitespace-nowrap">
+                                  <div className={cn(
+                                    "absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 whitespace-nowrap",
+                                    showTooltipBelow ? "top-full mt-2" : "bottom-full mb-2"
+                                  )}>
                                     <div className="text-sm font-semibold text-foreground">{dayName}</div>
                                     <div className="text-xs text-muted-foreground">{fullDate}</div>
                                     <div className={cn(
@@ -453,7 +458,11 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                     )}>
                                       {tooltipText}
                                     </div>
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-border" />
+                                    {/* Arrow pointing to cell */}
+                                    <div className={cn(
+                                      "absolute left-1/2 -translate-x-1/2 border-[6px] border-transparent",
+                                      showTooltipBelow ? "bottom-full border-b-border" : "top-full border-t-border"
+                                    )} />
                                   </div>
                                 )}
                               </div>
