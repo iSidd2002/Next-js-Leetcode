@@ -115,34 +115,39 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
   // For calendar: exactly 52 weeks (like LeetCode)
   const today = new Date();
+  today.setHours(23, 59, 59, 999); // End of today
   
   // Start from exactly 52 weeks ago (364 days) from today
   const startDate = new Date(today);
   startDate.setDate(startDate.getDate() - 364);
+  startDate.setHours(0, 0, 0, 0); // Start of that day
   
   // Find the Sunday of the week containing the start date
   const startSunday = new Date(startDate);
   const startDayOfWeek = startDate.getDay();
   startSunday.setDate(startDate.getDate() - startDayOfWeek);
+  startSunday.setHours(0, 0, 0, 0);
   
   // Find the Saturday of the week containing today
   const endSaturday = new Date(today);
   const todayDayOfWeek = today.getDay();
   endSaturday.setDate(today.getDate() + (6 - todayDayOfWeek));
+  endSaturday.setHours(23, 59, 59, 999);
   
-  // Generate solve counts for the actual data range (not the padded weeks)
-  const last365Days = eachDayOfInterval({ start: startDate, end: today });
-  const solveCounts = last365Days.reduce((acc, day) => {
-    const count = problems.filter(p => isSameDay(new Date(p.dateSolved), day)).length;
-    acc[format(day, 'yyyy-MM-dd')] = count;
-    return acc;
-  }, {} as Record<string, number>);
+  // Generate solve counts - include ALL problems within the date range
+  const solveCounts: Record<string, number> = {};
+  problems.forEach(p => {
+    const solveDate = new Date(p.dateSolved);
+    const dateStr = format(solveDate, 'yyyy-MM-dd');
+    solveCounts[dateStr] = (solveCounts[dateStr] || 0) + 1;
+  });
 
   // Create exactly 52 weeks starting from the calculated Sunday
   const allWeeks = eachWeekOfInterval({ start: startSunday, end: endSaturday }, { weekStartsOn: 0 });
   
   // Ensure we have exactly 52-53 weeks max (GitHub shows 53 sometimes)
   const weeks = allWeeks.slice(0, Math.min(53, allWeeks.length));
+  const totalWeeks = weeks.length;
 
   // Calculate month labels with better alignment
   const monthLabels: { label: string; weekIndex: number }[] = [];
@@ -160,17 +165,22 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
   });
 
   // Create heatmap data (7 rows for days, weeks as columns) - Sunday to Saturday
-  const heatmapData: { date: Date; count: number; isInDataRange: boolean }[][] = weeks.map(weekStart => {
+  const heatmapData: { date: Date; count: number; isInDataRange: boolean; weekIdx: number }[][] = weeks.map((weekStart, weekIdx) => {
     return Array.from({length: 7}, (_, i) => {
       const day = new Date(weekStart);
       day.setDate(day.getDate() + i);
+      day.setHours(12, 0, 0, 0); // Normalize to noon to avoid timezone issues
       const dateStr = format(day, 'yyyy-MM-dd');
       
-      // Check if this day is within our actual data range
-      const isInDataRange = day >= startDate && day <= today;
-      const count = isInDataRange ? (solveCounts[dateStr] || 0) : 0;
+      // Check if this day is within our actual data range (compare date strings to avoid time issues)
+      const dayTime = day.getTime();
+      const startTime = startSunday.getTime();
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+      const isInDataRange = dayTime >= startTime && dayTime <= todayEnd.getTime();
+      const count = solveCounts[dateStr] || 0;
       
-      return { date: day, count, isInDataRange };
+      return { date: day, count, isInDataRange, weekIdx };
     });
   });
 
@@ -183,10 +193,16 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
     return 'bg-emerald-600 dark:bg-emerald-500';
   };
 
-  // Stats: use the actual data range, not the padded weeks
-  const pastYearSolves = problems.filter(p => new Date(p.dateSolved) >= startDate && new Date(p.dateSolved) <= today).length;
-  const activeDays = Object.values(solveCounts).filter(c => c > 0).length;
-  const totalDays = differenceInDays(today, startDate) + 1;
+  // Stats: count problems and active days in the last year
+  const pastYearSolves = problems.filter(p => {
+    const solveDate = new Date(p.dateSolved);
+    return solveDate >= startSunday && solveDate <= today;
+  }).length;
+  const activeDays = Object.keys(solveCounts).filter(dateStr => {
+    const date = new Date(dateStr);
+    return date >= startSunday && date <= today && solveCounts[dateStr] > 0;
+  }).length;
+  const totalDays = differenceInDays(today, startSunday) + 1;
   const activePercentage = Math.round((activeDays / totalDays) * 100);
 
   // Generate Chart Data for Recharts (Last 30 days)
@@ -433,6 +449,19 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                             const tooltipText = `${cell.count} problem${cell.count !== 1 ? 's' : ''} solved`;
                             // Show tooltip below for top 3 rows (Sun, Mon, Tue), above for rest
                             const showTooltipBelow = dayIdx < 3;
+                            // Adjust horizontal position for edge weeks
+                            const isLeftEdge = weekIdx < 5;
+                            const isRightEdge = weekIdx > totalWeeks - 6;
+                            const horizontalPosition = isLeftEdge 
+                              ? "left-0" 
+                              : isRightEdge 
+                                ? "right-0" 
+                                : "left-1/2 -translate-x-1/2";
+                            const arrowPosition = isLeftEdge
+                              ? "left-[6px]"
+                              : isRightEdge
+                                ? "right-[6px]"
+                                : "left-1/2 -translate-x-1/2";
                             return (
                               <div
                                 key={dayIdx}
@@ -447,7 +476,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                 />
                                 {!isOutOfRange && (
                                   <div className={cn(
-                                    "absolute left-1/2 -translate-x-1/2 px-3 py-2 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 whitespace-nowrap",
+                                    "absolute px-3 py-2 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 whitespace-nowrap",
+                                    horizontalPosition,
                                     showTooltipBelow ? "top-full mt-2" : "bottom-full mb-2"
                                   )}>
                                     <div className="text-sm font-semibold text-foreground">{dayName}</div>
@@ -460,7 +490,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                     </div>
                                     {/* Arrow pointing to cell */}
                                     <div className={cn(
-                                      "absolute left-1/2 -translate-x-1/2 border-[6px] border-transparent",
+                                      "absolute border-[6px] border-transparent",
+                                      arrowPosition,
                                       showTooltipBelow ? "bottom-full border-b-border" : "top-full border-t-border"
                                     )} />
                                   </div>
