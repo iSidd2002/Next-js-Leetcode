@@ -360,49 +360,72 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </Card>
 
 
-          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm card-shine">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5 text-primary" />
-                <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-500">
-                  Activity Heatmap
-                </span>
-              </CardTitle>
-              <CardDescription>Your submission history over the last year</CardDescription>
+          <Card className="border-none shadow-lg bg-card/50 backdrop-blur-sm card-shine">
+            <CardHeader className="pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarDays className="h-5 w-5 text-emerald-500" />
+                    <span className="bg-clip-text text-transparent bg-gradient-to-r from-emerald-500 to-teal-500">
+                      Activity Heatmap
+                    </span>
+                  </CardTitle>
+                  <CardDescription className="mt-1">{pastYearSolves} submissions in the last year</CardDescription>
+                </div>
+                {/* Legend - moved to header */}
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>Less</span>
+                  <div className="flex gap-1">
+                    <div className="w-[10px] h-[10px] rounded-sm bg-secondary/50 dark:bg-secondary/30" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-300 dark:bg-emerald-900/60" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-500 dark:bg-emerald-600" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+                  </div>
+                  <span>More</span>
+                </div>
+              </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-4">
               <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
-                <div className="min-w-[600px]">
-                  {/* Month labels */}
-                  <div className="relative mb-4 h-5 w-full">
-                    {monthLabels.map((month, i) => (
-                      <div
-                        key={i}
-                        className="absolute text-xs text-muted-foreground font-medium"
-                        style={{
-                          left: `${(month.weekIndex / weeks.length) * 100}%`,
-                        }}
-                      >
-                        {month.label}
-                      </div>
-                    ))}
+                <div className="min-w-[750px]">
+                  {/* Month labels row */}
+                  <div className="flex mb-2">
+                    <div className="w-10 shrink-0" /> {/* Spacer for day labels */}
+                    <div className="flex-1 flex">
+                      {monthLabels.map((month, i) => {
+                        const nextMonthIndex = monthLabels[i + 1]?.weekIndex ?? weeks.length;
+                        const width = ((nextMonthIndex - month.weekIndex) / weeks.length) * 100;
+                        return (
+                          <div
+                            key={i}
+                            className="text-xs text-muted-foreground font-medium"
+                            style={{ width: `${width}%` }}
+                          >
+                            {month.label}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Heatmap grid */}
-                  <div className="flex gap-2">
-                    <div className="flex flex-col justify-around text-[10px] text-muted-foreground font-medium h-[91px]">
-                      <span>Sun</span>
-                      <span>Mon</span>
-                      <span>Tue</span>
-                      <span>Wed</span>
-                      <span>Thu</span>
-                      <span>Fri</span>
-                      <span>Sat</span>
+                  {/* Heatmap grid with day labels */}
+                  <div className="flex gap-3">
+                    {/* Day labels */}
+                    <div className="w-7 shrink-0 flex flex-col text-[11px] text-muted-foreground font-medium" style={{ height: '118px' }}>
+                      <div className="h-[14px] flex items-center">Sun</div>
+                      <div className="h-[14px] flex items-center">Mon</div>
+                      <div className="h-[14px] flex items-center">Tue</div>
+                      <div className="h-[14px] flex items-center">Wed</div>
+                      <div className="h-[14px] flex items-center">Thu</div>
+                      <div className="h-[14px] flex items-center">Fri</div>
+                      <div className="h-[14px] flex items-center">Sat</div>
                     </div>
 
-                    <div className="flex-1 grid grid-flow-col gap-[3px] auto-cols-fr">
+                    {/* Grid of cells */}
+                    <div className="flex-1 flex gap-[4px]">
                       {heatmapData.map((week, weekIdx) => (
-                        <div key={weekIdx} className="grid grid-rows-7 gap-[3px]">
+                        <div key={weekIdx} className="flex flex-col gap-[4px]">
                           {week.map((cell, dayIdx) => {
                             const isOutOfRange = !cell.isInDataRange;
                             const dayName = format(cell.date, 'EEEE');
@@ -415,16 +438,22 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                               >
                                 <div
                                   className={cn(
-                                    "h-[10px] w-[10px] rounded-[2px] transition-all duration-300",
+                                    "w-[12px] h-[12px] rounded-sm transition-all duration-200",
                                     isOutOfRange ? "bg-transparent" : getColor(cell.count),
-                                    !isOutOfRange && cell.count > 0 && "hover:ring-2 hover:ring-ring hover:ring-offset-1 hover:ring-offset-background cursor-pointer shadow-sm hover:scale-125"
+                                    !isOutOfRange && "hover:ring-2 hover:ring-emerald-400 hover:ring-offset-1 hover:ring-offset-background cursor-pointer"
                                   )}
                                 />
                                 {!isOutOfRange && (
-                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 bg-popover border border-border rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50 whitespace-nowrap">
-                                    <div className="text-xs font-medium text-foreground">{dayName}, {fullDate}</div>
-                                    <div className="text-xs text-muted-foreground">{tooltipText}</div>
-                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-border" />
+                                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-popover/95 backdrop-blur-sm border border-border rounded-lg shadow-xl opacity-0 group-hover:opacity-100 transition-all duration-200 pointer-events-none z-50 whitespace-nowrap">
+                                    <div className="text-sm font-semibold text-foreground">{dayName}</div>
+                                    <div className="text-xs text-muted-foreground">{fullDate}</div>
+                                    <div className={cn(
+                                      "text-xs font-medium mt-1",
+                                      cell.count > 0 ? "text-emerald-500" : "text-muted-foreground"
+                                    )}>
+                                      {tooltipText}
+                                    </div>
+                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-[6px] border-transparent border-t-border" />
                                   </div>
                                 )}
                               </div>
@@ -433,19 +462,6 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                         </div>
                       ))}
                     </div>
-                  </div>
-                  
-                  {/* Legend */}
-                  <div className="flex items-center justify-end mt-4 gap-2 text-xs text-muted-foreground">
-                    <span>Less</span>
-                    <div className="flex gap-1">
-                      <div className="w-3 h-3 rounded-[2px] bg-secondary/50 dark:bg-secondary/30" />
-                      <div className="w-3 h-3 rounded-[2px] bg-emerald-300 dark:bg-emerald-900/60" />
-                      <div className="w-3 h-3 rounded-[2px] bg-emerald-400 dark:bg-emerald-700" />
-                      <div className="w-3 h-3 rounded-[2px] bg-emerald-500 dark:bg-emerald-600" />
-                      <div className="w-3 h-3 rounded-[2px] bg-emerald-600 dark:bg-emerald-500" />
-                    </div>
-                    <span>More</span>
                   </div>
                 </div>
               </div>
