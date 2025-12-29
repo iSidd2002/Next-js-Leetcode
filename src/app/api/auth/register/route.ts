@@ -80,16 +80,8 @@ export async function POST(request: NextRequest) {
 
     // Set HTTP-only cookie with the token
     // SECURITY: Using SameSite=strict for CSRF protection
+    // Note: User ID is extracted from JWT token - no separate cookie needed
     response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Upgraded for CSRF protection
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-      path: '/'
-    });
-
-    // Also set userId cookie for easy access
-    response.cookies.set('user-id', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict', // Upgraded for CSRF protection

@@ -21,15 +21,9 @@ export async function GET(request: NextRequest) {
       dbStatus = 'error';
     }
 
-    // Check environment variables
-    const envCheck = {
-      DATABASE_URL: !!process.env.DATABASE_URL,
-      JWT_SECRET: !!process.env.JWT_SECRET,
-      NEXTAUTH_SECRET: !!process.env.NEXTAUTH_SECRET,
-      GEMINI_API_KEY: !!process.env.GEMINI_API_KEY,
-    };
-
-    const allEnvVarsPresent = Object.values(envCheck).every(Boolean);
+    // Check environment variables (only check presence, don't expose which ones)
+    const requiredEnvVars = ['DATABASE_URL', 'JWT_SECRET', 'NEXTAUTH_SECRET'];
+    const allEnvVarsPresent = requiredEnvVars.every(key => !!process.env[key]);
 
     // Calculate total response time
     const totalResponseTime = Date.now() - startTime;
@@ -37,28 +31,33 @@ export async function GET(request: NextRequest) {
     // Determine overall health status
     const isHealthy = dbStatus === 'connected' && allEnvVarsPresent;
 
+    // In production, only return minimal health info
+    const isProduction = process.env.NODE_ENV === 'production';
+
     const healthData = {
       status: isHealthy ? 'healthy' : 'unhealthy',
       timestamp: new Date().toISOString(),
-      uptime: process.uptime(),
-      version: process.env.npm_package_version || '1.0.0',
-      environment: process.env.NODE_ENV || 'development',
-      checks: {
-        database: {
-          status: dbStatus,
-          responseTime: `${dbResponseTime}ms`,
-        },
-        environment: {
-          status: allEnvVarsPresent ? 'ok' : 'missing_variables',
-          variables: envCheck,
-        },
-        memory: {
-          used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-          total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
-          unit: 'MB',
-        },
-      },
       responseTime: `${totalResponseTime}ms`,
+      // Only include detailed info in development
+      ...(isProduction ? {} : {
+        uptime: process.uptime(),
+        version: process.env.npm_package_version || '1.0.0',
+        environment: process.env.NODE_ENV || 'development',
+        checks: {
+          database: {
+            status: dbStatus,
+            responseTime: `${dbResponseTime}ms`,
+          },
+          environment: {
+            status: allEnvVarsPresent ? 'ok' : 'missing_variables',
+          },
+          memory: {
+            used: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            total: Math.round(process.memoryUsage().heapTotal / 1024 / 1024),
+            unit: 'MB',
+          },
+        },
+      }),
     };
 
     // Return appropriate status code

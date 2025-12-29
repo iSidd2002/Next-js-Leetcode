@@ -10,7 +10,11 @@ interface RateLimitEntry {
   resetTime: number;
 }
 
-// In-memory store for rate limiting (use Redis in production for distributed systems)
+// In-memory store for rate limiting
+// TODO: For production with multiple instances/serverless, migrate to:
+// - @upstash/ratelimit for serverless environments
+// - Redis for traditional deployments
+// See: https://upstash.com/docs/redis/sdks/ratelimit-ts/overview
 const rateLimitStore = new Map<string, RateLimitEntry>();
 
 // Clean up expired entries every 10 minutes

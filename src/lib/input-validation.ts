@@ -71,6 +71,7 @@ export function sanitizeUsername(username: string): string {
 
 /**
  * Validate password strength
+ * Requirements: min 8 chars, uppercase, lowercase, number, special character
  */
 export function validatePassword(password: string): void {
   if (typeof password !== 'string') {
@@ -85,7 +86,7 @@ export function validatePassword(password: string): void {
     throw new Error('Password must not exceed 128 characters');
   }
   
-  // Check for at least one uppercase, one lowercase, and one number
+  // Check for at least one uppercase, one lowercase, one number, and one special character
   if (!/[A-Z]/.test(password)) {
     throw new Error('Password must contain at least one uppercase letter');
   }
@@ -96,6 +97,10 @@ export function validatePassword(password: string): void {
   
   if (!/[0-9]/.test(password)) {
     throw new Error('Password must contain at least one number');
+  }
+  
+  if (!/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(password)) {
+    throw new Error('Password must contain at least one special character (!@#$%^&*(),.?":{}|<>)');
   }
 }
 

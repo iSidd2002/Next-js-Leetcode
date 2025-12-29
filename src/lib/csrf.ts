@@ -78,7 +78,10 @@ interface CSRFTokenData {
 }
 
 // In-memory token store (for simplicity)
-// In production, use Redis or database
+// TODO: For production with multiple instances/serverless, migrate to:
+// - Redis/Upstash for persistent storage
+// - Or use stateless double-submit cookie pattern with signed tokens
+// See: https://cheatsheetseries.owasp.org/cheatsheets/Cross-Site_Request_Forgery_Prevention_Cheat_Sheet.html
 const tokenStore = new Map<string, CSRFTokenData>();
 
 /**

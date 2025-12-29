@@ -4,7 +4,9 @@ import User from '@/models/User';
 import { comparePassword, generateToken } from '@/lib/auth';
 import { sanitizeEmail } from '@/lib/input-validation';
 
-// Simple in-memory rate limiting (for production, use Redis or database)
+// Simple in-memory rate limiting
+// TODO: For production with multiple instances, migrate to Redis/Upstash for persistent rate limiting
+// See: https://upstash.com/docs/redis/sdks/ratelimit-ts/overview
 const loginAttempts = new Map<string, { count: number; lastAttempt: number }>();
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 minutes
@@ -145,16 +147,8 @@ export async function POST(request: NextRequest) {
 
     // Set HTTP-only cookie with the token (secure, server-side only)
     // SECURITY: Using SameSite=strict for CSRF protection
+    // Note: User ID is extracted from JWT token - no separate cookie needed
     response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict', // Upgraded from 'lax' for better CSRF protection
-      maxAge: 7 * 24 * 60 * 60, // 7 days in seconds
-      path: '/'
-    });
-
-    // Set userId cookie (secure, server-side only)
-    response.cookies.set('user-id', user._id.toString(), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict', // Upgraded from 'lax' for better CSRF protection

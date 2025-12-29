@@ -76,19 +76,32 @@ function addSecurityHeaders(response: NextResponse): void {
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   
   // Content Security Policy (CSP)
-  // Note: This is a strict policy. May need adjustment based on your needs
-  const cspDirectives = [
-    "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js dev
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: https: blob:",
-    "font-src 'self' data:",
-    "connect-src 'self' https://api.openai.com https://api.anthropic.com", // Allow AI API calls
-    "frame-ancestors 'none'",
-    "base-uri 'self'",
-    "form-action 'self'"
-  ].join('; ');
-  response.headers.set('Content-Security-Policy', cspDirectives);
+  // Production uses stricter policy, development allows unsafe-eval for Next.js HMR
+  const isProduction = process.env.NODE_ENV === 'production';
+  const cspDirectives = isProduction
+    ? [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Next.js, but no unsafe-eval in prod
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'"
+      ]
+    : [
+        "default-src 'self'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js dev HMR
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: https: blob:",
+        "font-src 'self' data:",
+        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'"
+      ];
+  response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
   
   // Permissions Policy (formerly Feature Policy)
   const permissionsPolicy = [

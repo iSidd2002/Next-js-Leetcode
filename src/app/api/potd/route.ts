@@ -30,6 +30,35 @@ interface LeetCodeGraphQLResponse {
 
 const LEETCODE_GRAPHQL_ENDPOINT = 'https://leetcode.com/graphql';
 
+// Predefined safe query for POTD - prevents arbitrary GraphQL queries
+const POTD_QUERY = `
+  query questionOfToday {
+    activeDailyCodingChallengeQuestion {
+      date
+      userStatus
+      link
+      question {
+        acRate
+        difficulty
+        freqBar
+        frontendQuestionId
+        isFavor
+        paidOnly
+        status
+        title
+        titleSlug
+        hasVideoSolution
+        hasSolution
+        topicTags {
+          name
+          id
+          slug
+        }
+      }
+    }
+  }
+`;
+
 // Helper function to make LeetCode API request with retry logic
 const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<globalThis.Response> => {
   let lastError: Error | null = null;
@@ -99,14 +128,8 @@ const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<gl
 };
 
 export async function POST(request: NextRequest) {
-  const { query } = await request.json();
-
-  if (!query) {
-    return NextResponse.json({
-      success: false,
-      error: 'GraphQL query is required'
-    }, { status: 400 });
-  }
+  // Security: Ignore user-provided query and use predefined safe query
+  // This prevents arbitrary GraphQL queries being proxied through our server
 
   // Create fallback data that's always available
   const fallbackProblem = {
@@ -145,8 +168,8 @@ export async function POST(request: NextRequest) {
   };
 
   try {
-    // Try to get real data from LeetCode
-    const response = await fetchWithRetry(query);
+    // Try to get real data from LeetCode using predefined safe query
+    const response = await fetchWithRetry(POTD_QUERY);
     const data = await response.json() as unknown as LeetCodeGraphQLResponse;
 
     // Check if we got valid data

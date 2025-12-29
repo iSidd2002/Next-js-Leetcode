@@ -152,8 +152,9 @@ class ApiService {
 
     // Clear all auth cookies
     document.cookie = 'auth-token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-    document.cookie = 'user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
     document.cookie = 'auth-status=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+    // Clear legacy user-id cookie if it exists
+    document.cookie = 'user-id=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
     // Clear any localStorage auth data if present
     localStorage.removeItem('auth-token');
