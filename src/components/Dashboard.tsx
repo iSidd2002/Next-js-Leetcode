@@ -401,6 +401,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                         <div key={weekIdx} className="grid grid-rows-7 gap-[3px]">
                           {week.map((cell, dayIdx) => {
                             const isOutOfRange = !cell.isInDataRange;
+                            const dayName = format(cell.date, 'EEEE'); // Full day name (Monday, Tuesday, etc.)
                             return (
                               <div
                                 key={dayIdx}
@@ -411,7 +412,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                                 )}
                                 title={isOutOfRange 
                                   ? "Out of range" 
-                                  : `${format(cell.date, 'MMM d, yyyy')}: ${cell.count} problems`}
+                                  : `${dayName}, ${format(cell.date, 'MMMM d, yyyy')}\n${cell.count} problem${cell.count !== 1 ? 's' : ''} solved`}
                               />
                             );
                           })}
