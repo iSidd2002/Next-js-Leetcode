@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 // Contest platforms and their APIs
 const CONTEST_APIS = {
@@ -25,7 +26,9 @@ interface Contest {
 
 async function fetchCodeforcesContests(): Promise<Contest[]> {
   try {
-    const response = await fetch(CONTEST_APIS.codeforces);
+    const response = await fetch(CONTEST_APIS.codeforces, {
+      signal: AbortSignal.timeout(10000) // 10 second timeout
+    });
     const data = await response.json();
     
     if (data.status !== 'OK') return [];
@@ -69,7 +72,8 @@ async function fetchLeetCodeContests(): Promise<Contest[]> {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ query })
+      body: JSON.stringify({ query }),
+      signal: AbortSignal.timeout(15000) // 15 second timeout
     });
     
     const data = await response.json();
@@ -155,6 +159,19 @@ async function fetchMockContests(): Promise<Contest[]> {
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for public endpoint
+    const rateLimit = checkRateLimit(request, RateLimitPresets.PUBLIC);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.PUBLIC);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, {
+        status: 429,
+        headers
+      });
+    }
+
     console.log('Fetching contests from all platforms...');
     
     // Fetch contests from multiple platforms in parallel

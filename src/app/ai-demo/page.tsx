@@ -12,7 +12,6 @@ import type { Problem } from '@/types';
 // Mock problem data for demonstration
 const mockProblem: Problem = {
   id: 'demo-two-sum',
-  userId: 'demo-user',
   platform: 'leetcode',
   title: 'Two Sum',
   problemId: '1',

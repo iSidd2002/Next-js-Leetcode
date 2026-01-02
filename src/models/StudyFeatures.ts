@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 // Flashcard System
 export interface IFlashcard extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   title: string;
   front: string; // Question/Concept
   back: string; // Answer/Explanation
@@ -20,7 +20,7 @@ export interface IFlashcard extends Document {
 }
 
 const FlashcardSchema = new Schema<IFlashcard>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true, trim: true },
   front: { type: String, required: true, maxlength: 2000 },
   back: { type: String, required: true, maxlength: 5000 },
@@ -47,7 +47,7 @@ const FlashcardSchema = new Schema<IFlashcard>({
 // Code Templates
 export interface ICodeTemplate extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   name: string;
   description: string;
   language: 'javascript' | 'python' | 'java' | 'cpp' | 'c' | 'go' | 'rust';
@@ -65,7 +65,7 @@ export interface ICodeTemplate extends Document {
 }
 
 const CodeTemplateSchema = new Schema<ICodeTemplate>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true, trim: true },
   description: { type: String, required: true, maxlength: 1000 },
   language: { 
@@ -93,7 +93,7 @@ const CodeTemplateSchema = new Schema<ICodeTemplate>({
 // Learning Paths
 export interface ILearningPath extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   name: string;
   description: string;
   category: 'beginner' | 'intermediate' | 'advanced' | 'interview-prep' | 'topic-specific';
@@ -123,7 +123,7 @@ export interface ILearningPath extends Document {
 }
 
 const LearningPathSchema = new Schema<ILearningPath>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   name: { type: String, required: true, trim: true },
   description: { type: String, required: true, maxlength: 2000 },
   category: { 
@@ -163,7 +163,7 @@ const LearningPathSchema = new Schema<ILearningPath>({
 // Concept Notes
 export interface IConceptNote extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   title: string;
   content: string;
   category: string;
@@ -177,7 +177,7 @@ export interface IConceptNote extends Document {
 }
 
 const ConceptNoteSchema = new Schema<IConceptNote>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   title: { type: String, required: true, trim: true },
   content: { type: String, required: true, maxlength: 20000 },
   category: { type: String, required: true, trim: true },

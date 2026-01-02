@@ -4,7 +4,6 @@
  */
 
 import { NextRequest } from 'next/server';
-import crypto from 'crypto';
 
 /**
  * Validates Origin/Referer headers against the request host
@@ -88,7 +87,10 @@ const tokenStore = new Map<string, CSRFTokenData>();
  * Generates a CSRF token for a user
  */
 export function generateCSRFToken(userId: string): string {
-  const token = crypto.randomBytes(CSRF_TOKEN_LENGTH).toString('hex');
+  // Use Web Crypto API for Edge Runtime compatibility
+  const array = new Uint8Array(CSRF_TOKEN_LENGTH);
+  crypto.getRandomValues(array);
+  const token = Array.from(array, byte => byte.toString(16).padStart(2, '0')).join('');
   const expires = Date.now() + CSRF_TOKEN_LIFETIME;
   
   tokenStore.set(token, {

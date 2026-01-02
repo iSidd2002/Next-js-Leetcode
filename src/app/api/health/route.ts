@@ -1,10 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   try {
+    // Rate limiting for public endpoint (very generous since this is a health check)
+    const rateLimit = checkRateLimit(request, RateLimitPresets.READ_ONLY);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.READ_ONLY);
+      return NextResponse.json({
+        success: false,
+        error: 'Too many requests'
+      }, {
+        status: 429,
+        headers
+      });
+    }
     const startTime = Date.now();
 
     // Check database connectivity

@@ -185,7 +185,7 @@ export async function GET(request: NextRequest) {
       // 2. Check cache
       const cacheManager = getCacheManager();
       const cacheKey = `integration-test:${normalizedProblem.id}`;
-      let cachedResult = cacheManager.get(cacheKey);
+      let cachedResult = cacheManager.get(cacheKey) as { recommendations?: unknown[] } | null;
       
       // 3. Generate AI response if not cached
       if (!cachedResult) {
@@ -222,7 +222,7 @@ export async function GET(request: NextRequest) {
           }
         });
         
-        cachedResult = aiResponse;
+        cachedResult = aiResponse as { recommendations?: unknown[] } | null;
       }
       
       const endTime = Date.now();

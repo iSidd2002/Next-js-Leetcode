@@ -30,7 +30,8 @@ export async function GET(request: NextRequest) {
             text: 'Say "Hello World" and nothing else.'
           }]
         }]
-      })
+      }),
+      signal: AbortSignal.timeout(30000) // 30 second timeout
     });
 
     console.log(`📡 Response status: ${response.status}`);

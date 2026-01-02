@@ -7,9 +7,8 @@ const nextConfig = {
 
   // Build configuration
   typescript: {
-    // Warning: This allows production builds to successfully complete even if
-    // your project has type errors.
-    ignoreBuildErrors: true,
+    // Type errors must be fixed before deployment
+    ignoreBuildErrors: false,
   },
 
   // External packages

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 interface LeetCodeGraphQLResponse {
   data: {
@@ -127,62 +128,77 @@ const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<gl
   throw lastError || new Error('All retry attempts failed');
 };
 
-export async function POST(request: NextRequest) {
-  // Security: Ignore user-provided query and use predefined safe query
-  // This prevents arbitrary GraphQL queries being proxied through our server
-
-  // Create fallback data that's always available
-  const fallbackProblem = {
-    data: {
-      activeDailyCodingChallengeQuestion: {
-        date: new Date().toISOString().split('T')[0], // Today's date
-        userStatus: "NotStart",
-        link: "/problems/two-sum/",
-        question: {
-          acRate: 54.5,
-          difficulty: "Easy",
-          freqBar: null,
-          frontendQuestionId: "1",
-          isFavor: false,
-          paidOnly: false,
-          status: null,
-          title: "Two Sum (Fallback Problem)",
-          titleSlug: "two-sum",
-          hasVideoSolution: true,
-          hasSolution: true,
-          topicTags: [
-            {
-              name: "Array",
-              id: "VG9waWNUYWdOb2RlOjU=",
-              slug: "array"
-            },
-            {
-              name: "Hash Table",
-              id: "VG9waWNUYWdOb2RlOjY=",
-              slug: "hash-table"
-            }
-          ]
-        }
+// Helper function to create consistent fallback data
+const createFallbackProblem = (): LeetCodeGraphQLResponse => ({
+  data: {
+    activeDailyCodingChallengeQuestion: {
+      date: new Date().toISOString().split('T')[0],
+      userStatus: "NotStart",
+      link: "/problems/two-sum/",
+      question: {
+        acRate: 54.5,
+        difficulty: "Easy",
+        freqBar: null,
+        frontendQuestionId: "1",
+        isFavor: false,
+        paidOnly: false,
+        status: null,
+        title: "Two Sum (Fallback Problem)",
+        titleSlug: "two-sum",
+        hasVideoSolution: true,
+        hasSolution: true,
+        topicTags: [
+          {
+            name: "Array",
+            id: "VG9waWNUYWdOb2RlOjU=",
+            slug: "array"
+          },
+          {
+            name: "Hash Table",
+            id: "VG9waWNUYWdOb2RlOjY=",
+            slug: "hash-table"
+          }
+        ]
       }
     }
-  };
+  }
+});
 
+export async function POST(request: NextRequest) {
   try {
+    // Rate limiting for public endpoint
+    const rateLimit = checkRateLimit(request, RateLimitPresets.PUBLIC);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.PUBLIC);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, {
+        status: 429,
+        headers
+      });
+    }
+
+    // Security: Ignore user-provided query and use predefined safe query
+    // This prevents arbitrary GraphQL queries being proxied through our server
+
     // Try to get real data from LeetCode using predefined safe query
     const response = await fetchWithRetry(POTD_QUERY);
     const data = await response.json() as unknown as LeetCodeGraphQLResponse;
 
     // Check if we got valid data
     if (data.data && data.data.activeDailyCodingChallengeQuestion) {
+      console.log('POTD API: ✅ Successfully fetched real LeetCode POTD');
       return NextResponse.json(data);
     }
 
   } catch (error) {
-    // Fall back to mock data
+    console.warn('POTD API: ⚠️ Failed to fetch real data, using fallback:', error instanceof Error ? error.message : 'Unknown error');
   }
 
   // Always return fallback data with 200 status if real data fails
   console.log('POTD API: 🔄 Using fallback problem: Two Sum');
+  const fallbackProblem = createFallbackProblem();
   return NextResponse.json(fallbackProblem);
 }
 

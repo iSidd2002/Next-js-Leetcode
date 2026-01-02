@@ -121,11 +121,11 @@ export default function ContestForm({ open, onOpenChange, onAddContest, onUpdate
               </div>
               <div className="space-y-2">
                 <Label htmlFor="problemsSolved">Problems Solved</Label>
-                <Input id="problemsSolved" type="number" {...register('problemsSolved', { valueAsNumber: true })} />
+                <Input id="problemsSolved" type="number" {...register('problems.solved', { valueAsNumber: true })} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="totalProblems">Total Problems</Label>
-                <Input id="totalProblems" type="number" {...register('totalProblems', { valueAsNumber: true })} />
+                <Input id="totalProblems" type="number" {...register('problems.total', { valueAsNumber: true })} />
               </div>
           </div>
           <DialogFooter>

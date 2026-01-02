@@ -508,8 +508,8 @@ export async function GET(request: NextRequest) {
 
     // If target platform failed, try other platforms as fallback
     if (!problem) {
-      const fallbackPlatforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'codingninjas', 'atcoder']
-        .filter(p => p !== targetPlatform);
+      const allPlatforms: Platform[] = ['leetcode', 'codeforces', 'geeksforgeeks', 'codingninjas', 'atcoder'];
+      const fallbackPlatforms = allPlatforms.filter(p => p !== targetPlatform);
 
       for (const fallbackPlatform of fallbackPlatforms) {
         try {

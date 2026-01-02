@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface IContest extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   name: string;
   platform: 'leetcode' | 'codeforces' | 'atcoder' | 'codechef' | 'other';
   startTime: string;
@@ -18,7 +18,7 @@ export interface IContest extends Document {
 
 const ContestSchema = new Schema<IContest>({
   userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
     // Note: Index created by compound indexes below, no need for individual index

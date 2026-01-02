@@ -2,7 +2,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 
 export interface ITodo extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   title: string;
   description?: string;
   priority: 'low' | 'medium' | 'high' | 'urgent';
@@ -20,7 +20,7 @@ export interface ITodo extends Document {
 
 const TodoSchema = new Schema<ITodo>({
   userId: {
-    type: Schema.Types.ObjectId,
+    type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
     // Note: Index created by compound indexes below, no need for individual index

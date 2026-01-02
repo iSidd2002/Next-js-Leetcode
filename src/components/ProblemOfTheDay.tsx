@@ -14,6 +14,8 @@ import { cn } from "@/lib/utils";
 // Use environment variable or fallback to Next.js API routes
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 const LEETCODE_API_ENDPOINT = `${API_BASE_URL}/potd`;
+// Note: This query is ignored by the backend for security reasons
+// The backend uses a predefined safe query instead
 const DAILY_PROBLEM_QUERY = `
   query questionOfToday {
     activeDailyCodingChallengeQuestion {
@@ -24,9 +26,9 @@ const DAILY_PROBLEM_QUERY = `
         acRate
         difficulty
         freqBar
-        frontendQuestionId: questionFrontendId
+        frontendQuestionId
         isFavor
-        paidOnly: isPaidOnly
+        paidOnly
         status
         title
         titleSlug
@@ -55,6 +57,8 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
   useEffect(() => {
     const fetchDailyProblem = async () => {
       try {
+        // Note: Backend ignores the query parameter for security
+        // It uses a predefined safe query instead
         const response = await fetch(LEETCODE_API_ENDPOINT, {
           method: "POST",
           headers: {
@@ -64,14 +68,18 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
         });
 
         if (!response.ok) {
+          // Handle rate limiting specifically
+          if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please try again later.");
+          }
           throw new Error(`Failed to fetch daily problem: ${response.status}`);
         }
 
         const result = await response.json();
-        if (result.data.activeDailyCodingChallengeQuestion) {
+        if (result.data?.activeDailyCodingChallengeQuestion) {
           setProblem(result.data.activeDailyCodingChallengeQuestion);
         } else {
-          throw new Error("No daily problem found");
+          throw new Error("No daily problem found in response");
         }
       } catch (err) {
         console.error('Failed to fetch Problem of the Day:', err);

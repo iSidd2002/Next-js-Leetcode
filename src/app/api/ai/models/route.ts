@@ -19,17 +19,33 @@ export async function GET(request: NextRequest) {
     
     console.log('🔍 Listing available Gemini models...');
     
-    // List available models
-    const models = await genAI.listModels();
-    
-    const modelList = models.map(model => ({
-      name: model.name,
-      displayName: model.displayName,
-      description: model.description,
-      inputTokenLimit: model.inputTokenLimit,
-      outputTokenLimit: model.outputTokenLimit,
-      supportedGenerationMethods: model.supportedGenerationMethods,
-    }));
+    // Return known Gemini models (API doesn't have listModels method)
+    const modelList = [
+      {
+        name: 'gemini-1.5-flash',
+        displayName: 'Gemini 1.5 Flash',
+        description: 'Fast, versatile model for most tasks',
+        inputTokenLimit: 1048576,
+        outputTokenLimit: 8192,
+        supportedGenerationMethods: ['generateContent'],
+      },
+      {
+        name: 'gemini-1.5-pro',
+        displayName: 'Gemini 1.5 Pro',
+        description: 'Best for complex reasoning tasks',
+        inputTokenLimit: 2097152,
+        outputTokenLimit: 8192,
+        supportedGenerationMethods: ['generateContent'],
+      },
+      {
+        name: 'gemini-2.0-flash-exp',
+        displayName: 'Gemini 2.0 Flash (Experimental)',
+        description: 'Next-gen multimodal model',
+        inputTokenLimit: 1048576,
+        outputTokenLimit: 8192,
+        supportedGenerationMethods: ['generateContent'],
+      },
+    ];
 
     console.log(`✅ Found ${modelList.length} available models`);
 

@@ -12,7 +12,15 @@ interface CompanyViewProps {
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
   onDeleteProblem: (id: string) => void;
   onEditProblem: (problem: Problem) => void;
-  onProblemReviewed: (id: string, currentInterval: number) => void;
+  onProblemReviewed: (
+    id: string, 
+    quality?: number, 
+    notes?: string, 
+    timeTaken?: number, 
+    tags?: string[], 
+    customDays?: number, 
+    moveToLearned?: boolean
+  ) => void;
 }
 
 const CompanyView = ({ problems, onUpdateProblem, onDeleteProblem, onEditProblem, onProblemReviewed }: CompanyViewProps) => {

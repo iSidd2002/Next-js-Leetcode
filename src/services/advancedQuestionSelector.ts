@@ -322,7 +322,7 @@ export class AdvancedQuestionSelector {
       if (userProblem.status === 'solved') {
         // Check time since last attempt
         const daysSinceSolved = Math.floor(
-          (Date.now() - new Date(userProblem.lastAttemptDate || Date.now()).getTime()) /
+          (Date.now() - new Date(userProblem.dateSolved || userProblem.createdAt).getTime()) /
             (1000 * 60 * 60 * 24)
         );
 
@@ -368,8 +368,9 @@ export class AdvancedQuestionSelector {
       if (!nextReviewDate) return 0.5;
 
       const now = new Date();
+      const reviewDate = new Date(nextReviewDate);
       const daysUntilReview = Math.floor(
-        (nextReviewDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+        (reviewDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
       );
 
       // Perfect score if review is due today
@@ -425,7 +426,8 @@ export class AdvancedQuestionSelector {
           difficulty: true,
           topics: true,
           status: true,
-          lastAttemptDate: true,
+          dateSolved: true,
+          createdAt: true,
         },
       });
 

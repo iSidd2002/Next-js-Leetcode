@@ -3,7 +3,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 // Solution Repository
 export interface ISolution extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   problemId: string; // Reference to Problem
   problemTitle: string;
   problemUrl: string;
@@ -27,7 +27,7 @@ export interface ISolution extends Document {
 }
 
 const SolutionSchema = new Schema<ISolution>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   problemId: { type: String, required: true },
   problemTitle: { type: String, required: true, trim: true },
   problemUrl: { type: String, required: true },
@@ -57,7 +57,7 @@ const SolutionSchema = new Schema<ISolution>({
 // Code Comparison
 export interface ICodeComparison extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   problemId: string;
   title: string;
   description: string;
@@ -81,7 +81,7 @@ export interface ICodeComparison extends Document {
 }
 
 const CodeComparisonSchema = new Schema<ICodeComparison>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   problemId: { type: String, required: true },
   title: { type: String, required: true, trim: true },
   description: { type: String, required: true, maxlength: 2000 },
@@ -107,7 +107,7 @@ const CodeComparisonSchema = new Schema<ICodeComparison>({
 // Performance Benchmark
 export interface IPerformanceBenchmark extends Document {
   _id: string;
-  userId: string;
+  userId: mongoose.Types.ObjectId;
   problemId: string;
   solutionId: string;
   language: string;
@@ -137,7 +137,7 @@ export interface IPerformanceBenchmark extends Document {
 }
 
 const PerformanceBenchmarkSchema = new Schema<IPerformanceBenchmark>({
-  userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   problemId: { type: String, required: true },
   solutionId: { type: String, required: true },
   language: { type: String, required: true },
@@ -169,7 +169,7 @@ const PerformanceBenchmarkSchema = new Schema<IPerformanceBenchmark>({
 // Code Review
 export interface ICodeReview extends Document {
   _id: string;
-  reviewerId: string;
+  reviewerId: mongoose.Types.ObjectId;
   solutionId: string;
   rating: number; // 1-5 stars
   feedback: {
@@ -197,7 +197,7 @@ export interface ICodeReview extends Document {
 }
 
 const CodeReviewSchema = new Schema<ICodeReview>({
-  reviewerId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  reviewerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   solutionId: { type: String, required: true },
   rating: { type: Number, min: 1, max: 5, required: true },
   feedback: {

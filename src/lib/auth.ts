@@ -1,16 +1,19 @@
-import jwt from 'jsonwebtoken';
+import jwt, { Secret, SignOptions, VerifyOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET_RAW = process.env.JWT_SECRET;
 
-if (!JWT_SECRET) {
+if (!JWT_SECRET_RAW) {
   throw new Error('JWT_SECRET environment variable is required');
 }
 
-if (JWT_SECRET.length < 32) {
+if (JWT_SECRET_RAW.length < 32) {
   throw new Error('JWT_SECRET must be at least 32 characters long');
 }
+
+// TypeScript now knows this is definitely a string
+const JWT_SECRET: Secret = JWT_SECRET_RAW;
 
 export interface JWTPayload {
   id: string;
@@ -28,14 +31,12 @@ export function generateToken(user: JWTPayload): string {
     iat: Math.floor(Date.now() / 1000)
   };
 
-  return jwt.sign(
-    payload,
-    JWT_SECRET,
-    {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-      algorithm: 'HS256'
-    }
-  );
+  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn,
+    algorithm: 'HS256'
+  } as SignOptions);
 }
 
 export function verifyToken(token: string): JWTPayload {

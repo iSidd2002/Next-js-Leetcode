@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, getRateLimitHeaders, RateLimitPresets } from '@/lib/rate-limiter';
 
 interface CompanyProblem {
   id: number;
@@ -24,6 +25,17 @@ const DIFFICULTY_MAP = {
 
 // GitHub repository base URL for company problems
 const GITHUB_BASE_URL = 'https://raw.githubusercontent.com/liquidslr/leetcode-company-wise-problems/main';
+
+// Validate company name to prevent SSRF and path traversal attacks
+function validateCompanyName(company: string): boolean {
+  if (!company || typeof company !== 'string') {
+    return false;
+  }
+  // Only allow alphanumeric characters, spaces, hyphens, and common punctuation
+  // Reject path traversal attempts and special characters
+  const validPattern = /^[a-zA-Z0-9\s\-._&]+$/;
+  return validPattern.test(company) && company.length <= 100;
+}
 
 // Parse CSV data from GitHub (space-separated format)
 function parseCSV(csvText: string): any[] {
@@ -93,7 +105,8 @@ async function fetchCompanyProblemsFromGitHub(company: string): Promise<CompanyP
         const response = await fetch(url, {
           headers: {
             'User-Agent': 'LeetCode-Tracker-App/1.0'
-          }
+          },
+          signal: AbortSignal.timeout(10000) // 10 second timeout
         });
 
         if (response.ok) {
@@ -171,13 +184,33 @@ export async function GET(
   { params }: { params: Promise<{ company: string }> }
 ) {
   try {
+    // Rate limiting for public endpoint
+    const rateLimit = checkRateLimit(request, RateLimitPresets.PUBLIC);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.PUBLIC);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, {
+        status: 429,
+        headers
+      });
+    }
     const { searchParams } = new URL(request.url);
-    const limit = parseInt(searchParams.get('limit') || '1000'); // Increased default limit
+    const limit = parseInt(searchParams.get('limit') || '1000');
     const page = parseInt(searchParams.get('page') || '1');
     const difficulty = searchParams.get('difficulty');
     const search = searchParams.get('search');
     const resolvedParams = await params;
     const company = decodeURIComponent(resolvedParams.company);
+
+    // SECURITY: Validate company name to prevent SSRF
+    if (!validateCompanyName(company)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid company name' },
+        { status: 400 }
+      );
+    }
 
     console.log(`Fetching problems for company: ${company}, limit: ${limit}`);
 
@@ -234,7 +267,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error(`Error fetching problems for company ${company}:`, error);
+    console.error('Error fetching problems for company:', error);
     return NextResponse.json(
       { success: false, error: 'Failed to fetch company problems' },
       { status: 500 }

@@ -45,7 +45,7 @@ export function CommandMenu({ open, onOpenChange, onAddProblem, onAddContest }: 
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
-        onOpenChange((open) => !open)
+        onOpenChange(!open)
       }
     }
 

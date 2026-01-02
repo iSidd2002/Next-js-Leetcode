@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       normalizedProblem = PlatformAdapter.normalizeProblem(body.problem, body.problem.platform);
     } catch (error) {
       console.error('❌ Problem normalization failed:', error);
-      // If normalization fails, use the raw problem data
+      // If normalization fails, use the raw problem data with full NormalizedProblem structure
       normalizedProblem = {
         id: body.problem.id || 'unknown',
         title: body.problem.title,
@@ -119,8 +119,17 @@ export async function POST(request: NextRequest) {
           category: 'Medium' as const
         },
         topics: body.problem.topics || [],
-        description: body.problem.description
-      };
+        description: body.problem.description,
+        url: body.problem.url || '',
+        companies: body.problem.companies || [],
+        metadata: {
+          solvedCount: undefined,
+          acceptanceRate: undefined,
+          timeLimit: undefined,
+          memoryLimit: undefined,
+          tags: body.problem.topics || []
+        }
+      } as NormalizedProblem;
     }
 
     // Create request object
@@ -180,9 +189,9 @@ export async function POST(request: NextRequest) {
       }
     );
 
-    let aiResponse;
+    let aiResponse: SimilarProblemsResponse;
     try {
-      aiResponse = await Promise.race([aiPromise, timeoutPromise]);
+      aiResponse = await Promise.race([aiPromise, timeoutPromise]) as SimilarProblemsResponse;
     } catch (error: any) {
       if (error.message === 'AI_TIMEOUT') {
         console.log('⏰ AI request timed out, returning fallback recommendations');

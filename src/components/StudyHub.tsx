@@ -17,7 +17,7 @@ import {
   TrendingUp
 } from 'lucide-react';
 import FlashcardSystem from './study/FlashcardSystem';
-import AIAssistant from './ai/AIAssistant';
+import { AIDashboard } from './ai';
 
 interface StudyHubProps {
   // Add any props you need
@@ -99,7 +99,7 @@ const StudyHub = ({}: StudyHubProps) => {
 
         {/* AI Assistant Tab */}
         <TabsContent value="ai-assistant" className="space-y-4">
-          <AIAssistant />
+          <AIDashboard />
         </TabsContent>
 
         {/* Code Templates Tab */}
