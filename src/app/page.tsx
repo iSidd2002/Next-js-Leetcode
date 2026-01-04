@@ -68,6 +68,7 @@ export default function HomePage() {
   // Initialize app
   useEffect(() => {
     initializeApp();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const initializeApp = async () => {
@@ -88,8 +89,8 @@ export default function HomePage() {
         setCurrentUser(userProfile);
         setIsAuthenticated(true);
         await loadUserData();
-      } catch (error: any) {
-        logger.error('Server verification failed', error);
+      } catch (error: unknown) {
+        logger.error('Server verification failed', error instanceof Error ? error.message : String(error));
         setIsAuthenticated(false);
         setCurrentUser(null);
         setShowAuthModal(true);
@@ -198,7 +199,7 @@ export default function HomePage() {
 
   const handleToggleReview = async (id: string, updates: Partial<Problem>) => {
     try {
-      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
+      const problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
@@ -277,15 +278,15 @@ export default function HomePage() {
     moveToLearned?: boolean
   ) => {
     try {
-      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
+      const problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
         return;
       }
 
-      let updatedProblem;
-      let intervalDays;
+      let updatedProblem: Problem;
+      let intervalDays: number;
 
       if (moveToLearned) {
         updatedProblem = {

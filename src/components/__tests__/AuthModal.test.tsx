@@ -1,29 +1,29 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '../../../src/test/utils/testUtils';
+import '@testing-library/jest-dom';
+import { render, screen, fireEvent, waitFor } from '../../test/utils/testUtils';
 import userEvent from '@testing-library/user-event';
 import AuthModal from '../AuthModal';
 import ApiService from '../../services/api';
 
 // Mock ApiService
-vi.mock('../../services/api', () => ({
+jest.mock('../../services/api', () => ({
   default: {
-    login: vi.fn(),
-    register: vi.fn()
+    login: jest.fn(),
+    register: jest.fn()
   }
 }));
 
 // Mock sonner toast
-vi.mock('sonner', () => ({
+jest.mock('sonner', () => ({
   toast: {
-    success: vi.fn(),
-    error: vi.fn(),
-    info: vi.fn()
+    success: jest.fn(),
+    error: jest.fn(),
+    info: jest.fn()
   }
 }));
 
 describe('AuthModal', () => {
-  const mockOnOpenChange = vi.fn();
-  const mockOnAuthSuccess = vi.fn();
+  const mockOnOpenChange = jest.fn();
+  const mockOnAuthSuccess = jest.fn();
 
   const defaultProps = {
     open: true,
@@ -32,7 +32,7 @@ describe('AuthModal', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should render login form by default', () => {
@@ -64,7 +64,7 @@ describe('AuthModal', () => {
       user: { id: '123', email: 'test@example.com', username: 'testuser' }
     };
 
-    vi.mocked(ApiService.login).mockResolvedValue(mockAuthResponse);
+    (ApiService.login as jest.Mock).mockResolvedValue(mockAuthResponse);
 
     render(<AuthModal {...defaultProps} />);
 
@@ -81,7 +81,7 @@ describe('AuthModal', () => {
 
   it('should handle login error', async () => {
     const user = userEvent.setup();
-    vi.mocked(ApiService.login).mockRejectedValue(new Error('Invalid credentials'));
+    (ApiService.login as jest.Mock).mockRejectedValue(new Error('Invalid credentials'));
 
     render(<AuthModal {...defaultProps} />);
 
@@ -101,7 +101,7 @@ describe('AuthModal', () => {
       user: { id: '123', email: 'new@example.com', username: 'newuser' }
     };
 
-    vi.mocked(ApiService.register).mockResolvedValue(mockAuthResponse);
+    (ApiService.register as jest.Mock).mockResolvedValue(mockAuthResponse);
 
     render(<AuthModal {...defaultProps} />);
 
@@ -170,7 +170,7 @@ describe('AuthModal', () => {
   it('should handle offline mode selection', async () => {
     const user = userEvent.setup();
     const mockLocalStorage = {
-      setItem: vi.fn()
+      setItem: jest.fn()
     };
     Object.defineProperty(window, 'localStorage', { value: mockLocalStorage });
 
@@ -185,7 +185,7 @@ describe('AuthModal', () => {
 
   it('should show loading state during login', async () => {
     const user = userEvent.setup();
-    vi.mocked(ApiService.login).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+    (ApiService.login as jest.Mock).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
 
     render(<AuthModal {...defaultProps} />);
 
@@ -201,7 +201,7 @@ describe('AuthModal', () => {
 
   it('should show loading state during registration', async () => {
     const user = userEvent.setup();
-    vi.mocked(ApiService.register).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
+    (ApiService.register as jest.Mock).mockImplementation(() => new Promise(resolve => setTimeout(resolve, 100)));
 
     render(<AuthModal {...defaultProps} />);
 
@@ -230,7 +230,7 @@ describe('AuthModal', () => {
       user: { id: '123', email: 'test@example.com', username: 'testuser' }
     };
 
-    vi.mocked(ApiService.login).mockResolvedValue(mockAuthResponse);
+    (ApiService.login as jest.Mock).mockResolvedValue(mockAuthResponse);
 
     render(<AuthModal {...defaultProps} />);
 

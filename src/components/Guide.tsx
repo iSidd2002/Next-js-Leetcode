@@ -528,7 +528,7 @@ const Guide = () => {
                 <ol className="space-y-2 text-xs text-muted-foreground ml-1">
                   <li className="flex items-start gap-2">
                     <span className="font-bold text-purple-500">1.</span>
-                    <span>Add/Edit a problem & go to <strong>"Code Solution"</strong> tab</span>
+                    <span>Add/Edit a problem &amp; go to <strong>&quot;Code Solution&quot;</strong> tab</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <span className="font-bold text-purple-500">2.</span>

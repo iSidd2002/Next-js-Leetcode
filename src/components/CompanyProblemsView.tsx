@@ -82,7 +82,7 @@ const CompanyProblemsView: React.FC<CompanyProblemsViewProps> = ({
         <div>
           <h2 className="text-2xl font-bold tracking-tight">Company Problems</h2>
           <p className="text-muted-foreground">
-            Problems imported from companies that you haven't solved yet
+            Problems imported from companies that you haven&apos;t solved yet
           </p>
         </div>
         <div className="flex items-center gap-2">

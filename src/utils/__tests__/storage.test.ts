@@ -1,28 +1,34 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import '@testing-library/jest-dom';
 import StorageService from '../storage';
 import ApiService from '../../services/api';
 
 // Mock ApiService
-vi.mock('../../services/api', () => ({
+jest.mock('../../services/api', () => ({
   default: {
-    isAuthenticated: vi.fn(),
-    getProblems: vi.fn(),
-    createProblem: vi.fn(),
-    updateProblem: vi.fn(),
-    deleteProblem: vi.fn(),
-    getContests: vi.fn(),
-    createContest: vi.fn(),
-    updateContest: vi.fn(),
-    deleteContest: vi.fn()
+    isAuthenticated: jest.fn(),
+    getProblems: jest.fn(),
+    createProblem: jest.fn(),
+    updateProblem: jest.fn(),
+    deleteProblem: jest.fn(),
+    getContests: jest.fn(),
+    createContest: jest.fn(),
+    updateContest: jest.fn(),
+    deleteContest: jest.fn(),
+    clearAuthState: jest.fn(),
+    login: jest.fn(),
+    register: jest.fn(),
+    logout: jest.fn(),
+    getToken: jest.fn(),
+    setToken: jest.fn(),
   }
 }));
 
 // Mock localStorage
 const mockLocalStorage = {
-  getItem: vi.fn(),
-  setItem: vi.fn(),
-  removeItem: vi.fn(),
-  clear: vi.fn()
+  getItem: jest.fn(),
+  setItem: jest.fn(),
+  removeItem: jest.fn(),
+  clear: jest.fn()
 };
 
 Object.defineProperty(window, 'localStorage', {
@@ -46,7 +52,8 @@ const mockProblems = [
     nextReviewDate: null,
     topics: ['Array', 'Hash Table'],
     status: 'active' as const,
-    companies: ['Google']
+    companies: ['Google'],
+    source: 'manual' as const
   }
 ];
 
@@ -65,13 +72,13 @@ const mockContests = [
 
 describe('StorageService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
     mockLocalStorage.getItem.mockReturnValue(null);
   });
 
   describe('Offline Mode', () => {
     beforeEach(() => {
-      vi.mocked(ApiService.isAuthenticated).mockReturnValue(false);
+      (ApiService.isAuthenticated as jest.Mock).mockReturnValue(false);
     });
 
     it('should get problems from localStorage in offline mode', async () => {
@@ -110,7 +117,8 @@ describe('StorageService', () => {
         nextReviewDate: null,
         topics: ['Array'],
         status: 'active' as const,
-        companies: []
+        companies: [],
+        source: 'manual' as const
       };
 
       const result = await StorageService.addProblem(problemData);
@@ -144,11 +152,11 @@ describe('StorageService', () => {
 
   describe('Online Mode', () => {
     beforeEach(() => {
-      vi.mocked(ApiService.isAuthenticated).mockReturnValue(true);
+      (ApiService.isAuthenticated as jest.Mock).mockReturnValue(true);
     });
 
     it('should get problems from API in online mode', async () => {
-      vi.mocked(ApiService.getProblems).mockResolvedValue(mockProblems);
+      (ApiService.getProblems as jest.Mock).mockResolvedValue(mockProblems);
 
       const problems = await StorageService.getProblems();
 
@@ -161,7 +169,7 @@ describe('StorageService', () => {
     });
 
     it('should fallback to localStorage when API fails', async () => {
-      vi.mocked(ApiService.getProblems).mockRejectedValue(new Error('API Error'));
+      (ApiService.getProblems as jest.Mock).mockRejectedValue(new Error('API Error'));
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockProblems));
 
       const problems = await StorageService.getProblems();
@@ -186,11 +194,12 @@ describe('StorageService', () => {
         nextReviewDate: null,
         topics: ['Dynamic Programming'],
         status: 'active' as const,
-        companies: ['Meta']
+        companies: ['Meta'],
+        source: 'manual' as const
       };
 
       const expectedResult = { ...problemData, id: 'api-problem-id', createdAt: '2024-01-01T00:00:00.000Z' };
-      vi.mocked(ApiService.createProblem).mockResolvedValue(expectedResult as any);
+      (ApiService.createProblem as jest.Mock).mockResolvedValue(expectedResult as unknown);
 
       const result = await StorageService.addProblem(problemData);
 
@@ -201,7 +210,7 @@ describe('StorageService', () => {
     it('should update problem via API in online mode', async () => {
       const updates = { title: 'API Updated Title' };
       const expectedResult = { ...mockProblems[0], ...updates };
-      vi.mocked(ApiService.updateProblem).mockResolvedValue(expectedResult as any);
+      (ApiService.updateProblem as jest.Mock).mockResolvedValue(expectedResult as unknown);
 
       const result = await StorageService.updateProblem('problem-1', updates);
 
@@ -210,7 +219,7 @@ describe('StorageService', () => {
     });
 
     it('should delete problem via API in online mode', async () => {
-      vi.mocked(ApiService.deleteProblem).mockResolvedValue();
+      (ApiService.deleteProblem as jest.Mock).mockResolvedValue(undefined);
 
       const result = await StorageService.deleteProblem('problem-1');
 
@@ -221,11 +230,11 @@ describe('StorageService', () => {
 
   describe('Contests', () => {
     beforeEach(() => {
-      vi.mocked(ApiService.isAuthenticated).mockReturnValue(true);
+      (ApiService.isAuthenticated as jest.Mock).mockReturnValue(true);
     });
 
     it('should get contests from API in online mode', async () => {
-      vi.mocked(ApiService.getContests).mockResolvedValue(mockContests as any);
+      (ApiService.getContests as jest.Mock).mockResolvedValue(mockContests as unknown);
 
       const contests = await StorageService.getContests();
 
@@ -238,7 +247,7 @@ describe('StorageService', () => {
     });
 
     it('should fallback to localStorage for contests when API fails', async () => {
-      vi.mocked(ApiService.getContests).mockRejectedValue(new Error('API Error'));
+      (ApiService.getContests as jest.Mock).mockRejectedValue(new Error('API Error'));
       mockLocalStorage.getItem.mockReturnValue(JSON.stringify(mockContests));
 
       const contests = await StorageService.getContests();
@@ -286,9 +295,9 @@ describe('StorageService', () => {
     });
 
     it('should handle sync with server', async () => {
-      vi.mocked(ApiService.isAuthenticated).mockReturnValue(true);
-      vi.mocked(ApiService.getProblems).mockResolvedValue([]);
-      vi.mocked(ApiService.getContests).mockResolvedValue([]);
+      (ApiService.isAuthenticated as jest.Mock).mockReturnValue(true);
+      (ApiService.getProblems as jest.Mock).mockResolvedValue([]);
+      (ApiService.getContests as jest.Mock).mockResolvedValue([]);
 
       await StorageService.syncWithServer();
 
@@ -298,7 +307,7 @@ describe('StorageService', () => {
     });
 
     it('should not sync in offline mode', async () => {
-      vi.mocked(ApiService.isAuthenticated).mockReturnValue(false);
+      (ApiService.isAuthenticated as jest.Mock).mockReturnValue(false);
 
       await StorageService.syncWithServer();
 

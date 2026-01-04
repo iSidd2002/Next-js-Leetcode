@@ -28,6 +28,7 @@ export function ThemeProvider({
     if (storedTheme) {
       setTheme(storedTheme)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {

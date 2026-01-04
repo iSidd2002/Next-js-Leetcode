@@ -19,11 +19,8 @@ import {
 import FlashcardSystem from './study/FlashcardSystem';
 import { AIDashboard } from './ai';
 
-interface StudyHubProps {
-  // Add any props you need
-}
-
-const StudyHub = ({}: StudyHubProps) => {
+// StudyHub component - no props needed currently
+const StudyHub = () => {
   const [activeTab, setActiveTab] = useState('flashcards');
   const [showCreateFlashcard, setShowCreateFlashcard] = useState(false);
 

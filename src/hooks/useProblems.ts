@@ -11,6 +11,26 @@ import { getReviewIntervals } from '@/utils/settingsStorage';
 import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 
+// Type definitions for daily challenge and importable problems
+interface DailyChallengeProblem {
+  id?: string;
+  title: string;
+  difficulty: string;
+  url: string;
+  platform?: 'leetcode' | 'codeforces' | 'atcoder';
+  problemId?: string;
+  topics?: string[];
+}
+
+interface ImportableProblem {
+  title: string;
+  difficulty: string;
+  url?: string;
+  problemId?: string;
+  titleSlug?: string;
+  topics?: string[];
+}
+
 interface UseProblemsReturn {
   problems: Problem[];
   potdProblems: Problem[];
@@ -30,11 +50,11 @@ interface UseProblemsReturn {
     moveToLearned?: boolean
   ) => Promise<void>;
   addPotdProblem: (potd: ActiveDailyCodingChallengeQuestion) => void;
-  addDailyChallengeToPotd: (dailyProblem: any) => Promise<void>;
+  addDailyChallengeToPotd: (dailyProblem: DailyChallengeProblem) => Promise<void>;
   addPotdToProblem: (id: string, targetStatus?: 'active' | 'learned') => Promise<void>;
   cleanupPotd: () => Promise<void>;
   clearAllProblems: () => Promise<void>;
-  importProblems: (companyName: string, problemsToImport: any[]) => Promise<void>;
+  importProblems: (companyName: string, problemsToImport: ImportableProblem[]) => Promise<void>;
   isPotdInProblems: (potdProblem: Problem) => { inProblems: boolean; inLearned: boolean; status: string };
 }
 
@@ -154,7 +174,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
 
   const toggleReview = useCallback(async (id: string, updates: Partial<Problem>) => {
     try {
-      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
+      const problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
@@ -205,15 +225,15 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
     moveToLearned?: boolean
   ) => {
     try {
-      let problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
+      const problem = problems.find(p => p.id === id) || potdProblems.find(p => p.id === id);
 
       if (!problem) {
         toast.error('Problem not found');
         return;
       }
 
-      let updatedProblem;
-      let intervalDays;
+      let updatedProblem: Problem;
+      let intervalDays: number;
 
       if (moveToLearned) {
         updatedProblem = {
@@ -314,7 +334,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
     toast.success('POTD added to tracking list!');
   }, [potdProblems]);
 
-  const addDailyChallengeToPotd = useCallback(async (dailyProblem: any) => {
+  const addDailyChallengeToPotd = useCallback(async (dailyProblem: DailyChallengeProblem) => {
     try {
       const isDuplicate = potdProblems.some(p => p.url === dailyProblem.url);
       if (isDuplicate) {
@@ -324,9 +344,9 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
 
       const newProblem: Problem = {
         id: generateId(),
-        platform: dailyProblem.platform,
+        platform: dailyProblem.platform || 'leetcode',
         title: dailyProblem.title,
-        problemId: dailyProblem.id,
+        problemId: dailyProblem.id || dailyProblem.problemId || '',
         difficulty: dailyProblem.difficulty,
         url: dailyProblem.url,
         dateSolved: '',
@@ -434,7 +454,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
     }
   }, [problems]);
 
-  const importProblems = useCallback(async (companyName: string, problemsToImport: any[]) => {
+  const importProblems = useCallback(async (companyName: string, problemsToImport: ImportableProblem[]) => {
     try {
       const newProblems: Problem[] = [];
       const duplicates: string[] = [];
@@ -462,8 +482,9 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
         try {
           const created = await StorageService.addProblem(problemData);
           newProblems.push(created);
-        } catch (error: any) {
-          const isDuplicate = error.message?.includes('already exists') || error.status === 409;
+        } catch (error: unknown) {
+          const errorObj = error as { message?: string; status?: number };
+          const isDuplicate = errorObj.message?.includes('already exists') || errorObj.status === 409;
           if (isDuplicate) duplicates.push(problem.title);
           else failed.push(problem.title);
         }

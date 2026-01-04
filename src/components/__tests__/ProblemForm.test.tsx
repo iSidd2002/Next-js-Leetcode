@@ -1,23 +1,22 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import '@testing-library/jest-dom';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProblemForm from '../ProblemForm';
-import { mockProblem } from '../../test/utils/testUtils';
+import { mockProblem, render } from '../../test/utils/testUtils';
 import {
-  renderWithProviders,
   selectOption,
   fillProblemForm,
   submitForm,
   createMockProblem
 } from '../../test/utils/componentTestUtils';
 
-// Import render for tests that haven't been updated yet
-import { render } from '@testing-library/react';
+// Alias render as renderWithProviders for compatibility
+const renderWithProviders = render;
 
 describe('ProblemForm', () => {
-  const mockOnAddProblem = vi.fn();
-  const mockOnUpdateProblem = vi.fn();
-  const mockOnOpenChange = vi.fn();
+  const mockOnAddProblem = jest.fn();
+  const mockOnUpdateProblem = jest.fn();
+  const mockOnOpenChange = jest.fn();
 
   const defaultProps = {
     open: true,
@@ -28,7 +27,7 @@ describe('ProblemForm', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
+    jest.clearAllMocks();
   });
 
   it('should render add problem form', () => {

@@ -23,12 +23,34 @@
   "jest": {
     "preset": "ts-jest",
     "testEnvironment": "jsdom",
-    "testURL": "http://localhost",
-    "moduleNameMapper": {
-      "^@/(.*)$": "<rootDir>/src/$1"
+    "testEnvironmentOptions": {
+      "url": "http://localhost"
     },
-    "setupFiles": [
+    "moduleNameMapper": {
+      "^@/(.*)$": "<rootDir>/src/$1",
+      "\\.(css|less|scss|sass)$": "identity-obj-proxy"
+    },
+    "setupFilesAfterEnv": [
       "<rootDir>/jest.setup.js"
+    ],
+    "transform": {
+      "^.+\\.(ts|tsx)$": [
+        "ts-jest",
+        {
+          "tsconfig": {
+            "jsx": "react-jsx",
+            "esModuleInterop": true,
+            "allowSyntheticDefaultImports": true
+          }
+        }
+      ]
+    },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@testing-library)/)"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.next/"
     ]
   },
   "dependencies": {
@@ -83,6 +105,9 @@
     "@babel/preset-react": "^7.27.1",
     "@babel/preset-typescript": "^7.27.1",
     "@eslint/eslintrc": "^3",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
+    "@testing-library/user-event": "^14.6.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^20",
     "@types/react": "^19.1.8",
@@ -93,7 +118,9 @@
     "dotenv": "^17.2.0",
     "eslint": "^9",
     "eslint-config-next": "15.4.2",
+    "identity-obj-proxy": "^3.0.0",
     "jest": "^30.0.5",
+    "jest-environment-jsdom": "^30.2.0",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5"

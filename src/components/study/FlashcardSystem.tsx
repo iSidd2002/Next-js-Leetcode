@@ -39,6 +39,7 @@ const FlashcardSystem = ({ onCreateFlashcard }: FlashcardSystemProps) => {
 
   useEffect(() => {
     loadFlashcards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reviewMode]);
 
   const loadFlashcards = async () => {

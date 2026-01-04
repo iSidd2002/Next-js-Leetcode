@@ -273,8 +273,8 @@ const ExternalResources = () => {
               Pro Tip from the Team
             </h4>
             <p className="text-sm text-foreground/80 leading-relaxed">
-              Use these external resources to discover new problems, then add them to your POTD archive using the 
-              "Add Problem" feature. This way you can track your progress and use the spaced repetition system 
+              Use these external resources to discover new problems, then add them to your POTD archive using the
+              &quot;Add Problem&quot; feature. This way you can track your progress and use the spaced repetition system
               for long-term retention. <span className="font-semibold text-primary">Happy coding! 🚀</span>
             </p>
           </div>

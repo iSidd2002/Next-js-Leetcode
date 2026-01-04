@@ -31,7 +31,7 @@ export default function MoreProjects() {
           More Projects from Me
         </h1>
         <p className="text-muted-foreground max-w-2xl mx-auto">
-          Check out some of my other projects that I've built to solve real-world problems and explore different technologies.
+          Check out some of my other projects that I&apos;ve built to solve real-world problems and explore different technologies.
         </p>
       </div>
 

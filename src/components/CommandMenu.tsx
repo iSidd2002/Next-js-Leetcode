@@ -51,7 +51,8 @@ export function CommandMenu({ open, onOpenChange, onAddProblem, onAddContest }: 
 
     document.addEventListener("keydown", down)
     return () => document.removeEventListener("keydown", down)
-  }, [onOpenChange])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onOpenChange, open])
 
   return (
     <CommandDialog open={open} onOpenChange={onOpenChange}>
