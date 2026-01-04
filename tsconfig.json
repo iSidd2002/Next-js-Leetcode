@@ -6,7 +6,11 @@
       "dom.iterable",
       "esnext"
     ],
-    "types": ["jest", "@testing-library/jest-dom"],
+    "types": [
+      "jest",
+      "@testing-library/jest-dom",
+      "react-syntax-highlighter"
+    ],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
