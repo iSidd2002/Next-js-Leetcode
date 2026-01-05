@@ -447,6 +447,15 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
                             >
                               <Lightbulb className="h-4 w-4" />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setProblemToDelete(problem.id)}
+                              className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                              title="Delete Problem"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                             <Button 
                                 size="sm" 
                                 onClick={() => {
