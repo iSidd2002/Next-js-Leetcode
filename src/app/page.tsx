@@ -545,7 +545,16 @@ export default function HomePage() {
         source: 'manual',
         status: targetStatus,
         dateSolved: new Date().toISOString(),
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        // Preserve review status - if POTD was marked for review, keep it
+        // Also mark for review if adding as active (user likely wants to practice it)
+        isReview: potdProblem.isReview || targetStatus === 'active',
+        // Initialize spaced repetition for active problems
+        ...(targetStatus === 'active' && !potdProblem.isReview ? {
+          repetition: 0,
+          interval: 1,
+          nextReviewDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        } : {})
       };
 
       await StorageService.addProblem(newProblem);

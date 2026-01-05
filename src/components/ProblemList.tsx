@@ -330,14 +330,16 @@ const ProblemList = ({ problems, onUpdateProblem, onToggleReview, onDeleteProble
 
                 {isReviewList && (
                   <div className="mt-3 pt-3 border-t border-white/5 flex gap-2">
-                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 5)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-green-600 hover:bg-green-700 text-white">
-                        Easy
-                      </Button>
-                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 3)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-yellow-600 hover:bg-yellow-700 text-white">
-                        Good
-                      </Button>
-                      <Button size="sm" onClick={() => onProblemReviewed(problem.id, 1)} disabled={!isDueForReview(problem)} className="flex-1 text-xs h-8 bg-red-600 hover:bg-red-700 text-white">
-                        Hard
+                      <Button 
+                        size="sm" 
+                        onClick={() => {
+                          setProblemToReview(problem);
+                          setShowEnhancedReview(true);
+                        }}
+                        disabled={!isDueForReview(problem)} 
+                        className="flex-1 text-xs h-8 bg-primary hover:bg-primary/90"
+                      >
+                        Review
                       </Button>
                   </div>
                 )}
