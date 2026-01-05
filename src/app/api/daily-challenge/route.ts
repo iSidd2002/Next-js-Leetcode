@@ -302,6 +302,7 @@ const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
     logDev('Daily Challenge: 🔄 Fetching LeetCode Daily Challenge');
 
     // First, try to fetch the actual daily challenge
+    // Updated query for LeetCode's current GraphQL schema (2025)
     const dailyQuery = `
       query questionOfToday {
         activeDailyCodingChallengeQuestion {
@@ -310,12 +311,11 @@ const fetchLeetCodeProblem = async (): Promise<UnifiedProblem | null> => {
           question {
             acRate
             difficulty
-            frontendQuestionId: questionFrontendId
+            questionId
             title
             titleSlug
             topicTags {
               name
-              id
               slug
             }
           }

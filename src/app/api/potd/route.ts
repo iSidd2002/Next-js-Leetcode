@@ -5,23 +5,24 @@ interface LeetCodeGraphQLResponse {
   data: {
     activeDailyCodingChallengeQuestion: {
       date: string;
-      userStatus: string | null;
+      userStatus?: string | null;
       link: string;
       question: {
         acRate: number;
         difficulty: string;
-        freqBar: number | null;
-        frontendQuestionId: string;
-        isFavor: boolean;
-        paidOnly: boolean;
-        status: string | null;
+        freqBar?: number | null;
+        questionId: string;
+        frontendQuestionId?: string; // Deprecated, keeping for backward compatibility
+        isFavor?: boolean;
+        paidOnly?: boolean;
+        status?: string | null;
         title: string;
         titleSlug: string;
-        hasVideoSolution: boolean;
-        hasSolution: boolean;
+        hasVideoSolution?: boolean;
+        hasSolution?: boolean;
         topicTags: Array<{
           name: string;
-          id: string;
+          id?: string;
           slug: string;
         }>;
       };
@@ -32,27 +33,20 @@ interface LeetCodeGraphQLResponse {
 const LEETCODE_GRAPHQL_ENDPOINT = 'https://leetcode.com/graphql';
 
 // Predefined safe query for POTD - prevents arbitrary GraphQL queries
+// Updated to use current LeetCode GraphQL schema (2025)
 const POTD_QUERY = `
   query questionOfToday {
     activeDailyCodingChallengeQuestion {
       date
-      userStatus
       link
       question {
         acRate
         difficulty
-        freqBar
-        frontendQuestionId
-        isFavor
-        paidOnly
-        status
+        questionId
         title
         titleSlug
-        hasVideoSolution
-        hasSolution
         topicTags {
           name
-          id
           slug
         }
       }
@@ -133,29 +127,20 @@ const createFallbackProblem = (): LeetCodeGraphQLResponse => ({
   data: {
     activeDailyCodingChallengeQuestion: {
       date: new Date().toISOString().split('T')[0],
-      userStatus: "NotStart",
       link: "/problems/two-sum/",
       question: {
         acRate: 54.5,
         difficulty: "Easy",
-        freqBar: null,
-        frontendQuestionId: "1",
-        isFavor: false,
-        paidOnly: false,
-        status: null,
+        questionId: "1",
         title: "Two Sum (Fallback Problem)",
         titleSlug: "two-sum",
-        hasVideoSolution: true,
-        hasSolution: true,
         topicTags: [
           {
             name: "Array",
-            id: "VG9waWNUYWdOb2RlOjU=",
             slug: "array"
           },
           {
             name: "Hash Table",
-            id: "VG9waWNUYWdOb2RlOjY=",
             slug: "hash-table"
           }
         ]
