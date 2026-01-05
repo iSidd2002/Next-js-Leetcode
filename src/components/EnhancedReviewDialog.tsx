@@ -367,7 +367,7 @@ export function EnhancedReviewDialog({
                       <Label className="text-sm font-semibold">Select review date</Label>
                     </div>
 
-                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen} modal={true}>
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
@@ -380,7 +380,12 @@ export function EnhancedReviewDialog({
                           {customDate ? format(customDate, "PPP") : "Pick a date"}
                         </Button>
                       </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
+                      <PopoverContent 
+                        className="w-auto p-0" 
+                        align="start"
+                        style={{ zIndex: 100 }}
+                        onOpenAutoFocus={(e) => e.preventDefault()}
+                      >
                         <Calendar
                           mode="single"
                           selected={customDate}
@@ -390,7 +395,6 @@ export function EnhancedReviewDialog({
                             setShowQuickActions(true);
                           }}
                           disabled={(date) => date < new Date()}
-                          initialFocus
                         />
                       </PopoverContent>
                     </Popover>
