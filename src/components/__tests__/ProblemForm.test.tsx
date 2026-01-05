@@ -2,13 +2,13 @@ import '@testing-library/jest-dom';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import ProblemForm from '../ProblemForm';
-import { mockProblem, render } from '../../test/utils/testUtils';
+import { mockProblem, render } from '../../../tests/utils/testUtils';
 import {
   selectOption,
   fillProblemForm,
   submitForm,
   createMockProblem
-} from '../../test/utils/componentTestUtils';
+} from '../../../tests/utils/componentTestUtils';
 
 // Alias render as renderWithProviders for compatibility
 const renderWithProviders = render;

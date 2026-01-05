@@ -1,6 +1,6 @@
 import { screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Problem } from '../../types';
+import { Problem } from '../../src/types';
 
 // Form interaction helpers
 export const fillInput = async (labelText: string | RegExp, value: string) => {

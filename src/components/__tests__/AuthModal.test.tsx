@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, fireEvent, waitFor } from '../../test/utils/testUtils';
+import { render, screen, waitFor } from '../../../tests/utils/testUtils';
 import userEvent from '@testing-library/user-event';
 import AuthModal from '../AuthModal';
 import ApiService from '@/services/api';

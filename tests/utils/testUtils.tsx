@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { render, RenderOptions } from '@testing-library/react';
-import { AppProvider } from '../../context/AppContext';
-import { Problem } from '../../types';
+import { AppProvider } from '../../src/context/AppContext';
+import { Problem } from '../../src/types';
 
 // Mock problem data
 export const mockProblem: Problem = {
