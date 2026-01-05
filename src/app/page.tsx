@@ -32,6 +32,7 @@ import ClientOnly from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLoadingScreen } from '@/components/ui/loading';
 import { Spotlight } from '@/components/ui/spotlight';
+import { EnhancedReviewDialog } from '@/components/EnhancedReviewDialog';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -64,6 +65,9 @@ export default function HomePage() {
   const [problemToEdit, setProblemToEdit] = useState<Problem | null>(null);
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  // Schedule Review Dialog state
+  const [showScheduleReviewDialog, setShowScheduleReviewDialog] = useState(false);
+  const [problemToScheduleReview, setProblemToScheduleReview] = useState<Problem | null>(null);
 
   // Initialize app
   useEffect(() => {
@@ -206,13 +210,16 @@ export default function HomePage() {
         return;
       }
 
-      let updatedProblem: Problem;
-
+      // If marking for review, open the schedule dialog instead of auto-scheduling
       if (updates.isReview && !problem.isReview) {
-        updatedProblem = initializeSpacedRepetition({ ...problem, ...updates }, true);
-        toast.success('Problem marked for review!');
-      } else if (!updates.isReview && problem.isReview) {
-        updatedProblem = {
+        setProblemToScheduleReview(problem);
+        setShowScheduleReviewDialog(true);
+        return;
+      }
+      
+      // If unmarking from review, proceed directly
+      if (!updates.isReview && problem.isReview) {
+        const updatedProblem: Problem = {
           ...problem,
           ...updates,
           repetition: 0,
@@ -220,10 +227,64 @@ export default function HomePage() {
           nextReviewDate: null,
           isReview: false
         };
+        
+        await handleUpdateProblem(problem.id, updatedProblem);
+
+        const [updatedProblems, updatedPotdProblems] = await Promise.all([
+          StorageService.getProblems(),
+          StorageService.getPotdProblems()
+        ]);
+        setProblems(updatedProblems);
+        setPotdProblems(updatedPotdProblems);
         toast.success('Problem unmarked from review');
-      } else {
-        updatedProblem = { ...problem, ...updates };
       }
+    } catch (error) {
+      logger.error('Failed to toggle review', error);
+      toast.error('Failed to update review status');
+    }
+  };
+  
+  // Handler for scheduling a review from the dialog
+  const handleScheduleReview = async (
+    problemId: string,
+    quality: number,
+    notes?: string,
+    timeTaken?: number,
+    tags?: string[],
+    customDays?: number
+  ) => {
+    try {
+      const problem = problems.find(p => p.id === problemId) || potdProblems.find(p => p.id === problemId);
+      
+      if (!problem) {
+        toast.error('Problem not found');
+        return;
+      }
+
+      let nextReviewDate: Date;
+      let interval: number;
+
+      if (customDays !== undefined) {
+        // User selected custom days
+        interval = customDays;
+        nextReviewDate = new Date();
+        nextReviewDate.setDate(nextReviewDate.getDate() + customDays);
+      } else {
+        // Use quality-based calculation
+        const customIntervals = getReviewIntervals();
+        interval = customIntervals[0] || 1;
+        nextReviewDate = new Date();
+        nextReviewDate.setDate(nextReviewDate.getDate() + interval);
+      }
+
+      const updatedProblem: Problem = {
+        ...problem,
+        isReview: true,
+        repetition: 0,
+        interval: interval,
+        nextReviewDate: nextReviewDate.toISOString(),
+        notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
+      };
 
       await handleUpdateProblem(problem.id, updatedProblem);
 
@@ -233,9 +294,13 @@ export default function HomePage() {
       ]);
       setProblems(updatedProblems);
       setPotdProblems(updatedPotdProblems);
+      
+      toast.success(`Problem scheduled for review in ${interval} days!`);
+      setShowScheduleReviewDialog(false);
+      setProblemToScheduleReview(null);
     } catch (error) {
-      logger.error('Failed to toggle review', error);
-      toast.error('Failed to update review status');
+      logger.error('Failed to schedule review', error);
+      toast.error('Failed to schedule review');
     }
   };
 
@@ -546,15 +611,13 @@ export default function HomePage() {
         status: targetStatus,
         dateSolved: new Date().toISOString(),
         createdAt: new Date().toISOString(),
-        // Preserve review status - if POTD was marked for review, keep it
-        // Also mark for review if adding as active (user likely wants to practice it)
-        isReview: potdProblem.isReview || targetStatus === 'active',
-        // Initialize spaced repetition for active problems
-        ...(targetStatus === 'active' && !potdProblem.isReview ? {
-          repetition: 0,
-          interval: 1,
-          nextReviewDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-        } : {})
+        // Only preserve review status if POTD was already marked for review
+        // Don't auto-mark for review - let user decide via "Mark for review" option
+        isReview: potdProblem.isReview || false,
+        // Copy existing spaced repetition data if present
+        repetition: potdProblem.repetition || 0,
+        interval: potdProblem.interval || 0,
+        nextReviewDate: potdProblem.nextReviewDate || null
       };
 
       await StorageService.addProblem(newProblem);
@@ -1043,6 +1106,17 @@ export default function HomePage() {
           onSettingsSave={(intervals) => {
             toast.success(`Review intervals updated: ${intervals.join(', ')} days`);
           }}
+        />
+
+        {/* Schedule Review Dialog - for marking problems for review */}
+        <EnhancedReviewDialog
+          problem={problemToScheduleReview}
+          open={showScheduleReviewDialog}
+          onOpenChange={(open) => {
+            setShowScheduleReviewDialog(open);
+            if (!open) setProblemToScheduleReview(null);
+          }}
+          onReview={handleScheduleReview}
         />
 
         {/* Floating Action Button */}
