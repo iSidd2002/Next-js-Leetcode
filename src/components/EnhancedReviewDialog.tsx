@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Problem } from '@/types';
 import {
   Dialog,
@@ -115,6 +115,24 @@ export function EnhancedReviewDialog({
   const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
+  // Reset all state when dialog opens/closes
+  useEffect(() => {
+    if (open) {
+      // Reset state when dialog opens
+      setSelectedQuality(null);
+      setNotes('');
+      setTimeTaken(0);
+      setQuickTags([]);
+      setShowQuickActions(false);
+      setReviewMode('quality');
+      setCustomDays(7);
+      setMoveToLearned(false);
+      setUseCustomDate(false);
+      setCustomDate(undefined);
+      setIsCalendarOpen(false);
+    }
+  }, [open]);
+
   const handleSubmit = () => {
     if (!problem) return;
     
@@ -227,6 +245,8 @@ export function EnhancedReviewDialog({
           {/* Review Mode Selection */}
           <Tabs value={reviewMode} onValueChange={(v) => {
             setReviewMode(v as 'quality' | 'manual');
+            // Close calendar when switching tabs
+            setIsCalendarOpen(false);
             // Reset moveToLearned when switching to manual mode
             if (v === 'manual') {
               setMoveToLearned(false);
@@ -238,7 +258,7 @@ export function EnhancedReviewDialog({
                 Quality Based
               </TabsTrigger>
               <TabsTrigger value="manual" className="gap-2">
-                <Calendar className="h-4 w-4" />
+                <CalendarIcon className="h-4 w-4" />
                 Custom Days
               </TabsTrigger>
             </TabsList>
