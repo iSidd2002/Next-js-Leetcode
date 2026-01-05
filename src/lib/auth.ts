@@ -1,19 +1,28 @@
-import jwt, { Secret, SignOptions, VerifyOptions } from 'jsonwebtoken';
+import jwt, { Secret, SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { NextRequest } from 'next/server';
 
-const JWT_SECRET_RAW = process.env.JWT_SECRET;
+// Lazy initialization to avoid build-time errors when env vars are not available
+let JWT_SECRET: Secret | null = null;
 
-if (!JWT_SECRET_RAW) {
-  throw new Error('JWT_SECRET environment variable is required');
+function getJWTSecret(): Secret {
+  if (JWT_SECRET) {
+    return JWT_SECRET;
+  }
+  
+  const secret = process.env.JWT_SECRET;
+  
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is required');
+  }
+
+  if (secret.length < 32) {
+    throw new Error('JWT_SECRET must be at least 32 characters long');
+  }
+
+  JWT_SECRET = secret;
+  return JWT_SECRET;
 }
-
-if (JWT_SECRET_RAW.length < 32) {
-  throw new Error('JWT_SECRET must be at least 32 characters long');
-}
-
-// TypeScript now knows this is definitely a string
-const JWT_SECRET: Secret = JWT_SECRET_RAW;
 
 export interface JWTPayload {
   id: string;
@@ -33,7 +42,7 @@ export function generateToken(user: JWTPayload): string {
 
   const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
   
-  return jwt.sign(payload, JWT_SECRET, {
+  return jwt.sign(payload, getJWTSecret(), {
     expiresIn,
     algorithm: 'HS256'
   } as SignOptions);
@@ -41,7 +50,7 @@ export function generateToken(user: JWTPayload): string {
 
 export function verifyToken(token: string): JWTPayload {
   try {
-    const payload = jwt.verify(token, JWT_SECRET, {
+    const payload = jwt.verify(token, getJWTSecret(), {
       algorithms: ['HS256']
     }) as JWTPayload;
 
