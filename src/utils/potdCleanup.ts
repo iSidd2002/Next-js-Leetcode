@@ -25,6 +25,16 @@ export function shouldPreservePotdForever(problem: Problem): boolean {
     return false; // Only applies to POTD problems
   }
 
+  // Preserve if problem has been solved (dateSolved is set)
+  if (problem.dateSolved && problem.dateSolved.trim().length > 0) {
+    return true;
+  }
+
+  // Preserve if status is 'learned' (user explicitly marked as learned)
+  if (problem.status === 'learned') {
+    return true;
+  }
+
   // Preserve if marked for review
   if (problem.isReview) {
     return true;
