@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '../../../tests/utils/testUtils';
+import { render, screen, waitFor } from '../utils/testUtils';
 import userEvent from '@testing-library/user-event';
-import AuthModal from '../AuthModal';
-import ApiService from '@/services/api';
+import AuthModal from '../../src/components/AuthModal';
+import ApiService from '../../src/services/api';
 
 // Mock ApiService
 jest.mock('@/services/api', () => ({

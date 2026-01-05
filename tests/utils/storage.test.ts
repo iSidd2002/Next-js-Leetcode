@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import StorageService from '../storage';
-import ApiService from '@/services/api';
+import StorageService from '../../src/utils/storage';
+import ApiService from '../../src/services/api';
 
 // Mock ApiService
 jest.mock('@/services/api', () => ({
