@@ -7,8 +7,7 @@
       "esnext"
     ],
     "types": [
-      "jest",
-      "@testing-library/jest-dom",
+      "node",
       "react-syntax-highlighter"
     ],
     "allowJs": true,
