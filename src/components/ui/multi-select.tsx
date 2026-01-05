@@ -81,23 +81,30 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                                 onClick={() => handleUnselect(item)}
                             >
                                 {options.find(opt => opt.value === item)?.label}
-                                <button
-                                    className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") {
-                                            handleUnselect(item);
-                                        }
-                                    }}
-                                    onMouseDown={(e) => {
+                            <span
+                                role="button"
+                                tabIndex={0}
+                                className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+                                onKeyDown={(e) => {
+                                    if (e.key === "Enter" || e.key === " ") {
                                         e.preventDefault();
-                                        e.stopPropagation();
-                                    }}
-                                    onClick={() => handleUnselect(item)}
-                                >
-                                    <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
-                                </button>
-                            </Badge>
-                        ))}
+                                        handleUnselect(item);
+                                    }
+                                }}
+                                onMouseDown={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleUnselect(item);
+                                }}
+                            >
+                                <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+                            </span>
+                        </Badge>
+                    ))}
                          {value.length === 0 && placeholder}
                     </div>
                     <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />

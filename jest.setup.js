@@ -34,7 +34,8 @@ jest.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
 jest.mock('./src/components/ui/MarkdownEditor.css', () => ({}), { virtual: true });
 
 // Global mock for API service
-jest.mock('./src/services/api', () => ({
+jest.mock('@/services/api', () => ({
+  __esModule: true,
   default: {
     isAuthenticated: jest.fn(() => false),
     getProblems: jest.fn(() => Promise.resolve([])),
@@ -103,3 +104,11 @@ global.IntersectionObserver = class IntersectionObserver {
     return null;
   }
 };
+
+// Mock ResizeObserver for components using layout measurements
+class MockResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+global.ResizeObserver = MockResizeObserver;

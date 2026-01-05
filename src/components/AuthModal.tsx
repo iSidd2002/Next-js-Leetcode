@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Eye, EyeOff, Sparkles, Code, Palette, Zap } from 'lucide-react';
 import ApiService from '@/services/api';
@@ -49,6 +49,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       toast.success('Login successful!');
       onOpenChange(false);
+      onAuthSuccess();
       setLoginForm({ email: '', password: '' });
 
       setTimeout(async () => {
@@ -108,6 +109,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       toast.success('Registration successful!');
       onOpenChange(false);
+      onAuthSuccess();
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
       setTimeout(async () => {
@@ -151,6 +153,10 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="w-[95vw] max-w-[600px] max-h-[95vh] overflow-hidden p-0 border-none bg-transparent shadow-none">
+        <DialogTitle className="sr-only">Authentication</DialogTitle>
+        <DialogDescription className="sr-only">
+          Sign in or create an account to sync your coding progress.
+        </DialogDescription>
         {/* Artistic Background Layer */}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-background via-background to-muted/30 backdrop-blur-2xl border border-white/10">
           {/* Decorative Abstract Shapes - Picasso Style */}

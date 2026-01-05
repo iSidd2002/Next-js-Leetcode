@@ -117,17 +117,22 @@ describe('Daily Challenge Multi-Platform Tests', () => {
         problem: { title: string };
       }
       
+      // Use a helper function to avoid TypeScript narrowing issues
+      const checkCacheHit = (cache: CacheEntry | null, targetDate: string): boolean => {
+        return cache !== null && cache.date === targetDate;
+      };
+      
       let cache: CacheEntry | null = null;
       const today = new Date().toISOString().split('T')[0];
       
       // First call - cache miss
-      expect(cache?.date === today).toBe(false);
+      expect(checkCacheHit(cache, today)).toBe(false);
       
       // Set cache
       cache = { date: today, problem: { title: 'Test Problem' } };
       
       // Second call - cache hit
-      expect(cache.date === today).toBe(true);
+      expect(checkCacheHit(cache, today)).toBe(true);
     });
 
     it('should invalidate cache for new date', () => {

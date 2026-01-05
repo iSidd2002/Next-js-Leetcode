@@ -68,7 +68,7 @@ describe('ProblemForm', () => {
     await user.type(urlInput, 'https://leetcode.com/problems/test-problem/');
 
     // Set date value directly
-    const dateInput = screen.getByTestId('date-input');
+    const dateInput = screen.getByTestId('date-input') as HTMLInputElement;
     dateInput.value = '2024-01-15';
     dateInput.dispatchEvent(new Event('change', { bubbles: true }));
 
@@ -123,7 +123,7 @@ describe('ProblemForm', () => {
     renderWithProviders(<ProblemForm {...defaultProps} />);
 
     // Test date input functionality using direct value setting (more reliable for date inputs)
-    const dateInput = screen.getByTestId('date-input');
+    const dateInput = screen.getByTestId('date-input') as HTMLInputElement;
 
     // Set date value directly and trigger change event
     dateInput.value = '2024-01-15';
@@ -213,7 +213,7 @@ describe('ProblemForm', () => {
     await user.type(urlInput, 'https://leetcode.com/problems/complete/');
 
     // Handle date input with direct value setting
-    dateInput.value = '2024-01-15';
+    (dateInput as HTMLInputElement).value = '2024-01-15';
     dateInput.dispatchEvent(new Event('change', { bubbles: true }));
 
     // Verify all inputs have values

@@ -1,9 +1,10 @@
 import '@testing-library/jest-dom';
 import StorageService from '../storage';
-import ApiService from '../../services/api';
+import ApiService from '@/services/api';
 
 // Mock ApiService
-jest.mock('../../services/api', () => ({
+jest.mock('@/services/api', () => ({
+  __esModule: true,
   default: {
     isAuthenticated: jest.fn(),
     getProblems: jest.fn(),

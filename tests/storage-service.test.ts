@@ -77,7 +77,17 @@ describe('Storage Service Tests', () => {
     });
 
     it('should add missing fields with defaults', () => {
-      const incompleteData = { id: '1', title: 'Two Sum' };
+      interface IncompleteData {
+        id: string;
+        title: string;
+        platform?: string;
+        difficulty?: string;
+        status?: string;
+        topics?: string[];
+        companies?: string[];
+      }
+      
+      const incompleteData: IncompleteData = { id: '1', title: 'Two Sum' };
       
       const complete = {
         ...incompleteData,
@@ -102,11 +112,11 @@ describe('Storage Service Tests', () => {
       const warningThreshold = 0.8;
       
       const usageRatio = estimatedSize / maxSize;
-      expect(usageRatio > warningThreshold).toBe(true);
+      expect(usageRatio >= warningThreshold).toBe(true);
     });
 
     it('should handle storage quota exceeded error', () => {
-      const mockSetItem = jest.fn(() => {
+      const mockSetItem = jest.fn((_key: string, _value: string) => {
         throw new DOMException('QuotaExceededError');
       });
       

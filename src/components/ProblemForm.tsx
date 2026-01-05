@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { MultiSelect, type Option } from '@/components/ui/multi-select';
 import { MarkdownEditor } from '@/components/ui/MarkdownEditor';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -147,7 +147,9 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEditing ? 'Edit Problem' : 'Add New Problem'}</DialogTitle>
-          {/* DialogDescription removed as per new_code */}
+          <DialogDescription className="sr-only">
+            {isEditing ? 'Edit the selected problem details' : 'Add a new problem to your tracker'}
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <Tabs defaultValue="details" className="w-full">

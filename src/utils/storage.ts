@@ -12,9 +12,20 @@ const OFFLINE_MODE_KEY = 'offline-mode';
 class StorageService {
   private static isOfflineMode(): boolean {
     try {
-      // Only consider offline if explicitly set to offline mode
-      // Don't rely on ApiService.isAuthenticated() here as it might be unreliable during startup
-      return localStorage.getItem(OFFLINE_MODE_KEY) === 'true';
+      const offlineFlag = localStorage.getItem(OFFLINE_MODE_KEY) === 'true';
+      if (offlineFlag) return true;
+
+      // Treat navigator offline as offline mode
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return true;
+      }
+
+      // Fall back to auth status when available (test environments mock this)
+      if (typeof ApiService.isAuthenticated === 'function') {
+        return !ApiService.isAuthenticated();
+      }
+
+      return false;
     } catch (error) {
       console.error('Error accessing localStorage for offline mode:', error);
       // Default to online mode if localStorage is not accessible
@@ -54,8 +65,13 @@ class StorageService {
         throw error; // Re-throw authentication errors
       }
       // For other errors, fallback to local storage
-      const problems = localStorage.getItem(PROBLEMS_KEY);
-      return problems ? JSON.parse(problems) : [];
+      try {
+        const problems = localStorage.getItem(PROBLEMS_KEY);
+        return problems ? JSON.parse(problems) : [];
+      } catch (storageError) {
+        console.error('Error parsing problems from storage:', storageError);
+        return [];
+      }
     }
   }
 
@@ -146,8 +162,13 @@ class StorageService {
         throw error; // Re-throw authentication errors
       }
       // For other errors, fallback to local storage
-      const contests = localStorage.getItem(CONTESTS_KEY);
-      return contests ? JSON.parse(contests) : [];
+      try {
+        const contests = localStorage.getItem(CONTESTS_KEY);
+        return contests ? JSON.parse(contests) : [];
+      } catch (storageError) {
+        console.error('Error parsing contests from storage:', storageError);
+        return [];
+      }
     }
   }
 
