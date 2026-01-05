@@ -191,6 +191,51 @@ This Next.js version maintains 100% feature parity with the original React/Vite 
 6. **Company Filter**: Organize problems by target companies
 7. **AI Features**: Get personalized insights and problem recommendations
 
+## 📖 Review System Guide
+
+The app features a powerful spaced repetition review system to help you retain what you learn.
+
+### Review Modes
+
+When reviewing a problem, you have two options:
+
+#### 1. Quality Based (Default)
+Rate how well you remembered the solution:
+- **Again** - Couldn't solve it (review in 1 day)
+- **Hard** - Struggled significantly (review in 2 days)
+- **Good** - Got it with some effort (review in 3+ days)
+- **Easy** - Solved smoothly (review in 7+ days)
+- **Perfect** - Mastered completely (review in 14+ days)
+
+The system automatically calculates the optimal next review date based on your rating.
+
+#### 2. Custom Days / Pick a Date
+For more control, switch to "Custom Days" tab:
+
+**Option A - Days from now:**
+- Enter a specific number of days (1-365)
+- Use quick presets: 1, 3, 7, 14, 30, 60, or 90 days
+- See the calculated review date instantly
+
+**Option B - Pick a specific date:**
+- Toggle to "Pick a date" mode
+- Select any future date from the calendar
+- Perfect for scheduling reviews around exams, interviews, or specific events
+
+### Additional Review Features
+
+- **Time Tracking**: Optionally log how long the review took
+- **Quick Tags**: Add tags like "tricky-edge-case", "need-revisit", "interview-ready"
+- **Notes**: Add additional notes that append to existing problem notes
+- **Move to Learned**: Mark a problem as fully mastered (removes from review queue)
+
+### Tips for Effective Reviews
+
+1. **Be honest** with your quality ratings - this helps the algorithm work better
+2. **Use custom dates** when you have specific deadlines (interviews, contests)
+3. **Add notes** about edge cases or insights you want to remember
+4. **Mark as Learned** only when you're confident you've truly mastered a problem
+
 ## 🚀 Deployment
 
 This application is production-ready and can be deployed on multiple platforms:

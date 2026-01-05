@@ -24,13 +24,17 @@ import {
   Sparkles,
   Edit3,
   Tag,
-  Calendar,
-  GraduationCap
+  Calendar as CalendarIcon,
+  GraduationCap,
+  CalendarDays
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format, differenceInDays, startOfDay } from 'date-fns';
 
 interface EnhancedReviewDialogProps {
   problem: Problem | null;
@@ -107,20 +111,33 @@ export function EnhancedReviewDialog({
   const [reviewMode, setReviewMode] = useState<'quality' | 'manual'>('quality');
   const [customDays, setCustomDays] = useState<number>(7);
   const [moveToLearned, setMoveToLearned] = useState(false);
+  const [useCustomDate, setUseCustomDate] = useState(false);
+  const [customDate, setCustomDate] = useState<Date | undefined>(undefined);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleSubmit = () => {
     if (!problem) return;
+    
+    // Calculate days from custom date if selected
+    let daysToUse = customDays;
+    if (reviewMode === 'manual' && useCustomDate && customDate) {
+      const today = startOfDay(new Date());
+      const selectedDate = startOfDay(customDate);
+      daysToUse = Math.max(1, differenceInDays(selectedDate, today));
+    }
     
     console.log('📤 EnhancedReviewDialog submitting:', {
       reviewMode,
       selectedQuality,
       moveToLearned,
-      customDays
+      customDays: daysToUse,
+      useCustomDate,
+      customDate
     });
     
     if (reviewMode === 'manual') {
       // Use custom days with a neutral quality score (3)
-      onReview(problem.id, 3, notes, timeTaken, quickTags, customDays, moveToLearned);
+      onReview(problem.id, 3, notes, timeTaken, quickTags, daysToUse, moveToLearned);
     } else {
       // Use quality-based system
       // If moveToLearned is checked, allow submission even without quality rating (use default 3)
@@ -142,6 +159,8 @@ export function EnhancedReviewDialog({
     setReviewMode('quality');
     setCustomDays(7);
     setMoveToLearned(false);
+    setUseCustomDate(false);
+    setCustomDate(undefined);
     onOpenChange(false);
   };
 
@@ -265,50 +284,138 @@ export function EnhancedReviewDialog({
             </TabsContent>
 
             <TabsContent value="manual" className="space-y-4 mt-4">
-              <div className="space-y-3">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm font-semibold">Review this problem in</Label>
-                </div>
-                
-                <div className="flex items-center gap-3">
-                  <Input
-                    type="number"
-                    min={1}
-                    max={365}
-                    value={customDays}
-                    onChange={(e) => setCustomDays(Number(e.target.value))}
-                    className="w-24 text-center text-lg font-semibold"
-                  />
-                  <span className="text-lg">days</span>
+              <div className="space-y-4">
+                {/* Toggle between days and specific date */}
+                <div className="flex items-center gap-4 p-3 rounded-lg bg-muted/30 border">
+                  <label className="flex items-center gap-2 cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      name="dateMode"
+                      checked={!useCustomDate}
+                      onChange={() => setUseCustomDate(false)}
+                      className="h-4 w-4 text-primary"
+                    />
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Days from now</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer flex-1">
+                    <input
+                      type="radio"
+                      name="dateMode"
+                      checked={useCustomDate}
+                      onChange={() => setUseCustomDate(true)}
+                      className="h-4 w-4 text-primary"
+                    />
+                    <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Pick a date</span>
+                  </label>
                 </div>
 
-                {/* Quick day presets */}
-                <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Quick presets:</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {[1, 3, 7, 14, 30, 60, 90].map((days) => (
-                      <Button
-                        key={days}
-                        variant={customDays === days ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => {
-                          setCustomDays(days);
-                          setShowQuickActions(true);
-                        }}
-                        className="h-8"
-                      >
-                        {days} {days === 1 ? 'day' : 'days'}
-                      </Button>
-                    ))}
+                {!useCustomDate ? (
+                  // Days-based selection
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-sm font-semibold">Review this problem in</Label>
+                    </div>
+                    
+                    <div className="flex items-center gap-3">
+                      <Input
+                        type="number"
+                        min={1}
+                        max={365}
+                        value={customDays}
+                        onChange={(e) => setCustomDays(Number(e.target.value))}
+                        className="w-24 text-center text-lg font-semibold"
+                      />
+                      <span className="text-lg">days</span>
+                    </div>
+
+                    {/* Quick day presets */}
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Quick presets:</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {[1, 3, 7, 14, 30, 60, 90].map((days) => (
+                          <Button
+                            key={days}
+                            variant={customDays === days && !useCustomDate ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => {
+                              setCustomDays(days);
+                              setUseCustomDate(false);
+                              setShowQuickActions(true);
+                            }}
+                            className="h-8"
+                          >
+                            {days} {days === 1 ? 'day' : 'days'}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-lg bg-muted/50 border">
+                      <p className="text-sm text-muted-foreground">
+                        <strong>Next review date:</strong> {new Date(Date.now() + customDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  // Custom date picker
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2">
+                      <CalendarDays className="h-4 w-4 text-muted-foreground" />
+                      <Label className="text-sm font-semibold">Select review date</Label>
+                    </div>
 
-                <div className="p-3 rounded-lg bg-muted/50 border">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Next review date:</strong> {new Date(Date.now() + customDays * 24 * 60 * 60 * 1000).toLocaleDateString()}
-                  </p>
-                </div>
+                    <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !customDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarDays className="mr-2 h-4 w-4" />
+                          {customDate ? format(customDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customDate}
+                          onSelect={(date) => {
+                            setCustomDate(date);
+                            setIsCalendarOpen(false);
+                            setShowQuickActions(true);
+                          }}
+                          disabled={(date) => date < new Date()}
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
+
+                    {customDate && (
+                      <div className="p-3 rounded-lg bg-muted/50 border">
+                        <p className="text-sm text-muted-foreground">
+                          <strong>Review on:</strong> {format(customDate, "EEEE, MMMM do, yyyy")}
+                          <br />
+                          <span className="text-xs">
+                            ({differenceInDays(startOfDay(customDate), startOfDay(new Date()))} days from now)
+                          </span>
+                        </p>
+                      </div>
+                    )}
+
+                    {!customDate && (
+                      <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                        <p className="text-sm text-amber-600 dark:text-amber-400">
+                          Please select a date to schedule your review.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>
@@ -428,14 +535,19 @@ export function EnhancedReviewDialog({
           </Button>
           <Button
             onClick={handleSubmit}
-            disabled={reviewMode === 'quality' && selectedQuality === null && !moveToLearned}
+            disabled={
+              (reviewMode === 'quality' && selectedQuality === null && !moveToLearned) ||
+              (reviewMode === 'manual' && useCustomDate && !customDate)
+            }
             className="gap-2"
           >
             <Trophy className="h-4 w-4" />
             {moveToLearned && reviewMode === 'quality' && selectedQuality === null
               ? 'Move to Learned'
               : reviewMode === 'manual'
-              ? `Review in ${customDays} days`
+              ? useCustomDate && customDate
+                ? `Review on ${format(customDate, "MMM d")}`
+                : `Review in ${customDays} days`
               : 'Complete Review'}
           </Button>
         </div>
