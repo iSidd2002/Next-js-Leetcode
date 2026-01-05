@@ -66,12 +66,21 @@ class RateLimiter {
 }
 
 export class GeminiClient {
-  private genAI: GoogleGenerativeAI;
+  private genAI: GoogleGenerativeAI | null = null;
   private rateLimiter: RateLimiter;
-  private defaultModel: string;
-  private fallbackModel: string;
+  private defaultModel: string = 'models/gemini-2.5-flash';
+  private fallbackModel: string = 'models/gemini-2.5-flash-lite';
 
   constructor() {
+    const rateLimit = parseInt(process.env.AI_RATE_LIMIT_PER_HOUR || '100');
+    this.rateLimiter = new RateLimiter(rateLimit, 1);
+  }
+
+  private getGenAI(): GoogleGenerativeAI {
+    if (this.genAI) {
+      return this.genAI;
+    }
+
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       throw new Error('GEMINI_API_KEY environment variable is required');
@@ -81,8 +90,7 @@ export class GeminiClient {
     this.defaultModel = process.env.GEMINI_MODEL || 'models/gemini-2.5-flash';
     this.fallbackModel = process.env.GEMINI_FALLBACK_MODEL || 'models/gemini-2.5-flash-lite';
     
-    const rateLimit = parseInt(process.env.AI_RATE_LIMIT_PER_HOUR || '100');
-    this.rateLimiter = new RateLimiter(rateLimit, 1);
+    return this.genAI;
   }
 
   async generateResponse(prompt: string, options: AIOptions = {}): Promise<AIResponse> {
@@ -115,7 +123,7 @@ export class GeminiClient {
   }
 
   private async callGemini(prompt: string, modelName: string, options: AIOptions): Promise<AIResponse> {
-    const model = this.genAI.getGenerativeModel({ model: modelName });
+    const model = this.getGenAI().getGenerativeModel({ model: modelName });
 
     const generationConfig: GenerationConfig = {
       temperature: options.temperature || 0.7,
