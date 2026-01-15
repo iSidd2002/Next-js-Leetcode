@@ -84,28 +84,55 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
   const calculateStreaks = (problems: Problem[]) => {
     const today = new Date();
-    const solveDates = problems.map(p => new Date(p.dateSolved).setHours(0,0,0,0)).sort((a,b) => a - b);
+    today.setHours(0, 0, 0, 0);
     
-    let currentStreak = 0;
-    let longestStreak = 0;
-    let tempStreak = 0;
+    // Get unique solve dates (deduplicated)
+    const uniqueSolveDatesSet = new Set(
+      problems.map(p => new Date(p.dateSolved).setHours(0, 0, 0, 0))
+    );
+    const solveDates = Array.from(uniqueSolveDatesSet).sort((a, b) => a - b);
     
-    let prevDate: number | null = null;
-    solveDates.forEach(date => {
-      if (prevDate !== null && differenceInDays(date, prevDate) === 1) {
+    if (solveDates.length === 0) {
+      return { currentStreak: 0, longestStreak: 0 };
+    }
+    
+    let longestStreak = 1;
+    let tempStreak = 1;
+    
+    // Calculate longest streak from sorted unique dates
+    for (let i = 1; i < solveDates.length; i++) {
+      const diff = differenceInDays(solveDates[i], solveDates[i - 1]);
+      if (diff === 1) {
         tempStreak++;
-      } else {
+        longestStreak = Math.max(longestStreak, tempStreak);
+      } else if (diff > 1) {
         tempStreak = 1;
       }
-      longestStreak = Math.max(longestStreak, tempStreak);
-      prevDate = date;
-    });
+      // diff === 0 shouldn't happen since we deduplicated, but ignore if it does
+    }
     
-    // Check current streak
-    let checkDate = today.setHours(0,0,0,0);
-    while (solveDates.includes(checkDate)) {
+    // Check current streak - must include today or yesterday to be "current"
+    let currentStreak = 0;
+    const todayTime = today.getTime();
+    const yesterdayTime = subDays(today, 1).setHours(0, 0, 0, 0);
+    
+    // Start checking from today, then yesterday, etc.
+    let checkDate = todayTime;
+    
+    // If today doesn't have a solve, check if yesterday does (streak is still active)
+    if (!uniqueSolveDatesSet.has(todayTime)) {
+      if (uniqueSolveDatesSet.has(yesterdayTime)) {
+        checkDate = yesterdayTime;
+      } else {
+        // No solve today or yesterday, current streak is 0
+        return { currentStreak: 0, longestStreak };
+      }
+    }
+    
+    // Count consecutive days going backwards
+    while (uniqueSolveDatesSet.has(checkDate)) {
       currentStreak++;
-      checkDate = subDays(new Date(checkDate), 1).getTime();
+      checkDate = subDays(new Date(checkDate), 1).setHours(0, 0, 0, 0);
     }
     
     return { currentStreak, longestStreak };
