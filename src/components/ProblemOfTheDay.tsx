@@ -171,9 +171,9 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
   };
 
   return (
-    <SpotlightCard className="border-white/10 bg-black/40 backdrop-blur-xl overflow-hidden relative group h-full">
+    <SpotlightCard className="border-primary/20 bg-slate-900/80 backdrop-blur-xl overflow-hidden relative group h-full">
       {/* Decorative gradient background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 opacity-50" />
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5 opacity-60" />
       
       <CardHeader className="pb-4 pt-5 px-5 relative z-10">
         <CardTitle className="text-sm flex items-center justify-between">
@@ -205,13 +205,13 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             {topicTags.slice(0, 3).map((tag) => (
               <span
                 key={tag.id}
-                className="inline-flex items-center rounded-md border border-white/10 bg-white/5 hover:bg-white/10 px-2.5 h-6 text-[10px] text-slate-300 font-normal transition-colors"
+                className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/60 hover:bg-slate-800 px-2.5 h-6 text-[10px] text-slate-300 font-normal transition-colors"
               >
                 {tag.name}
               </span>
             ))}
             {topicTags.length > 3 && (
-              <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2.5 h-6 text-[10px] text-slate-400 font-normal">
+              <span className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/60 px-2.5 h-6 text-[10px] text-slate-400 font-normal">
                 +{topicTags.length - 3}
               </span>
             )}
@@ -231,7 +231,7 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             variant="outline" 
             size="sm" 
             asChild 
-            className="h-9 text-xs font-medium border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-all"
+            className="h-9 text-xs font-medium border-slate-700 bg-slate-800/60 text-white/80 hover:bg-slate-800 hover:text-white transition-all"
            >
               <a
                 href={`https://leetcode.com${link}`}
