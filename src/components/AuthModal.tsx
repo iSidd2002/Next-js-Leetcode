@@ -167,7 +167,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
           <div className="absolute top-1/2 left-1/2 w-32 h-32 bg-gradient-to-br from-accent/15 to-transparent rounded-full blur-2xl -translate-x-1/2 -translate-y-1/2 rotate-45" />
           
           {/* Asymmetrical Border Accents */}
-          <div className="absolute top-0 left-0 w-24 h-1 bg-gradient-to-r from-primary via-secondary to-transparent" />
+          <div className="absolute top-0 left-0 w-24 h-1 bg-gradient-to-r from-primary to-transparent" />
           <div className="absolute top-0 right-0 w-32 h-1 bg-gradient-to-l from-accent via-primary to-transparent rotate-12 origin-right" />
           <div className="absolute bottom-0 right-0 w-28 h-1 bg-gradient-to-l from-secondary via-accent to-transparent rotate-[-12deg] origin-right" />
 
@@ -180,7 +180,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
               <div className="relative flex items-start gap-4">
                 {/* Logo - Hand-drawn style */}
                 <div className="relative">
-                  <div className="w-16 h-16 bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-5deg] hover:rotate-0 transition-transform duration-300">
+                  <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-5deg] hover:rotate-0 transition-transform duration-300">
                     <Code className="h-8 w-8 text-white" />
                   </div>
                   {/* Small accent dot */}
@@ -189,7 +189,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                 
                 <div className="flex-1 pt-2">
                   <h2 className="text-3xl sm:text-4xl font-black tracking-tight mb-2">
-                    <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                    <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
                       Welcome,
                     </span>
                     <br />
@@ -417,7 +417,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
                   <Button 
                     type="submit" 
-                    className="w-full h-12 bg-gradient-to-r from-secondary via-secondary/90 to-accent hover:from-secondary/90 hover:via-secondary hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg shadow-secondary/20 hover:shadow-xl hover:shadow-secondary/30 transition-all duration-300" 
+                    className="w-full h-12 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white font-semibold rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-300"
                     disabled={isLoading}
                   >
                     {isLoading ? (

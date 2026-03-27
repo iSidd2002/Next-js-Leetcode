@@ -819,12 +819,20 @@ export default function HomePage() {
                         onClick={async () => {
                           try {
                             await ApiService.logout();
-                            setIsAuthenticated(false);
-                            setCurrentUser(null);
-                            toast.success('Logged out successfully');
                           } catch (error) {
                             logger.error('Logout error', error);
-                            toast.error('Logout failed');
+                          } finally {
+                            // Always clear state regardless of server response
+                            ApiService.clearAuthState();
+                            StorageService.clearAppData();
+                            setIsAuthenticated(false);
+                            setCurrentUser(null);
+                            setProblems([]);
+                            setPotdProblems([]);
+                            setContests([]);
+                            setTodos([]);
+                            setShowAuthModal(true);
+                            toast.success('Logged out successfully');
                           }
                         }}
                         className="text-destructive focus:text-destructive"

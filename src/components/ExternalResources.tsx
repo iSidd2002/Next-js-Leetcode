@@ -248,8 +248,8 @@ const ExternalResources = () => {
                 {/* Action Button - Artistic */}
                 <Button
                   className={cn(
-                    "w-full mt-4 h-10 bg-gradient-to-r from-primary via-secondary to-accent",
-                    "hover:from-primary/90 hover:via-secondary/90 hover:to-accent/90",
+                    "w-full mt-4 h-10 bg-gradient-to-r from-primary to-accent",
+                    "hover:from-primary/90 hover:to-accent/90",
                     "text-white font-semibold rounded-xl shadow-lg shadow-primary/20",
                     "hover:shadow-xl hover:shadow-primary/30 transition-all duration-300",
                     "group/btn"

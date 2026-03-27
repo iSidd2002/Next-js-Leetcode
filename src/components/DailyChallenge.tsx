@@ -259,13 +259,12 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             </Badge>
             
              {problem.topics && problem.topics.slice(0, 2).map(topic => (
-                <Badge 
-                  key={topic} 
-                  variant="secondary" 
-                  className="text-[10px] px-2.5 h-6 bg-white/5 hover:bg-white/10 text-slate-300 border-transparent font-normal transition-colors"
+                <span
+                  key={topic}
+                  className="inline-flex items-center rounded-md border border-white/10 bg-white/5 hover:bg-white/10 px-2.5 h-6 text-[10px] text-slate-300 font-normal transition-colors"
                 >
                   {topic}
-                </Badge>
+                </span>
               ))}
           </div>
         </div>

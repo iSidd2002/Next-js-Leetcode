@@ -599,6 +599,18 @@ class StorageService {
       throw error;
     }
   }
+
+  static clearAppData(): void {
+    try {
+      localStorage.removeItem(PROBLEMS_KEY);
+      localStorage.removeItem(POTD_PROBLEMS_KEY);
+      localStorage.removeItem(COMPANY_PROBLEMS_KEY);
+      localStorage.removeItem(CONTESTS_KEY);
+      localStorage.removeItem(TODOS_KEY);
+    } catch (error) {
+      console.error('Error clearing app data from localStorage:', error);
+    }
+  }
 }
 
 export default StorageService;

@@ -35,7 +35,7 @@ const Guide = () => {
         <div className="relative space-y-3">
           <div className="flex items-start gap-4">
             <div className="relative">
-              <div className="w-16 h-16 bg-gradient-to-br from-primary via-secondary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-8deg] hover:rotate-0 transition-transform duration-500">
+              <div className="w-16 h-16 bg-gradient-to-br from-primary to-accent rounded-2xl flex items-center justify-center shadow-lg shadow-primary/20 rotate-[-8deg] hover:rotate-0 transition-transform duration-500">
                 <BookOpen className="h-8 w-8 text-white" />
               </div>
               {/* Small accent dots */}
@@ -44,7 +44,7 @@ const Guide = () => {
             </div>
             <div className="flex-1 pt-2">
               <h1 className="text-4xl sm:text-5xl font-black tracking-tight mb-2">
-                <span className="bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent block">
+                <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent block">
                   Your Journey
                 </span>
                 <span className="text-foreground italic block" style={{ transform: 'rotate(-1deg)', marginTop: '4px' }}>

@@ -203,18 +203,17 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
           
           <div className="flex flex-wrap gap-2">
             {topicTags.slice(0, 3).map((tag) => (
-              <Badge 
-                key={tag.id} 
-                variant="secondary" 
-                className="text-[10px] px-2.5 h-6 bg-white/5 hover:bg-white/10 text-slate-300 border-transparent font-normal transition-colors"
+              <span
+                key={tag.id}
+                className="inline-flex items-center rounded-md border border-white/10 bg-white/5 hover:bg-white/10 px-2.5 h-6 text-[10px] text-slate-300 font-normal transition-colors"
               >
                 {tag.name}
-              </Badge>
+              </span>
             ))}
             {topicTags.length > 3 && (
-              <Badge variant="secondary" className="text-[10px] px-2.5 h-6 bg-white/5 text-slate-400 font-normal">
+              <span className="inline-flex items-center rounded-md border border-white/10 bg-white/5 px-2.5 h-6 text-[10px] text-slate-400 font-normal">
                 +{topicTags.length - 3}
-              </Badge>
+              </span>
             )}
           </div>
         </div>
