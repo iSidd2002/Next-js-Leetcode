@@ -220,7 +220,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             <div className="p-1.5 rounded-lg bg-accent/10 text-accent ring-1 ring-accent/20">
               <Sparkles className="h-4 w-4" />
             </div>
-            <span className="font-semibold tracking-tight text-foreground">Challenge</span>
+            <span className="font-semibold tracking-tight text-white">Challenge</span>
           </div>
           <div className="flex items-center gap-2">
             <Button
@@ -228,7 +228,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
               size="sm"
               onClick={handleRefresh}
               disabled={isRefreshing}
-              className="h-7 w-7 p-0 hover:bg-white/10"
+              className="h-7 w-7 p-0 text-white/60 hover:text-white hover:bg-white/10"
               title="Refresh daily challenge"
             >
               <RefreshCw className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin")} />
@@ -246,7 +246,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             href={problem.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-base font-bold text-foreground hover:text-primary transition-colors line-clamp-2 leading-snug"
+            className="block text-base font-bold text-white hover:text-primary transition-colors line-clamp-2 leading-snug"
             title={problem.title}
           >
             {problem.title}
@@ -290,7 +290,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             asChild 
             variant="outline" 
             size="sm" 
-            className="h-9 text-xs font-medium border-white/10 bg-white/5 hover:bg-white/10 hover:text-white transition-all"
+            className="h-9 text-xs font-medium border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-all"
           >
             <a
               href={problem.url}

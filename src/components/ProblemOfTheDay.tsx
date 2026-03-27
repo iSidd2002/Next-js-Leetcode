@@ -181,7 +181,7 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             <div className="p-1.5 rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
               <Calendar className="h-4 w-4" />
             </div>
-            <span className="font-semibold tracking-tight text-foreground">Daily POTD</span>
+            <span className="font-semibold tracking-tight text-white">Daily POTD</span>
           </div>
           <Badge variant="outline" className={cn("text-[10px] h-6 px-2.5 font-medium border", getDifficultyColor(difficulty))}>
             {difficulty}
@@ -195,7 +195,7 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             href={`https://leetcode.com${link}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="block text-base font-bold text-foreground hover:text-primary transition-colors line-clamp-2 leading-snug"
+            className="block text-base font-bold text-white hover:text-primary transition-colors line-clamp-2 leading-snug"
             title={title}
           >
             {title}
@@ -231,7 +231,7 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             variant="outline" 
             size="sm" 
             asChild 
-            className="h-9 text-xs font-medium border-white/10 bg-white/5 hover:bg-white/10 hover:text-white transition-all"
+            className="h-9 text-xs font-medium border-white/10 bg-white/5 text-white/80 hover:bg-white/10 hover:text-white transition-all"
            >
               <a
                 href={`https://leetcode.com${link}`}
