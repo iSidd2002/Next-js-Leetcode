@@ -1001,7 +1001,7 @@ export default function HomePage() {
                       onClick={() => downloadLearnedCSV(learnedProblems)}
                     >
                       <Download className="h-3.5 w-3.5" />
-                      Download CSV
+                      Export Excel
                     </Button>
                   </div>
                   <ErrorBoundary>

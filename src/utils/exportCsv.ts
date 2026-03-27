@@ -1,42 +1,51 @@
 import type { Problem } from '@/types';
 
 /**
- * Escape a single CSV cell value.
- * Wraps in quotes and doubles any internal quotes.
+ * Compute the ideal column width (in characters) for a set of values + header.
  */
-function escapeCell(value: string | undefined | null): string {
-  const str = value ?? '';
-  // If the value contains a comma, newline, or quote — wrap it
-  if (/[",\n\r]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
+function colWidth(header: string, values: string[]): number {
+  const maxContent = values.reduce((max, v) => Math.max(max, v.length), 0);
+  return Math.min(Math.max(header.length + 4, maxContent + 4), 100);
 }
 
 /**
- * Download learned problems as a CSV file.
+ * Download learned problems as an Excel (.xlsx) file with auto-fitted wide columns.
  * Columns: Question Name | Link | Topics | Pattern
+ *
+ * Uses SheetJS (xlsx) so every cell is fully visible without manual column resizing.
  */
-export function downloadLearnedCSV(problems: Problem[]): void {
-  const headers = ['Question Name', 'Link', 'Topics', 'Pattern'];
+export async function downloadLearnedCSV(problems: Problem[]): Promise<void> {
+  // Lazy-load xlsx so it doesn't bloat the initial bundle
+  const XLSX = await import('xlsx');
 
-  const rows = problems.map((p) => [
-    escapeCell(p.title),
-    escapeCell(p.url),
-    escapeCell((p.topics ?? []).join(', ')),
-    escapeCell(p.pattern ?? ''),
-  ]);
+  const rows = problems.map((p) => ({
+    'Question Name': p.title ?? '',
+    'Link': p.url ?? '',
+    'Topics': (p.topics ?? []).join(', '),
+    'Pattern': p.pattern ?? '',
+  }));
 
-  const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+  const ws = XLSX.utils.json_to_sheet(rows);
 
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
+  // Compute column widths from actual data
+  const names    = rows.map((r) => r['Question Name']);
+  const links    = rows.map((r) => r['Link']);
+  const topics   = rows.map((r) => r['Topics']);
+  const patterns = rows.map((r) => r['Pattern']);
+
+  ws['!cols'] = [
+    { wch: colWidth('Question Name', names) },
+    { wch: colWidth('Link', links) },
+    { wch: colWidth('Topics', topics) },
+    { wch: colWidth('Pattern', patterns) },
+  ];
+
+  // Freeze the header row so it stays visible while scrolling
+  ws['!freeze'] = { xSplit: 0, ySplit: 1 };
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Learned Problems');
 
   const date = new Date().toISOString().split('T')[0];
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = `learned-problems-${date}.csv`;
-  link.click();
-
-  URL.revokeObjectURL(url);
+  XLSX.writeFile(wb, `learned-problems-${date}.xlsx`);
 }

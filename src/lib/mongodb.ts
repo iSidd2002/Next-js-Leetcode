@@ -34,7 +34,9 @@ export async function connectDB(): Promise<typeof mongoose> {
 
     const uri = getMongoDBUri();
     cached.promise = mongoose.connect(uri, opts).then((mongoose) => {
-      console.log('Connected to MongoDB');
+      if (process.env.NODE_ENV !== 'production') {
+        console.log('Connected to MongoDB');
+      }
       return mongoose;
     });
   }

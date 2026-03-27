@@ -55,8 +55,13 @@ class StorageService {
 
     try {
       const problems = await ApiService.getProblems();
-      // Cache for offline use
-      localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+      // Cache for offline use — guard against QuotaExceededError (localStorage ~5MB limit)
+      try {
+        localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
+      } catch {
+        // Storage full — clear the cache and continue without caching
+        localStorage.removeItem(PROBLEMS_KEY);
+      }
       return problems;
     } catch (error) {
       console.error('Error fetching problems from API:', error);

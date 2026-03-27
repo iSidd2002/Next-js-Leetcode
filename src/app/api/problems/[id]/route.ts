@@ -99,27 +99,42 @@ export async function PUT(
 
     const updatedProblem = await Problem.findByIdAndUpdate(id, updateData, { new: true });
 
+    if (!updatedProblem) {
+      return NextResponse.json({
+        success: false,
+        error: 'Problem not found after update'
+      }, { status: 404 });
+    }
+
     const formattedProblem = {
-      id: updatedProblem!._id.toString(),
-      platform: updatedProblem!.platform,
-      title: updatedProblem!.title,
-      problemId: updatedProblem!.problemId,
-      difficulty: updatedProblem!.difficulty,
-      url: updatedProblem!.url,
-      dateSolved: updatedProblem!.dateSolved,
-      createdAt: updatedProblem!.createdAt,
-      notes: updatedProblem!.notes,
-      isReview: updatedProblem!.isReview,
-      repetition: updatedProblem!.repetition,
-      interval: updatedProblem!.interval,
-      nextReviewDate: updatedProblem!.nextReviewDate,
-      topics: updatedProblem!.topics,
-      status: updatedProblem!.status,
-      companies: updatedProblem!.companies,
-      codeSnippet: updatedProblem!.codeSnippet,
-      codeLanguage: updatedProblem!.codeLanguage,
-      codeFilename: updatedProblem!.codeFilename,
-      pattern: updatedProblem!.pattern,
+      id: updatedProblem._id.toString(),
+      platform: updatedProblem.platform,
+      title: updatedProblem.title,
+      problemId: updatedProblem.problemId,
+      difficulty: updatedProblem.difficulty,
+      url: updatedProblem.url,
+      dateSolved: updatedProblem.dateSolved,
+      createdAt: updatedProblem.createdAt,
+      notes: updatedProblem.notes,
+      isReview: updatedProblem.isReview,
+      repetition: updatedProblem.repetition,
+      interval: updatedProblem.interval,
+      nextReviewDate: updatedProblem.nextReviewDate,
+      topics: updatedProblem.topics,
+      status: updatedProblem.status,
+      companies: updatedProblem.companies,
+      source: updatedProblem.source || 'manual',
+      codeSnippet: updatedProblem.codeSnippet,
+      codeLanguage: updatedProblem.codeLanguage,
+      codeFilename: updatedProblem.codeFilename,
+      // Enhanced tracking fields
+      pattern: updatedProblem.pattern,
+      subPatterns: updatedProblem.subPatterns ?? [],
+      struggles: updatedProblem.struggles ?? [],
+      learnings: updatedProblem.learnings ?? [],
+      solutionSummary: updatedProblem.solutionSummary,
+      timeComplexity: updatedProblem.timeComplexity,
+      spaceComplexity: updatedProblem.spaceComplexity,
     };
 
     return NextResponse.json({

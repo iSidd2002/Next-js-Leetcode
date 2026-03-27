@@ -83,10 +83,10 @@ function addSecurityHeaders(response: NextResponse): void {
     ? [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline'", // unsafe-inline needed for Next.js, but no unsafe-eval in prod
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: https: blob:",
-        "font-src 'self' data:",
-        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com",
+        "font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com",
+        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://leetcode.com",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'"
@@ -94,10 +94,10 @@ function addSecurityHeaders(response: NextResponse): void {
     : [
         "default-src 'self'",
         "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval needed for Next.js dev HMR
-        "style-src 'self' 'unsafe-inline'",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
         "img-src 'self' data: https: blob:",
-        "font-src 'self' data:",
-        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com",
+        "font-src 'self' data: https://fonts.googleapis.com https://fonts.gstatic.com",
+        "connect-src 'self' https://api.openai.com https://api.anthropic.com https://generativelanguage.googleapis.com https://leetcode.com",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'"
