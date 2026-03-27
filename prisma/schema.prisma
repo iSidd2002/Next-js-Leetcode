@@ -65,6 +65,7 @@ model Problem {
   codeFilename      String?  // Filename for the code snippet
   
   // Enhanced tracking fields (inspired by comprehensive LeetCode tracking)
+  pattern           String?  // High-level algorithmic pattern (e.g., "Minimize boats to maximize pairs")
   subPatterns       String[] // Sub-patterns within topics (e.g., "Monotonic Stack" under "Stack")
   struggles         String[] // What the user struggled with on this problem
   learnings         String[] // Key learnings/takeaways from solving this problem

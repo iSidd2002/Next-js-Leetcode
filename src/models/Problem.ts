@@ -23,6 +23,7 @@ export interface IProblem extends Document {
   codeLanguage?: string;
   codeFilename?: string;
   // Enhanced tracking fields
+  pattern?: string;
   subPatterns: string[];
   struggles: string[];
   learnings: string[];
@@ -125,6 +126,12 @@ const ProblemSchema = new Schema<IProblem>({
     default: undefined
   },
   // Enhanced tracking fields
+  pattern: {
+    type: String,
+    default: undefined,
+    trim: true,
+    maxlength: 200
+  },
   subPatterns: [{
     type: String,
     trim: true

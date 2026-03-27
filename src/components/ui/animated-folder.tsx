@@ -2,9 +2,8 @@
 
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Folder, FolderOpen } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 
 interface AnimatedFolderProps {
   title: string;
@@ -25,128 +24,79 @@ export function AnimatedFolder({
   className,
   icon,
   badge,
-  accentColor = "primary",
 }: AnimatedFolderProps) {
   const [isOpen, setIsOpen] = React.useState(defaultOpen);
 
   return (
     <div
       className={cn(
-        "group rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden transition-all duration-300",
-        isOpen && "ring-1 ring-primary/20 shadow-lg shadow-primary/5",
+        "rounded-lg border border-border/60 bg-card overflow-hidden transition-colors duration-200",
+        isOpen && "border-border/80",
         className
       )}
     >
-      {/* Folder Header */}
+      {/* Header */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={cn(
-          "w-full flex items-center gap-3 p-4 text-left transition-all duration-300",
-          "hover:bg-muted/50",
-          isOpen && "bg-gradient-to-r from-primary/5 to-transparent"
-        )}
+        className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left hover:bg-muted/40 transition-colors duration-150"
       >
-        {/* Folder Icon with Animation */}
-        <div className="relative">
-          <motion.div
-            initial={false}
-            animate={{ 
-              scale: isOpen ? 1.1 : 1,
-              rotate: isOpen ? -5 : 0 
-            }}
-            transition={{ type: "spring", stiffness: 300, damping: 20 }}
-            className={cn(
-              "p-2 rounded-lg transition-colors duration-300",
-              isOpen 
-                ? "bg-primary/20 text-primary" 
-                : "bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"
-            )}
-          >
-            {icon || (isOpen ? (
-              <FolderOpen className="h-5 w-5" />
-            ) : (
-              <Folder className="h-5 w-5" />
-            ))}
-          </motion.div>
-          
-          {/* Glow effect when open */}
-          {isOpen && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="absolute inset-0 bg-primary/20 rounded-lg blur-md -z-10"
-            />
-          )}
-        </div>
-
-        {/* Title and Count */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <h3 className={cn(
-              "font-semibold truncate transition-colors duration-300",
-              isOpen ? "text-primary" : "text-foreground"
-            )}>
-              {title}
-            </h3>
-            {badge}
-          </div>
-          {count !== undefined && (
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {count} {count === 1 ? 'problem' : 'problems'}
-            </p>
-          )}
-        </div>
-
-        {/* Count Badge */}
-        {count !== undefined && (
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "transition-all duration-300",
-              isOpen && "bg-primary/20 text-primary"
-            )}
-          >
-            {count}
-          </Badge>
-        )}
-
         {/* Chevron */}
         <motion.div
           initial={false}
-          animate={{ rotate: isOpen ? 180 : 0 }}
-          transition={{ duration: 0.3, ease: "easeInOut" }}
-          className="text-muted-foreground"
+          animate={{ rotate: isOpen ? 90 : 0 }}
+          transition={{ duration: 0.2, ease: "easeInOut" }}
+          className="text-muted-foreground/60 shrink-0"
         >
-          <ChevronDown className="h-5 w-5" />
+          <ChevronRight className="h-3.5 w-3.5" />
         </motion.div>
+
+        {/* Optional icon (small, no background box) */}
+        {icon && (
+          <span className="text-muted-foreground/70 shrink-0 text-xs font-mono">
+            {icon}
+          </span>
+        )}
+
+        {/* Title */}
+        <span className="flex-1 min-w-0 text-sm font-medium text-foreground truncate">
+          {title}
+        </span>
+
+        {/* Badges inline */}
+        {badge}
+
+        {/* Count */}
+        {count !== undefined && (
+          <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+            {count}
+          </span>
+        )}
       </button>
 
-      {/* Folder Content */}
+      {/* Content */}
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
-            animate={{ 
-              height: "auto", 
+            animate={{
+              height: "auto",
               opacity: 1,
               transition: {
-                height: { duration: 0.3, ease: "easeOut" },
-                opacity: { duration: 0.2, delay: 0.1 }
-              }
+                height: { duration: 0.2, ease: "easeOut" },
+                opacity: { duration: 0.15, delay: 0.05 },
+              },
             }}
-            exit={{ 
-              height: 0, 
+            exit={{
+              height: 0,
               opacity: 0,
               transition: {
-                height: { duration: 0.3, ease: "easeIn" },
-                opacity: { duration: 0.1 }
-              }
+                height: { duration: 0.2, ease: "easeIn" },
+                opacity: { duration: 0.1 },
+              },
             }}
             className="overflow-hidden"
           >
-            <div className="border-t border-border/50">
-              {children}
-            </div>
+            <div className="border-t border-border/50">{children}</div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -154,8 +104,8 @@ export function AnimatedFolder({
   );
 }
 
-// Topic-specific folder with color coding
-interface TopicFolderProps extends Omit<AnimatedFolderProps, 'icon' | 'title'> {
+// Topic-specific folder
+interface TopicFolderProps extends Omit<AnimatedFolderProps, "icon" | "title"> {
   topic: string;
   difficulty?: {
     easy: number;
@@ -163,34 +113,6 @@ interface TopicFolderProps extends Omit<AnimatedFolderProps, 'icon' | 'title'> {
     hard: number;
   };
 }
-
-const TOPIC_ICONS: Record<string, React.ReactNode> = {
-  'Array': '[]',
-  'String': 'Aa',
-  'Hash Table': '#',
-  'Dynamic Programming': 'DP',
-  'Math': '+-',
-  'Sorting': '[]',
-  'Greedy': '$',
-  'Depth-First Search': '{}',
-  'Binary Search': '/',
-  'Database': 'DB',
-  'Breadth-First Search': '<>',
-  'Tree': '^',
-  'Matrix': '[]',
-  'Two Pointers': '>>',
-  'Bit Manipulation': '01',
-  'Stack': '[]',
-  'Heap': '^',
-  'Graph': 'o-',
-  'Design': '*',
-  'Linked List': '->',
-  'Backtracking': '<-',
-  'Simulation': '~',
-  'Sliding Window': '[]',
-  'Union Find': 'UF',
-  'Recursion': '()',
-};
 
 export function TopicFolder({
   topic,
@@ -201,35 +123,36 @@ export function TopicFolder({
   className,
   ...props
 }: TopicFolderProps) {
-  const topicIcon = TOPIC_ICONS[topic] || topic.charAt(0).toUpperCase();
-  
   return (
     <AnimatedFolder
       title={topic}
       count={count}
-      children={children}
       defaultOpen={defaultOpen}
       className={className}
-      icon={
-        <span className="font-mono text-sm font-bold">
-          {topicIcon}
-        </span>
-      }
       badge={
         difficulty && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5 shrink-0">
             {difficulty.easy > 0 && (
-              <span className="text-xs text-emerald-500">{difficulty.easy}E</span>
+              <span className="text-[11px] text-emerald-500/80 tabular-nums">
+                {difficulty.easy}E
+              </span>
             )}
             {difficulty.medium > 0 && (
-              <span className="text-xs text-amber-500">{difficulty.medium}M</span>
+              <span className="text-[11px] text-amber-500/80 tabular-nums">
+                {difficulty.medium}M
+              </span>
             )}
             {difficulty.hard > 0 && (
-              <span className="text-xs text-red-500">{difficulty.hard}H</span>
+              <span className="text-[11px] text-red-500/80 tabular-nums">
+                {difficulty.hard}H
+              </span>
             )}
           </div>
         )
       }
-    />
+      {...props}
+    >
+      {children}
+    </AnimatedFolder>
   );
 }

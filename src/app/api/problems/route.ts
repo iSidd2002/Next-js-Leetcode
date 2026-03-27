@@ -89,7 +89,8 @@ export async function GET(request: NextRequest) {
       source: p.source || 'manual', // Default to manual for backward compatibility
       codeSnippet: p.codeSnippet,
       codeLanguage: p.codeLanguage,
-      codeFilename: p.codeFilename
+      codeFilename: p.codeFilename,
+      pattern: p.pattern,
     }));
 
     return NextResponse.json({
@@ -170,6 +171,7 @@ export async function POST(request: NextRequest) {
       const codeSnippet = problemData.codeSnippet ? sanitizeString(problemData.codeSnippet, 'Code Snippet') : undefined;
       const codeLanguage = problemData.codeLanguage ? sanitizeString(problemData.codeLanguage, 'Code Language') : undefined;
       const codeFilename = problemData.codeFilename ? sanitizeString(problemData.codeFilename, 'Code Filename') : undefined;
+      const pattern = problemData.pattern ? sanitizeString(problemData.pattern, 'Pattern') : undefined;
 
       const problem = new Problem({
         userId: user.id,
@@ -191,7 +193,8 @@ export async function POST(request: NextRequest) {
         source,
         codeSnippet,
         codeLanguage,
-        codeFilename
+        codeFilename,
+        pattern,
       });
 
       await problem.save();
@@ -216,7 +219,8 @@ export async function POST(request: NextRequest) {
       source: problem.source || 'manual',
       codeSnippet: problem.codeSnippet,
       codeLanguage: problem.codeLanguage,
-      codeFilename: problem.codeFilename
+      codeFilename: problem.codeFilename,
+      pattern: problem.pattern,
     };
 
       return NextResponse.json({

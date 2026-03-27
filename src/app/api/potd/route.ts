@@ -31,6 +31,7 @@ interface LeetCodeGraphQLResponse {
 }
 
 const LEETCODE_GRAPHQL_ENDPOINT = 'https://leetcode.com/graphql';
+const LEETCODE_HOME = 'https://leetcode.com/';
 
 // Predefined safe query for POTD - prevents arbitrary GraphQL queries
 // Updated to use current LeetCode GraphQL schema (2025)
@@ -54,39 +55,85 @@ const POTD_QUERY = `
   }
 `;
 
+const BROWSER_HEADERS = {
+  'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+  'Accept-Language': 'en-US,en;q=0.9',
+};
+
+/**
+ * Fetch a LeetCode CSRF token by hitting the home page first.
+ * LeetCode's GraphQL endpoint requires x-csrftoken + matching cookie.
+ */
+async function getLeetCodeCsrfToken(): Promise<{ csrfToken: string; cookies: string }> {
+  const res = await fetch(LEETCODE_HOME, {
+    method: 'GET',
+    headers: { ...BROWSER_HEADERS, Accept: 'text/html' },
+    signal: AbortSignal.timeout(10000),
+  });
+
+  // Collect all Set-Cookie headers (Node 18+ returns a single joined string)
+  const rawCookies = res.headers.get('set-cookie') ?? '';
+
+  // Extract csrftoken value
+  const match = rawCookies.match(/csrftoken=([^;,\s]+)/);
+  const csrfToken = match?.[1] ?? '';
+
+  // Build a minimal Cookie header string for the subsequent request
+  const cookies = csrfToken ? `csrftoken=${csrfToken}` : '';
+
+  return { csrfToken, cookies };
+}
+
 // Helper function to make LeetCode API request with retry logic
 const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<globalThis.Response> => {
   let lastError: Error | null = null;
+
+  // Obtain CSRF token once before retry loop
+  let csrfToken = '';
+  let cookieHeader = '';
+  try {
+    const csrf = await getLeetCodeCsrfToken();
+    csrfToken = csrf.csrfToken;
+    cookieHeader = csrf.cookies;
+    console.log(`POTD API: obtained csrfToken=${csrfToken ? '✅' : '❌ (empty)'}`);
+  } catch (e) {
+    console.warn('POTD API: could not fetch CSRF token, proceeding without it:', e);
+  }
 
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`POTD API attempt ${attempt}/${maxRetries}`);
 
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        ...BROWSER_HEADERS,
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Referer': 'https://leetcode.com/',
+        'Origin': 'https://leetcode.com',
+        'Sec-Fetch-Dest': 'empty',
+        'Sec-Fetch-Mode': 'cors',
+        'Sec-Fetch-Site': 'same-origin',
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache',
+      };
+
+      if (csrfToken) {
+        headers['x-csrftoken'] = csrfToken;
+        headers['Cookie'] = cookieHeader;
+      }
+
       const response = await fetch(LEETCODE_GRAPHQL_ENDPOINT, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-          'Accept': 'application/json, text/plain, */*',
-          'Accept-Language': 'en-US,en;q=0.9',
-          'Accept-Encoding': 'gzip, deflate, br',
-          'Referer': 'https://leetcode.com/',
-          'Origin': 'https://leetcode.com',
-          'Sec-Fetch-Dest': 'empty',
-          'Sec-Fetch-Mode': 'cors',
-          'Sec-Fetch-Site': 'same-origin',
-          'Cache-Control': 'no-cache',
-          'Pragma': 'no-cache'
-        },
+        headers,
         body: JSON.stringify({ query }),
-        signal: AbortSignal.timeout(30000) // 30 second timeout
+        signal: AbortSignal.timeout(30000),
       });
 
       if (response.ok) {
         return response;
       }
 
-      // Continue retrying for certain status codes
       const errorText = await response.text();
 
       // Don't retry for client errors (4xx) except 429 (rate limit)
@@ -96,9 +143,8 @@ const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<gl
 
       lastError = new Error(`LeetCode API responded with status: ${response.status} - ${errorText}`);
 
-      // Wait before retrying (exponential backoff)
       if (attempt < maxRetries) {
-        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Max 5 seconds
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
         console.log(`Waiting ${delay}ms before retry...`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
@@ -107,12 +153,8 @@ const fetchWithRetry = async (query: string, maxRetries: number = 3): Promise<gl
       console.warn(`POTD API attempt ${attempt} error:`, error);
       lastError = error instanceof Error ? error : new Error('Unknown error');
 
-      // Don't retry for timeout or network errors on last attempt
-      if (attempt === maxRetries) {
-        break;
-      }
+      if (attempt === maxRetries) break;
 
-      // Wait before retrying
       const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
       console.log(`Waiting ${delay}ms before retry...`);
       await new Promise(resolve => setTimeout(resolve, delay));

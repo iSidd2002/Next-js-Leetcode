@@ -35,7 +35,8 @@ const devOnlyRoutes = [
 // AI routes that require authentication
 const aiProtectedRoutes = [
   '/api/ai/similar',
-  '/api/ai/review'
+  '/api/ai/review',
+  '/api/ai/pattern'
 ];
 
 export function middleware(request: NextRequest) {
@@ -124,25 +125,7 @@ function handleAPIRoute(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  // CSRF Protection: Validate origin/referer for state-changing requests
-  if (requiresCSRFProtection(method)) {
-    const csrfValidation = validateCSRFProtection(request, false); // Token not required yet, just origin check
-    
-    if (!csrfValidation.valid) {
-      const response = NextResponse.json(
-        { 
-          success: false, 
-          error: 'CSRF validation failed',
-          details: process.env.NODE_ENV === 'development' ? csrfValidation.reason : undefined
-        },
-        { status: 403 }
-      );
-      addSecurityHeaders(response);
-      return response;
-    }
-  }
-
-  // Block debug/test routes in production
+  // Block debug/test routes in production (before any auth checks)
   if (process.env.NODE_ENV === 'production') {
     if (devOnlyRoutes.some(route => pathname.startsWith(route))) {
       const response = NextResponse.json(
@@ -154,7 +137,8 @@ function handleAPIRoute(request: NextRequest) {
     }
   }
 
-  // Allow public routes without authentication
+  // Allow public routes without authentication or CSRF checks
+  // (login/register must pass through freely)
   if (publicRoutes.some(route => pathname.startsWith(route))) {
     const response = NextResponse.next();
     addSecurityHeaders(response);
@@ -166,6 +150,24 @@ function handleAPIRoute(request: NextRequest) {
     const response = NextResponse.next();
     addSecurityHeaders(response);
     return response;
+  }
+
+  // CSRF Protection: Validate origin/referer for state-changing requests (protected routes only)
+  if (requiresCSRFProtection(method)) {
+    const csrfValidation = validateCSRFProtection(request, false); // Token not required yet, just origin check
+
+    if (!csrfValidation.valid) {
+      const response = NextResponse.json(
+        {
+          success: false,
+          error: 'CSRF validation failed',
+          details: process.env.NODE_ENV === 'development' ? csrfValidation.reason : undefined
+        },
+        { status: 403 }
+      );
+      addSecurityHeaders(response);
+      return response;
+    }
   }
 
   // Check if this is a protected route (including AI routes)

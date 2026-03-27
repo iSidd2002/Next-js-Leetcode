@@ -382,12 +382,12 @@ export function TopicGroupedProblemList({
 
   if (problems.length === 0) {
     return (
-      <div className="text-center py-12">
-        <Folder className="h-12 w-12 mx-auto text-muted-foreground/50 mb-4" />
-        <h3 className="text-lg font-semibold mb-2">No problems yet</h3>
-        <p className="text-muted-foreground">
-          {isLearnedList 
-            ? "Problems you've mastered will appear here" 
+      <div className="text-center py-10">
+        <Folder className="h-8 w-8 mx-auto text-muted-foreground/30 mb-3" />
+        <p className="text-sm font-medium text-foreground mb-1">No problems yet</p>
+        <p className="text-xs text-muted-foreground">
+          {isLearnedList
+            ? "Problems you've mastered will appear here"
             : "Add problems to see them organized by topic"}
         </p>
       </div>
@@ -461,46 +461,45 @@ export function TopicGroupedProblemList({
       )}
 
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xl font-bold flex items-center gap-2">
-            <Folder className="h-5 w-5 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">
             {title}
           </h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground mt-0.5">
             {problems.length} problems in {groupedProblems.size} topics
           </p>
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {/* Search */}
-          <div className="relative flex-1 sm:w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <div className="relative flex-1 sm:w-56">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Search problems..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="pl-8 h-8 text-sm"
             />
           </div>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center border rounded-lg p-1">
+          <div className="flex items-center border border-border/60 rounded-md p-0.5">
             <Button
               variant={viewMode === 'folders' ? 'secondary' : 'ghost'}
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => setViewMode('folders')}
             >
-              <Folder className="h-4 w-4" />
+              <Folder className="h-3.5 w-3.5" />
             </Button>
             <Button
               variant={viewMode === 'list' ? 'secondary' : 'ghost'}
               size="icon"
-              className="h-8 w-8"
+              className="h-7 w-7"
               onClick={() => setViewMode('list')}
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>

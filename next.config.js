@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // Production optimizations
-  output: 'standalone',
+  // Note: output 'standalone' is for Docker/self-hosted only — Vercel manages output format itself
   poweredByHeader: false,
   compress: true,
 

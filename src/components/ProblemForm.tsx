@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
-import { Code2, FileText, Brain } from 'lucide-react';
+import { Code2, FileText, Brain, Sparkles, Loader2 } from 'lucide-react';
 import { TagInput } from '@/components/ui/tag-input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -47,6 +47,7 @@ const INITIAL_FORM_STATE: FormData = {
   codeFilename: 'solution',
   source: 'manual',
   // Enhanced tracking fields
+  pattern: '',
   subPatterns: [],
   struggles: [],
   learnings: [],
@@ -58,6 +59,7 @@ const INITIAL_FORM_STATE: FormData = {
 
 const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, problemToEdit }: ProblemFormProps) => {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_STATE);
+  const [aiPatternLoading, setAiPatternLoading] = useState(false);
 
   useEffect(() => {
     if (problemToEdit) {
@@ -66,6 +68,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         companies: problemToEdit.companies || [],
         dateSolved: problemToEdit.dateSolved ? problemToEdit.dateSolved.split('T')[0] : new Date().toISOString().split('T')[0],
         // Enhanced tracking fields
+        pattern: problemToEdit.pattern || '',
         subPatterns: problemToEdit.subPatterns || [],
         struggles: problemToEdit.struggles || [],
         learnings: problemToEdit.learnings || [],
@@ -106,6 +109,31 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         setFormData(prev => ({ ...prev, companies: value as string[] }));
     } else {
         setFormData(prev => ({ ...prev, [name]: value as string }));
+    }
+  };
+
+  const suggestPattern = async () => {
+    if (!formData.title.trim()) return;
+    setAiPatternLoading(true);
+    try {
+      const res = await fetch('/api/ai/pattern', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: formData.title,
+          difficulty: formData.difficulty,
+          topics: formData.topics,
+          notes: formData.notes,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.pattern) {
+        setFormData(prev => ({ ...prev, pattern: data.pattern }));
+      }
+    } catch {
+      // silently fail — user can still type manually
+    } finally {
+      setAiPatternLoading(false);
     }
   };
 
@@ -266,6 +294,37 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 value={formData.topics}
                 placeholder="Select topics"
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pattern">Pattern</Label>
+            <div className="flex gap-2">
+              <Input
+                id="pattern"
+                name="pattern"
+                value={formData.pattern || ''}
+                onChange={handleInputChange}
+                placeholder="e.g., Minimize boats to maximize pairs..."
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={suggestPattern}
+                disabled={aiPatternLoading || !formData.title.trim()}
+                className="shrink-0 gap-1.5"
+                title={!formData.title.trim() ? 'Enter a problem title first' : 'Suggest pattern with AI'}
+              >
+                {aiPatternLoading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                {aiPatternLoading ? 'Thinking...' : 'AI Suggest'}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">Describe the pattern manually or let AI suggest one based on the problem</p>
           </div>
 
           <div className="space-y-2">

@@ -33,6 +33,7 @@ export interface Problem {
   codeLanguage?: string; // Programming language
   codeFilename?: string; // Filename for code snippet
   // Enhanced tracking fields (comprehensive LeetCode tracking)
+  pattern?: string; // High-level algorithmic pattern (e.g., "Minimize boats to maximize pairs")
   subPatterns?: string[]; // Sub-patterns within topics (e.g., "Monotonic Stack" under "Stack")
   struggles?: string[]; // What the user struggled with on this problem
   learnings?: string[]; // Key learnings/takeaways from solving this problem
@@ -172,6 +173,7 @@ export interface DBProblem {
   status: 'active' | 'learned';
   companies: string[];
   // Enhanced tracking fields
+  pattern?: string;
   subPatterns?: string[];
   struggles?: string[];
   learnings?: string[];

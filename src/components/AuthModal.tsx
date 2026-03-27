@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Loader2, Eye, EyeOff, Sparkles, Code, Palette, Zap } from 'lucide-react';
+import { Loader2, Eye, EyeOff, Sparkles, Code, Palette, Zap, ShieldCheck } from 'lucide-react';
 import ApiService from '@/services/api';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -17,11 +17,37 @@ interface AuthModalProps {
   onAuthSuccess: () => void;
 }
 
+function getPasswordErrors(password: string): string[] {
+  const errors: string[] = [];
+  if (password.length < 8) errors.push('Password must be at least 8 characters');
+  if (!/[A-Z]/.test(password)) errors.push('Must contain an uppercase letter');
+  if (!/[a-z]/.test(password)) errors.push('Must contain a lowercase letter');
+  if (!/[0-9]/.test(password)) errors.push('Must contain a number');
+  if (!/[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/`~;']/.test(password))
+    errors.push('Must contain a special character');
+  return errors;
+}
+
+function getPasswordStrength(password: string): { score: number; label: string; color: string } {
+  const errors = getPasswordErrors(password);
+  const score = Math.max(0, 5 - errors.length); // 0–5
+  if (score <= 1) return { score, label: 'Weak', color: 'bg-rose-500' };
+  if (score <= 2) return { score, label: 'Fair', color: 'bg-amber-500' };
+  if (score <= 3) return { score, label: 'Good', color: 'bg-yellow-400' };
+  if (score <= 4) return { score, label: 'Strong', color: 'bg-emerald-400' };
+  return { score, label: 'Excellent', color: 'bg-emerald-500' };
+}
+
 export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthModalProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('login');
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setError('');
+  };
 
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -49,32 +75,20 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       toast.success('Login successful!');
       onOpenChange(false);
-      onAuthSuccess();
       setLoginForm({ email: '', password: '' });
 
+      // Poll until the auth cookie is readable, then notify the app
       setTimeout(async () => {
-        let authenticationWorking = false;
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (!authenticationWorking && attempts < maxAttempts) {
+        let confirmed = false;
+        for (let i = 0; i < 10 && !confirmed; i++) {
           try {
-            const testResponse = await fetch('/api/auth/profile', {
-              credentials: 'include'
-            });
-            authenticationWorking = testResponse.ok;
-
-            if (!authenticationWorking) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-          } catch (error) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-          attempts++;
+            const res = await fetch('/api/auth/profile', { credentials: 'include' });
+            confirmed = res.ok;
+          } catch { /* ignore */ }
+          if (!confirmed) await new Promise(r => setTimeout(r, 300));
         }
-
         onAuthSuccess();
-      }, 1000);
+      }, 200);
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Login failed');
@@ -94,8 +108,9 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
       return;
     }
 
-    if (registerForm.password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    const pwdErrors = getPasswordErrors(registerForm.password);
+    if (pwdErrors.length > 0) {
+      setError(pwdErrors[0]);
       setIsLoading(false);
       return;
     }
@@ -109,32 +124,19 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       toast.success('Registration successful!');
       onOpenChange(false);
-      onAuthSuccess();
       setRegisterForm({ email: '', username: '', password: '', confirmPassword: '' });
 
       setTimeout(async () => {
-        let authenticationWorking = false;
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (!authenticationWorking && attempts < maxAttempts) {
+        let confirmed = false;
+        for (let i = 0; i < 10 && !confirmed; i++) {
           try {
-            const testResponse = await fetch('/api/auth/profile', {
-              credentials: 'include'
-            });
-            authenticationWorking = testResponse.ok;
-
-            if (!authenticationWorking) {
-              await new Promise(resolve => setTimeout(resolve, 500));
-            }
-          } catch (error) {
-            await new Promise(resolve => setTimeout(resolve, 500));
-          }
-          attempts++;
+            const res = await fetch('/api/auth/profile', { credentials: 'include' });
+            confirmed = res.ok;
+          } catch { /* ignore */ }
+          if (!confirmed) await new Promise(r => setTimeout(r, 300));
         }
-
         onAuthSuccess();
-      }, 1000);
+      }, 200);
 
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Registration failed');
@@ -203,7 +205,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
             </div>
 
             {/* Tabs - Creative Style */}
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6">
               <TabsList className="grid w-full grid-cols-2 bg-muted/30 backdrop-blur-sm p-1 rounded-2xl border border-white/5 h-12">
                 <TabsTrigger 
                   value="login" 
@@ -361,6 +363,32 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
                     </div>
                   </div>
                   
+                  {/* Password strength bar */}
+                  {registerForm.password.length > 0 && (() => {
+                    const strength = getPasswordStrength(registerForm.password);
+                    return (
+                      <div className="space-y-1.5">
+                        <div className="flex gap-1">
+                          {[1, 2, 3, 4, 5].map(i => (
+                            <div
+                              key={i}
+                              className={`h-1 flex-1 rounded-full transition-all duration-300 ${i <= strength.score ? strength.color : 'bg-border'}`}
+                            />
+                          ))}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground flex items-center gap-1">
+                          <ShieldCheck className="h-3 w-3" />
+                          {strength.label}
+                          {strength.score < 5 && (
+                            <span className="opacity-60">
+                              — {getPasswordErrors(registerForm.password)[0]}
+                            </span>
+                          )}
+                        </p>
+                      </div>
+                    );
+                  })()}
+
                   <div className="space-y-2">
                     <Label htmlFor="register-confirm-password" className="text-sm font-medium flex items-center gap-2">
                       <Zap className="h-3.5 w-3.5 text-secondary" />

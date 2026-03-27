@@ -31,8 +31,8 @@ import { EnhancedSettings } from '@/components/EnhancedSettings';
 import ClientOnly from '@/components/client-only';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppLoadingScreen } from '@/components/ui/loading';
-import { Spotlight } from '@/components/ui/spotlight';
 import { EnhancedReviewDialog } from '@/components/EnhancedReviewDialog';
+import { AppLogo } from '@/components/ui/app-logo';
 
 // UI Components
 import { Button } from '@/components/ui/button';
@@ -43,11 +43,12 @@ import { useTheme } from '@/components/theme-provider';
 import { toast } from 'sonner';
 
 // Icons
-import { 
+import {
   Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
   LayoutDashboard, ListTodo, Building2, Calendar, Trophy, RefreshCcw,
-  CheckCircle, BookOpen, BarChart3, Compass, Library
+  CheckCircle, BookOpen, BarChart3, Compass, Library, Download
 } from 'lucide-react';
+import { downloadLearnedCSV } from '@/utils/exportCsv';
 
 export default function HomePage() {
   // State
@@ -727,16 +728,6 @@ export default function HomePage() {
   return (
     <ErrorBoundary>
       <div className="min-h-screen font-sans antialiased relative overflow-hidden">
-        {/* Aceternity UI Spotlight Effect */}
-        <Spotlight
-          className="-top-40 left-0 md:left-60 md:-top-20"
-          fill="hsl(var(--primary))"
-        />
-        <Spotlight
-          className="top-10 left-full -translate-x-[50%] md:hidden"
-          fill="hsl(var(--accent))"
-        />
-        
         {/* Command Menu */}
         <CommandMenu
           open={isCommandMenuOpen}
@@ -745,24 +736,15 @@ export default function HomePage() {
         />
 
         {/* Header */}
-        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <header className="sticky top-0 z-50 w-full border-b border-border/50 bg-background/90 backdrop-blur-md supports-[backdrop-filter]:bg-background/80">
           <div className="container mx-auto px-4">
-            <div className="flex h-16 items-center justify-between">
+            <div className="flex h-14 items-center justify-between">
               {/* Logo */}
-              <div className="flex items-center gap-3">
-                <div className="relative group">
-                  <div className="absolute -inset-1 bg-gradient-to-r from-primary to-accent rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-300" />
-                  <div className="relative">
-                    <img
-                      src="/logo.png"
-                      alt="LeetCode Tracker"
-                      className="h-10 w-auto object-contain"
-                    />
-                  </div>
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold gradient-text-static">Tracker</h1>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <AppLogo size={28} />
+                <span className="hidden sm:block text-sm font-semibold tracking-tight text-foreground">
+                  Tracker
+                </span>
               </div>
 
               {/* Actions */}
@@ -796,9 +778,9 @@ export default function HomePage() {
                   <Button
                     onClick={() => handleOpenForm()}
                     size="sm"
-                    className="hidden lg:flex gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+                    className="hidden lg:flex gap-1.5"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                     New Problem
                   </Button>
                 )}
@@ -818,8 +800,8 @@ export default function HomePage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="rounded-full">
-                        <div className="w-9 h-9 bg-gradient-to-br from-primary to-accent rounded-full flex items-center justify-center text-white shadow-md hover:scale-105 transition-transform">
-                          <User className="h-4 w-4" />
+                        <div className="w-7 h-7 bg-muted border border-border rounded-full flex items-center justify-center text-muted-foreground">
+                          <User className="h-3.5 w-3.5" />
                         </div>
                       </Button>
                     </DropdownMenuTrigger>
@@ -863,63 +845,40 @@ export default function HomePage() {
         {/* Main Content */}
         <main className="container mx-auto px-4 py-6">
           <ClientOnly>
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-5">
               {/* Tab Navigation */}
-              <div className="overflow-x-auto pb-2 hide-scrollbar">
-                <TabsList className="inline-flex h-12 items-center justify-center rounded-xl bg-muted/50 p-1.5 text-muted-foreground">
-                  <TabsTrigger value="dashboard" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <LayoutDashboard className="h-4 w-4" />
-                    <span className="hidden sm:inline">Dashboard</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="problems" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <ListTodo className="h-4 w-4" />
-                    <span className="hidden sm:inline">Problems</span>
-                    {activeProblems.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{activeProblems.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="companies" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <Building2 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Companies</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="potd" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <Calendar className="h-4 w-4" />
-                    <span className="hidden sm:inline">POTD</span>
-                    {potdProblems.length > 0 && (
-                      <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{potdProblems.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="contests" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <Trophy className="h-4 w-4" />
-                    <span className="hidden sm:inline">Contests</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="review" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <RefreshCcw className="h-4 w-4" />
-                    <span className="hidden sm:inline">Review</span>
-                    {dueReviewProblems.length > 0 && (
-                      <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-[10px]">{dueReviewProblems.length}</Badge>
-                    )}
-                  </TabsTrigger>
-                  <TabsTrigger value="todos" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <CheckCircle className="h-4 w-4" />
-                    <span className="hidden sm:inline">Tasks</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="learned" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <BookOpen className="h-4 w-4" />
-                    <span className="hidden sm:inline">Learned</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="analytics" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <BarChart3 className="h-4 w-4" />
-                    <span className="hidden sm:inline">Analytics</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="guide" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <Compass className="h-4 w-4" />
-                    <span className="hidden sm:inline">Guide</span>
-                  </TabsTrigger>
-                  <TabsTrigger value="resources" className="rounded-lg px-4 py-2 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm transition-all gap-2">
-                    <Library className="h-4 w-4" />
-                    <span className="hidden sm:inline">Resources</span>
-                  </TabsTrigger>
+              <div className="overflow-x-auto hide-scrollbar border-b border-border/50">
+                <TabsList className="inline-flex h-10 items-center gap-0 bg-transparent p-0 rounded-none">
+                  {[
+                    { value: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
+                    { value: 'problems', icon: ListTodo, label: 'Problems', count: activeProblems.length },
+                    { value: 'companies', icon: Building2, label: 'Companies' },
+                    { value: 'potd', icon: Calendar, label: 'POTD', count: potdProblems.length },
+                    { value: 'contests', icon: Trophy, label: 'Contests' },
+                    { value: 'review', icon: RefreshCcw, label: 'Review', count: dueReviewProblems.length, countVariant: 'destructive' as const },
+                    { value: 'todos', icon: CheckCircle, label: 'Tasks' },
+                    { value: 'learned', icon: BookOpen, label: 'Learned' },
+                    { value: 'analytics', icon: BarChart3, label: 'Analytics' },
+                    { value: 'guide', icon: Compass, label: 'Guide' },
+                    { value: 'resources', icon: Library, label: 'Resources' },
+                  ].map(({ value, icon: Icon, label, count, countVariant }) => (
+                    <TabsTrigger
+                      key={value}
+                      value={value}
+                      className="relative h-10 rounded-none border-b-2 border-transparent px-3 py-0 text-xs font-medium text-muted-foreground gap-1.5 transition-colors hover:text-foreground data-[state=active]:border-primary data-[state=active]:text-foreground data-[state=active]:shadow-none bg-transparent"
+                    >
+                      <Icon className="h-3.5 w-3.5 shrink-0" />
+                      <span className="hidden sm:inline">{label}</span>
+                      {count != null && count > 0 && (
+                        <Badge
+                          variant={countVariant ?? 'secondary'}
+                          className="h-4 px-1 text-[10px] font-medium"
+                        >
+                          {count}
+                        </Badge>
+                      )}
+                    </TabsTrigger>
+                  ))}
                 </TabsList>
               </div>
 
@@ -1028,7 +987,23 @@ export default function HomePage() {
                   </div>
                 </TabsContent>
 
-                <TabsContent value="learned" className="mt-0">
+                <TabsContent value="learned" className="mt-0 space-y-3">
+                  {/* CSV Download */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      {learnedProblems.length} problem{learnedProblems.length !== 1 ? 's' : ''} mastered
+                    </p>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 text-xs"
+                      disabled={learnedProblems.length === 0}
+                      onClick={() => downloadLearnedCSV(learnedProblems)}
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      Download CSV
+                    </Button>
+                  </div>
                   <ErrorBoundary>
                     <TopicGroupedProblemList
                       problems={learnedProblems}

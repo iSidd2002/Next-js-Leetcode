@@ -89,6 +89,7 @@ export async function PUT(
       if (problemData.codeSnippet !== undefined) updateData.codeSnippet = problemData.codeSnippet ? sanitizeString(problemData.codeSnippet, 'Code Snippet') : undefined;
       if (problemData.codeLanguage !== undefined) updateData.codeLanguage = problemData.codeLanguage ? sanitizeString(problemData.codeLanguage, 'Code Language') : undefined;
       if (problemData.codeFilename !== undefined) updateData.codeFilename = problemData.codeFilename ? sanitizeString(problemData.codeFilename, 'Code Filename') : undefined;
+      if (problemData.pattern !== undefined) updateData.pattern = problemData.pattern ? sanitizeString(problemData.pattern, 'Pattern') : undefined;
     } catch (validationError) {
       return NextResponse.json({
         success: false,
@@ -117,7 +118,8 @@ export async function PUT(
       companies: updatedProblem!.companies,
       codeSnippet: updatedProblem!.codeSnippet,
       codeLanguage: updatedProblem!.codeLanguage,
-      codeFilename: updatedProblem!.codeFilename
+      codeFilename: updatedProblem!.codeFilename,
+      pattern: updatedProblem!.pattern,
     };
 
     return NextResponse.json({

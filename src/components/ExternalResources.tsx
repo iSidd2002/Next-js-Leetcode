@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
-import { ExternalLink, BookOpen, Code, Target, Zap, Users, Trophy, Brain, Sparkles, Palette as PaletteIcon, ArrowRight } from "lucide-react";
+import { ExternalLink, BookOpen, Code, Target, Zap, Users, Trophy, Brain, Sparkles, Palette as PaletteIcon, ArrowRight, Bot } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ExternalResource {
@@ -80,6 +80,18 @@ const EXTERNAL_RESOURCES: ExternalResource[] = [
     color: 'text-primary',
     bgGradient: 'from-primary/10 via-teal-500/5 to-cyan-500/10',
     features: ['Structured Learning', 'Interview Prep', 'Multiple Languages', 'Guided Practice']
+  },
+  {
+    id: 'thita-ai',
+    name: 'Thita AI — Interview Prep Reimagined',
+    description: 'AI-powered interview prep platform with 90+ DSA patterns, adaptive mock interviews, AI coaching, and system design practice. 15,000+ users, 95% success rate.',
+    url: 'https://thita.ai',
+    category: 'interview',
+    difficulty: 'All Levels',
+    icon: <Bot className="h-5 w-5" />,
+    color: 'text-violet-400',
+    bgGradient: 'from-violet-500/10 via-purple-500/5 to-indigo-500/10',
+    features: ['90+ DSA Patterns', 'AI Mock Interviews', 'System Design', 'AI Coaching']
   },
   {
     id: 'algoexpert',
