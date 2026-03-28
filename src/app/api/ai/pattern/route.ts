@@ -115,34 +115,105 @@ const KNOWN_PATTERNS: Record<string, string[]> = {
   'range sum query 2d': ['2D Prefix Sum', 'Segment Tree 2D', 'Prefix Sum'],
 };
 
+// Topic (LeetCode tag name) → ordered pattern suggestions
+const TOPIC_TO_PATTERNS: Record<string, string[]> = {
+  'array': ['Two Pointers', 'Sliding Window', 'Prefix Sum'],
+  'two pointers': ['Two Pointers', 'Fast-Slow Pointers', 'Sliding Window'],
+  'sliding window': ['Sliding Window (Variable)', 'Sliding Window (Fixed)', 'Two Pointers'],
+  'hash table': ['Hash Map Lookup', 'Frequency Count', 'Hash Set'],
+  'sorting': ['Sort + Two Pointers', 'Sort + Greedy', 'Custom Comparator'],
+  'binary search': ['Binary Search on Answer', 'Binary Search on Sorted Array', 'Predicate Binary Search'],
+  'dynamic programming': ['1D DP', 'Memoization', 'Bottom-up DP'],
+  'depth-first search': ['DFS on Graph', 'DFS on Tree', 'Backtracking'],
+  'breadth-first search': ['BFS Shortest Path', 'BFS Level Order', 'Multi-source BFS'],
+  'tree': ['DFS on Tree', 'Post-order DFS', 'BFS Level Order'],
+  'binary tree': ['DFS on Tree', 'Post-order DFS', 'BFS Level Order'],
+  'binary search tree': ['In-order DFS', 'Recursive BST', 'Binary Search on Tree'],
+  'graph': ['DFS on Graph', 'BFS Shortest Path', 'Union Find'],
+  'backtracking': ['Backtracking', 'DFS Backtracking', 'Permutations / Subsets'],
+  'stack': ['Monotonic Stack', 'Stack Simulation', 'Next Greater Element'],
+  'queue': ['BFS Level Order', 'Monotonic Queue', 'Queue Simulation'],
+  'heap (priority queue)': ['Top-K with Heap', 'K-way Merge', 'Heap Simulation'],
+  'greedy': ['Greedy', 'Greedy with Sorting', 'Activity Selection'],
+  'string': ['Sliding Window + Hash Map', 'Two Pointers on String', 'String DP'],
+  'linked list': ['Fast-Slow Pointers', 'In-place Reversal', 'Two Pointers'],
+  'bit manipulation': ['XOR Tricks', 'Bit Manipulation', 'Bitmask DP'],
+  'math': ['Math (Number Theory)', 'Euclidean GCD', 'Modular Arithmetic'],
+  'trie': ['Trie Insert/Search', 'Trie + Backtracking', 'Trie + DFS'],
+  'union find': ['Union Find', 'Disjoint Set Union', 'Connected Components'],
+  'topological sort': ["Kahn's Algorithm", 'DFS Topological Sort', 'DAG Processing'],
+  'prefix sum': ['Prefix Sum', 'Difference Array', 'Running Sum'],
+  'monotonic stack': ['Monotonic Stack', 'Next Greater Element', 'Stack Simulation'],
+  'divide and conquer': ['Divide and Conquer', 'Merge Sort', 'Quick Select'],
+  'recursion': ['Recursion', 'Memoization', 'Divide and Conquer'],
+  'matrix': ['DFS on Grid', 'BFS on Grid', 'Matrix DP'],
+  'simulation': ['Simulation', 'State Machine', 'Queue Simulation'],
+  'segment tree': ['Segment Tree', 'Range Query', 'Lazy Propagation'],
+  'memoization': ['Memoization', '1D DP', 'Top-down DP'],
+  'rolling hash': ['Rolling Hash', 'Rabin-Karp', 'String Hashing'],
+  'geometry': ['Math (Geometry)', 'Cross Product', 'Sweep Line'],
+  'game theory': ['Minimax', 'Game Theory (Nim)', 'Sprague-Grundy'],
+};
+
+// Normalize title: lowercase, strip everything except alphanumeric (no spaces either)
+const normTitle = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
 function lookupKnownPatterns(title: string): string[] | null {
-  const key = title.toLowerCase().trim()
-    .replace(/[^a-z0-9\s]/g, '')
-    .replace(/\s+/g, ' ');
-  if (KNOWN_PATTERNS[key]) return KNOWN_PATTERNS[key];
-  // fuzzy: check if any known key is contained in the title or vice versa
+  const key = normTitle(title);
   for (const [k, v] of Object.entries(KNOWN_PATTERNS)) {
-    if (key.includes(k) || k.includes(key)) return v;
+    if (normTitle(k) === key) return v;
+  }
+  // fuzzy: normalized key contains a known entry (min 4 chars to avoid false positives)
+  for (const [k, v] of Object.entries(KNOWN_PATTERNS)) {
+    const nk = normTitle(k);
+    if (nk.length >= 4 && (key.includes(nk) || nk.includes(key))) return v;
   }
   return null;
 }
 
+function getTopicBasedPatterns(topics: string[]): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const topic of topics) {
+    const patterns = TOPIC_TO_PATTERNS[topic.toLowerCase()];
+    if (!patterns) continue;
+    for (const p of patterns) {
+      if (!seen.has(p)) { seen.add(p); result.push(p); }
+      if (result.length >= 3) return result;
+    }
+  }
+  return result;
+}
+
 function parsePatterns(raw: string): string[] {
-  const line = raw.trim().split('\n')[0].trim();
+  const cleaned = raw.trim();
+  // Try all separator styles
+  const line = cleaned.split('\n')[0].trim();
   let parts: string[];
   if (line.includes('|')) {
     parts = line.split('|');
-  } else if ((line.match(/,/g) || []).length >= 2) {
-    // 3+ comma-separated items
+  } else if ((line.match(/,/g) || []).length >= 1) {
     parts = line.split(',');
   } else {
-    // fallback: try all lines (newline-separated list)
-    parts = raw.trim().split('\n');
+    // newline-separated list
+    parts = cleaned.split('\n');
   }
   return parts
-    .map(p => p.trim().replace(/^[\d.\-*•\s"']+|["']+$/g, '').trim())
+    .map(p => p.trim().replace(/^[\d.\-*•\s"']+|["'.\s]+$/g, '').trim())
     .filter(p => p.length > 1 && p.length <= 80)
     .slice(0, 3);
+}
+
+function mergePatterns(...sources: string[][]): string[] {
+  const result: string[] = [];
+  const seen = new Set<string>();
+  for (const list of sources) {
+    for (const p of list) {
+      if (p && !seen.has(p)) { seen.add(p); result.push(p); }
+      if (result.length >= 3) return result;
+    }
+  }
+  return result;
 }
 
 export async function POST(request: NextRequest) {
@@ -235,20 +306,31 @@ Backtracking | Permutations | Recursion
 
 Return ONLY the 3 pipe-separated pattern names:`;
 
-    // Fast path: well-known problem lookup
+    // 1. Known problem lookup (instant, highest confidence)
     const known = lookupKnownPatterns(title);
     if (known) {
       return NextResponse.json({ success: true, pattern: known[0], patterns: known });
     }
 
-    const geminiClient = getGeminiClient();
-    const response = await geminiClient.generateResponse(prompt, {
-      userId: user.id,
-      temperature: 0.3,
-      maxTokens: 80,
-    });
+    // 2. Topic-based patterns (instant, reliable when topics are filled)
+    const topicPatterns = Array.isArray(topics) ? getTopicBasedPatterns(topics) : [];
 
-    const patterns = parsePatterns(response.content);
+    // 3. AI suggestion (best effort — may fail or return 1 pattern)
+    let aiPatterns: string[] = [];
+    try {
+      const geminiClient = getGeminiClient();
+      const response = await geminiClient.generateResponse(prompt, {
+        userId: user.id,
+        temperature: 0.3,
+        maxTokens: 80,
+      });
+      aiPatterns = parsePatterns(response.content);
+    } catch {
+      // AI failed — topic-based patterns will cover
+    }
+
+    // 4. Merge: AI first (more specific), then topic fill-ins to reach 3
+    const patterns = mergePatterns(aiPatterns, topicPatterns);
     const pattern = patterns[0] || '';
 
     return NextResponse.json({ success: true, pattern, patterns });
