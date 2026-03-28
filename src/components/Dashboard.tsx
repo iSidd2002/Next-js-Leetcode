@@ -430,20 +430,26 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
               </div>
             </CardHeader>
             <CardContent className="pt-4">
-              <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
-                <div className="w-max min-w-full">
+              {/* Pixel-exact widths so flex-1 collapse can't clip the last weeks */}
+              {(() => {
+                const STEP = 16; // 12px cell + 4px gap
+                const gridPx = weeks.length * STEP - 4; // total cell grid width
+                const spacerPx = 40; // w-7 (28) + gap-3 (12)
+                return (
+              <div className="w-full overflow-x-auto pb-3 custom-scrollbar">
+                <div style={{ width: spacerPx + gridPx + 'px' }}>
                   {/* Month labels row */}
                   <div className="flex mb-2">
-                    <div className="w-10 shrink-0" /> {/* Spacer for day labels */}
-                    <div className="flex-1 flex">
+                    <div style={{ width: spacerPx + 'px', flexShrink: 0 }} />
+                    <div style={{ width: gridPx + 'px' }} className="flex">
                       {monthLabels.map((month, i) => {
                         const nextMonthIndex = monthLabels[i + 1]?.weekIndex ?? weeks.length;
-                        const width = ((nextMonthIndex - month.weekIndex) / weeks.length) * 100;
+                        const widthPx = (nextMonthIndex - month.weekIndex) * STEP;
                         return (
                           <div
                             key={i}
                             className="text-xs text-muted-foreground font-medium"
-                            style={{ width: `${width}%` }}
+                            style={{ width: widthPx + 'px', flexShrink: 0 }}
                           >
                             {month.label}
                           </div>
@@ -454,7 +460,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
                   {/* Heatmap grid with day labels */}
                   <div className="flex gap-3">
-                    {/* Day labels — must match cell height + gap exactly */}
+                    {/* Day labels — h-[12px] + gap-[4px] matches cells exactly */}
                     <div className="w-7 shrink-0 flex flex-col gap-[4px] text-[11px] text-muted-foreground font-medium">
                       <div className="h-[12px] flex items-center leading-none">Sun</div>
                       <div className="h-[12px] flex items-center leading-none">Mon</div>
@@ -465,8 +471,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                       <div className="h-[12px] flex items-center leading-none">Sat</div>
                     </div>
 
-                    {/* Grid of cells */}
-                    <div className="flex-1 flex gap-[4px]">
+                    {/* Grid of cells — explicit pixel width, no flex-1 */}
+                    <div className="flex gap-[4px]" style={{ width: gridPx + 'px' }}>
                       {heatmapData.map((week, weekIdx) => (
                         <div key={weekIdx} className="flex flex-col gap-[4px]">
                           {week.map((cell, dayIdx) => {
@@ -532,6 +538,8 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                   </div>
                 </div>
               </div>
+                );
+              })()}
             </CardContent>
           </Card>
 
