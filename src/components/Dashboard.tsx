@@ -161,11 +161,12 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
   endSaturday.setDate(today.getDate() + (6 - todayDayOfWeek));
   endSaturday.setHours(23, 59, 59, 999);
   
-  // Generate solve counts - include ALL problems within the date range
+  // Generate solve counts — take date part directly to avoid UTC→local timezone shift
   const solveCounts: Record<string, number> = {};
   problems.forEach(p => {
-    const solveDate = new Date(p.dateSolved);
-    const dateStr = format(solveDate, 'yyyy-MM-dd');
+    const dateStr = typeof p.dateSolved === 'string'
+      ? p.dateSolved.split('T')[0]
+      : format(p.dateSolved, 'yyyy-MM-dd');
     solveCounts[dateStr] = (solveCounts[dateStr] || 0) + 1;
   });
 
@@ -211,13 +212,12 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
     });
   });
 
-  // Update color scheme to match LeetCode better
   const getColor = (count: number) => {
-    if (count === 0) return 'bg-secondary/50 dark:bg-secondary/30';
-    if (count === 1) return 'bg-emerald-300 dark:bg-emerald-900/60';
-    if (count === 2) return 'bg-emerald-400 dark:bg-emerald-700';
-    if (count === 3) return 'bg-emerald-500 dark:bg-emerald-600';
-    return 'bg-emerald-600 dark:bg-emerald-500';
+    if (count === 0) return 'bg-slate-100 dark:bg-slate-800';
+    if (count === 1) return 'bg-emerald-200 dark:bg-emerald-800';
+    if (count === 2) return 'bg-emerald-400 dark:bg-emerald-600';
+    if (count === 3) return 'bg-emerald-500 dark:bg-emerald-500';
+    return 'bg-emerald-600 dark:bg-emerald-400';
   };
 
   // Stats: count problems and active days in the last year
@@ -419,11 +419,11 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>Less</span>
                   <div className="flex gap-1">
-                    <div className="w-[10px] h-[10px] rounded-sm bg-secondary/50 dark:bg-secondary/30" />
-                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-300 dark:bg-emerald-900/60" />
-                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-400 dark:bg-emerald-700" />
-                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-500 dark:bg-emerald-600" />
-                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-600 dark:bg-emerald-500" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-slate-100 dark:bg-slate-800" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-200 dark:bg-emerald-800" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-400 dark:bg-emerald-600" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-500 dark:bg-emerald-500" />
+                    <div className="w-[10px] h-[10px] rounded-sm bg-emerald-600 dark:bg-emerald-400" />
                   </div>
                   <span>More</span>
                 </div>
@@ -431,7 +431,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
             </CardHeader>
             <CardContent className="pt-4">
               <div className="w-full overflow-x-auto pb-2 hide-scrollbar">
-                <div className="min-w-[750px]">
+                <div className="w-max min-w-full">
                   {/* Month labels row */}
                   <div className="flex mb-2">
                     <div className="w-10 shrink-0" /> {/* Spacer for day labels */}
@@ -454,15 +454,15 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
                   {/* Heatmap grid with day labels */}
                   <div className="flex gap-3">
-                    {/* Day labels */}
-                    <div className="w-7 shrink-0 flex flex-col text-[11px] text-muted-foreground font-medium" style={{ height: '118px' }}>
-                      <div className="h-[14px] flex items-center">Sun</div>
-                      <div className="h-[14px] flex items-center">Mon</div>
-                      <div className="h-[14px] flex items-center">Tue</div>
-                      <div className="h-[14px] flex items-center">Wed</div>
-                      <div className="h-[14px] flex items-center">Thu</div>
-                      <div className="h-[14px] flex items-center">Fri</div>
-                      <div className="h-[14px] flex items-center">Sat</div>
+                    {/* Day labels — must match cell height + gap exactly */}
+                    <div className="w-7 shrink-0 flex flex-col gap-[4px] text-[11px] text-muted-foreground font-medium">
+                      <div className="h-[12px] flex items-center leading-none">Sun</div>
+                      <div className="h-[12px] flex items-center leading-none">Mon</div>
+                      <div className="h-[12px] flex items-center leading-none">Tue</div>
+                      <div className="h-[12px] flex items-center leading-none">Wed</div>
+                      <div className="h-[12px] flex items-center leading-none">Thu</div>
+                      <div className="h-[12px] flex items-center leading-none">Fri</div>
+                      <div className="h-[12px] flex items-center leading-none">Sat</div>
                     </div>
 
                     {/* Grid of cells */}
