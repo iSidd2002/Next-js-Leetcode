@@ -8,6 +8,7 @@ import { cleanupInvalidDates } from '@/utils/dateMigration';
 import { initializeSpacedRepetition } from '@/utils/spacedRepetition';
 import { calculateNextReviewEnhanced } from '@/utils/enhancedSpacedRepetition';
 import { getReviewIntervals } from '@/utils/settingsStorage';
+import { localDateString } from '@/lib/utils';
 import { logger } from '@/utils/logger';
 import { toast } from 'sonner';
 
@@ -241,7 +242,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
           status: 'learned' as const,
           isReview: false,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString(),
+          dateSolved: localDateString(),
           repetition: (problem.repetition || 0) + 1,
         };
         intervalDays = 0;
@@ -256,7 +257,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
           repetition: (problem.repetition || 0) + 1,
           isReview: true,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString()
+          dateSolved: localDateString()
         };
         intervalDays = customDays;
       } else {
@@ -274,7 +275,7 @@ export function useProblems(isAuthenticated: boolean): UseProblemsReturn {
           ...problem,
           ...enhancedData,
           notes: notes ? (problem.notes ? `${problem.notes}\n\n---\n\n${notes}` : notes) : problem.notes,
-          dateSolved: new Date().toISOString()
+          dateSolved: localDateString()
         };
         intervalDays = updatedProblem.interval;
       }

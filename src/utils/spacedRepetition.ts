@@ -1,4 +1,5 @@
 import type { Problem } from '@/types';
+import { localDateString } from '@/lib/utils';
 
 /**
  * Spaced Repetition System for LeetCode Problem Review
@@ -83,7 +84,7 @@ export function markAsReviewed(
   return {
     ...problem,
     ...spacedRepetitionData,
-    dateSolved: new Date().toISOString() // Update last solved date
+    dateSolved: localDateString() // Update last solved date (local timezone)
   };
 }
 

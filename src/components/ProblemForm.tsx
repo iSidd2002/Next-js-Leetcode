@@ -15,7 +15,7 @@ import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
 import { Code2, FileText, Brain, Sparkles, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { cn, localDateString } from '@/lib/utils';
 import { TagInput } from '@/components/ui/tag-input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -29,12 +29,12 @@ interface ProblemFormProps {
 
 type FormData = Omit<Problem, 'id' | 'createdAt' | 'problemId'>;
 
-const INITIAL_FORM_STATE: FormData = {
+const getInitialFormState = (): FormData => ({
   platform: 'leetcode',
   title: '',
   difficulty: '',
   url: '',
-  dateSolved: new Date().toISOString().split('T')[0],
+  dateSolved: localDateString(),
   notes: '',
   isReview: false,
   topics: [],
@@ -55,11 +55,11 @@ const INITIAL_FORM_STATE: FormData = {
   solutionSummary: '',
   timeComplexity: '',
   spaceComplexity: '',
-};
+});
 
 
 const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, problemToEdit }: ProblemFormProps) => {
-  const [formData, setFormData] = useState<FormData>(INITIAL_FORM_STATE);
+  const [formData, setFormData] = useState<FormData>(getInitialFormState);
   const [aiPatternLoading, setAiPatternLoading] = useState(false);
   const [patternSuggestions, setPatternSuggestions] = useState<string[]>([]);
 
@@ -68,7 +68,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
       setFormData({
         ...problemToEdit,
         companies: problemToEdit.companies || [],
-        dateSolved: problemToEdit.dateSolved ? problemToEdit.dateSolved.split('T')[0] : new Date().toISOString().split('T')[0],
+        dateSolved: problemToEdit.dateSolved ? problemToEdit.dateSolved.split('T')[0] : localDateString(),
         // Enhanced tracking fields
         pattern: problemToEdit.pattern || '',
         subPatterns: problemToEdit.subPatterns || [],
@@ -79,7 +79,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         spaceComplexity: problemToEdit.spaceComplexity || '',
       });
     } else {
-      setFormData(INITIAL_FORM_STATE);
+      setFormData(getInitialFormState());
     }
   }, [problemToEdit, open]);
 
