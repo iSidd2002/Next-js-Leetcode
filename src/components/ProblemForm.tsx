@@ -15,6 +15,7 @@ import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
 import { Code2, FileText, Brain, Sparkles, Loader2 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { TagInput } from '@/components/ui/tag-input';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -60,6 +61,7 @@ const INITIAL_FORM_STATE: FormData = {
 const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, problemToEdit }: ProblemFormProps) => {
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_STATE);
   const [aiPatternLoading, setAiPatternLoading] = useState(false);
+  const [patternSuggestions, setPatternSuggestions] = useState<string[]>([]);
 
   useEffect(() => {
     if (problemToEdit) {
@@ -94,6 +96,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
+    if (name === 'pattern') setPatternSuggestions([]);
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -115,6 +118,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
   const suggestPattern = async () => {
     if (!formData.title.trim()) return;
     setAiPatternLoading(true);
+    setPatternSuggestions([]);
     try {
       const res = await fetch('/api/ai/pattern', {
         method: 'POST',
@@ -127,8 +131,12 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
         }),
       });
       const data = await res.json();
-      if (data.success && data.pattern) {
-        setFormData(prev => ({ ...prev, pattern: data.pattern }));
+      if (data.success) {
+        const suggestions: string[] = data.patterns?.length ? data.patterns : data.pattern ? [data.pattern] : [];
+        setPatternSuggestions(suggestions);
+        if (suggestions.length > 0) {
+          setFormData(prev => ({ ...prev, pattern: suggestions[0] }));
+        }
       }
     } catch {
       // silently fail — user can still type manually
@@ -324,7 +332,27 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 {aiPatternLoading ? 'Thinking...' : 'AI Suggest'}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground">Describe the pattern manually or let AI suggest one based on the problem</p>
+            {patternSuggestions.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {patternSuggestions.map((suggestion, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, pattern: suggestion }))}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-md border px-2.5 py-0.5 text-xs font-medium transition-colors cursor-pointer",
+                      formData.pattern === suggestion
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-muted text-muted-foreground border-border hover:bg-accent hover:text-accent-foreground"
+                    )}
+                  >
+                    {i === 0 && <Sparkles className="h-3 w-3" />}
+                    {suggestion}
+                  </button>
+                ))}
+              </div>
+            )}
+            <p className="text-xs text-muted-foreground">Describe the pattern manually or click a suggestion above</p>
           </div>
 
           <div className="space-y-2">
