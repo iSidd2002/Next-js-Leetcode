@@ -22,7 +22,6 @@ import Analytics from '@/components/Analytics';
 import AuthModal from '@/components/AuthModal';
 import ContestTracker from '@/components/ContestTracker';
 import TodoList from '@/components/TodoList';
-import MonthlyPotdList from '@/components/MonthlyPotdList';
 import ExternalResources from '@/components/ExternalResources';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
@@ -45,7 +44,7 @@ import { toast } from 'sonner';
 // Icons
 import {
   Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
-  LayoutDashboard, ListTodo, Building2, Calendar, Trophy, RefreshCcw,
+  LayoutDashboard, ListTodo, Building2, Trophy, RefreshCcw,
   CheckCircle, BookOpen, BarChart3, Compass, Library, Download
 } from 'lucide-react';
 import { downloadLearnedCSV } from '@/utils/exportCsv';
@@ -493,22 +492,19 @@ export default function HomePage() {
   };
 
   // POTD handlers
-  const handleAddPotdProblem = (potd: ActiveDailyCodingChallengeQuestion) => {
-    const isDuplicate = potdProblems.some(p => p.problemId === potd.question.titleSlug);
+  const handleAddPotdProblem = async (potd: ActiveDailyCodingChallengeQuestion) => {
+    const isDuplicate = problems.some(p => p.problemId === potd.question.titleSlug);
     if (isDuplicate) {
-      toast.info('Problem already exists in POTD list');
+      toast.info('Problem already in your list');
       return;
     }
-
-    const newProblem: Problem = {
-      id: generateId(),
+    await handleAddProblem({
       platform: 'leetcode',
       title: potd.question.title,
       problemId: potd.question.titleSlug,
       difficulty: potd.question.difficulty,
       url: `https://leetcode.com${potd.link}`,
       dateSolved: '',
-      createdAt: new Date().toISOString(),
       notes: '',
       isReview: false,
       repetition: 0,
@@ -517,13 +513,8 @@ export default function HomePage() {
       topics: potd.question.topicTags.map(t => t.name),
       status: 'active',
       companies: [],
-      source: 'potd',
-    };
-
-    const updated = [...potdProblems, newProblem];
-    setPotdProblems(updated);
-    StorageService.savePotdProblems(updated);
-    toast.success('POTD added!');
+      source: 'manual',
+    });
   };
 
   const handleAddDailyChallengeToPotd = async (dailyProblem: any) => {
@@ -861,7 +852,6 @@ export default function HomePage() {
                     { value: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
                     { value: 'problems', icon: ListTodo, label: 'Problems', count: activeProblems.length },
                     { value: 'companies', icon: Building2, label: 'Companies' },
-                    { value: 'potd', icon: Calendar, label: 'POTD', count: potdProblems.length },
                     { value: 'contests', icon: Trophy, label: 'Contests' },
                     { value: 'review', icon: RefreshCcw, label: 'Review', count: dueReviewProblems.length, countVariant: 'destructive' as const },
                     { value: 'todos', icon: CheckCircle, label: 'Tasks' },
@@ -938,20 +928,6 @@ export default function HomePage() {
                   </ErrorBoundary>
                 </TabsContent>
 
-                <TabsContent value="potd" className="mt-0">
-                  <ErrorBoundary>
-                    <MonthlyPotdList
-                      problems={potdProblems}
-                      onUpdateProblem={handleUpdateProblem}
-                      onToggleReview={handleToggleReview}
-                      onDeleteProblem={handleDeleteProblem}
-                      onEditProblem={handleEditProblem}
-                      onProblemReviewed={handleProblemReviewed}
-                      onAddToProblem={handleAddPotdToProblem}
-                      isPotdInProblems={isPotdInProblems}
-                    />
-                  </ErrorBoundary>
-                </TabsContent>
 
                 <TabsContent value="contests" className="mt-0">
                   <div className="rounded-xl border bg-card/50 backdrop-blur-sm overflow-hidden">

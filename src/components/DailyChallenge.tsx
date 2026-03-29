@@ -1,13 +1,32 @@
 "use client"
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Plus, RefreshCw, Zap, Sparkles } from "lucide-react";
+import { ExternalLink, Plus, RefreshCw, Zap, Sparkles, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+
+const TOPIC_OPTIONS = [
+  { label: 'Daily Pick', slug: '' },
+  { label: 'Two Pointers', slug: 'two-pointers' },
+  { label: 'Sliding Window', slug: 'sliding-window' },
+  { label: 'Binary Search', slug: 'binary-search' },
+  { label: 'Dynamic Programming', slug: 'dynamic-programming' },
+  { label: 'Tree', slug: 'tree' },
+  { label: 'Graph', slug: 'graph' },
+  { label: 'Backtracking', slug: 'backtracking' },
+  { label: 'Stack', slug: 'stack' },
+  { label: 'Heap / Priority Queue', slug: 'heap-priority-queue' },
+  { label: 'Greedy', slug: 'greedy' },
+  { label: 'Union Find', slug: 'union-find' },
+  { label: 'Trie', slug: 'trie' },
+  { label: 'Bit Manipulation', slug: 'bit-manipulation' },
+  { label: 'DFS', slug: 'depth-first-search' },
+  { label: 'BFS', slug: 'breadth-first-search' },
+];
 
 type Platform = 'leetcode' | 'codeforces' | 'geeksforgeeks' | 'codingninjas' | 'atcoder';
 
@@ -38,13 +57,26 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const [error, setError] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedTopic, setSelectedTopic] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dailyChallengeTopic') || '';
+    }
+    return '';
+  });
+  const [topicDropdownOpen, setTopicDropdownOpen] = useState(false);
+  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
+  const dropdownBtnRef = useRef<HTMLButtonElement>(null);
 
-  const fetchDailyChallenge = async (forceRefresh = false) => {
+  const fetchDailyChallenge = async (forceRefresh = false, topicSlug = selectedTopic) => {
     try {
       setLoading(true);
       setError(null);
-      
-      const url = forceRefresh ? '/api/daily-challenge?refresh=true' : '/api/daily-challenge';
+
+      const params = new URLSearchParams();
+      if (forceRefresh) params.set('refresh', 'true');
+      if (topicSlug) params.set('topic', topicSlug);
+      const url = `/api/daily-challenge${params.toString() ? '?' + params.toString() : ''}`;
+
       const response = await fetch(url, {
         method: 'GET',
         headers: {
@@ -84,9 +116,24 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
     setIsRefreshing(false);
   };
 
+  const handleTopicChange = (slug: string) => {
+    setSelectedTopic(slug);
+    localStorage.setItem('dailyChallengeTopic', slug);
+    setTopicDropdownOpen(false);
+    fetchDailyChallenge(false, slug);
+  };
+
   useEffect(() => {
-    fetchDailyChallenge();
+    fetchDailyChallenge(false, selectedTopic);
   }, []);
+
+  useEffect(() => {
+    if (!topicDropdownOpen) return;
+    const close = () => setTopicDropdownOpen(false);
+    // Use setTimeout to avoid immediately closing on the same click that opened
+    const t = setTimeout(() => document.addEventListener('click', close), 0);
+    return () => { clearTimeout(t); document.removeEventListener('click', close); };
+  }, [topicDropdownOpen]);
 
   const handleAddToPotd = async () => {
     if (!problem || !onAddToPotd) return;
@@ -210,6 +257,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const platformInfo = getPlatformInfo(problem.platform);
 
   return (
+    <>
     <SpotlightCard className="border-accent/20 bg-slate-900/80 backdrop-blur-xl overflow-hidden relative group h-full">
       {/* Decorative gradient background matching platform */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-60" />
@@ -223,6 +271,23 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
             <span className="font-semibold tracking-tight text-white">Challenge</span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Topic selector */}
+            <div className="relative">
+              <button
+                ref={dropdownBtnRef}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (dropdownBtnRef.current) {
+                    setDropdownRect(dropdownBtnRef.current.getBoundingClientRect());
+                  }
+                  setTopicDropdownOpen(o => !o);
+                }}
+                className="flex items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[10px] text-white/80 hover:bg-white/20 transition-colors"
+              >
+                {TOPIC_OPTIONS.find(t => t.slug === selectedTopic)?.label ?? 'Daily Pick'}
+                <ChevronDown className="h-2.5 w-2.5 opacity-60" />
+              </button>
+            </div>
             <Button
               variant="ghost"
               size="sm"
@@ -304,6 +369,35 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
         </div>
       </CardContent>
     </SpotlightCard>
+
+    {/* Fixed-position dropdown — renders outside overflow-hidden card */}
+    {topicDropdownOpen && dropdownRect && (
+      <div
+        style={{
+          position: 'fixed',
+          top: dropdownRect.bottom + 4,
+          right: window.innerWidth - dropdownRect.right,
+          zIndex: 9999,
+        }}
+        className="w-44 rounded-lg border border-white/10 bg-slate-900 shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar"
+      >
+        {TOPIC_OPTIONS.map(opt => (
+          <button
+            key={opt.slug}
+            onClick={() => handleTopicChange(opt.slug)}
+            className={cn(
+              "w-full text-left px-3 py-1.5 text-xs transition-colors",
+              selectedTopic === opt.slug
+                ? "bg-accent/20 text-accent"
+                : "text-white/70 hover:bg-white/10 hover:text-white"
+            )}
+          >
+            {opt.label}
+          </button>
+        ))}
+      </div>
+    )}
+    </>
   );
 };
 

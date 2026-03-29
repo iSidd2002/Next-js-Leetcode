@@ -225,7 +225,7 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
             className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all"
            >
               <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add to List
+              Add to Problems
            </Button>
            <Button 
             variant="outline" 
