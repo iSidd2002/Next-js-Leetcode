@@ -1,16 +1,17 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Plus, RefreshCw, Zap, Sparkles, ChevronDown } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ExternalLink, Plus, RefreshCw, Zap, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const TOPIC_OPTIONS = [
-  { label: 'Daily Pick', slug: '' },
+  { label: 'Daily Pick', slug: 'daily' },
   { label: 'Two Pointers', slug: 'two-pointers' },
   { label: 'Sliding Window', slug: 'sliding-window' },
   { label: 'Binary Search', slug: 'binary-search' },
@@ -59,13 +60,10 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedTopic, setSelectedTopic] = useState<string>(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('dailyChallengeTopic') || '';
+      return localStorage.getItem('dailyChallengeTopic') || 'daily';
     }
-    return '';
+    return 'daily';
   });
-  const [topicDropdownOpen, setTopicDropdownOpen] = useState(false);
-  const [dropdownRect, setDropdownRect] = useState<DOMRect | null>(null);
-  const dropdownBtnRef = useRef<HTMLButtonElement>(null);
 
   const fetchDailyChallenge = async (forceRefresh = false, topicSlug = selectedTopic) => {
     try {
@@ -74,7 +72,7 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
 
       const params = new URLSearchParams();
       if (forceRefresh) params.set('refresh', 'true');
-      if (topicSlug) params.set('topic', topicSlug);
+      if (topicSlug && topicSlug !== 'daily') params.set('topic', topicSlug);
       const url = `/api/daily-challenge${params.toString() ? '?' + params.toString() : ''}`;
 
       const response = await fetch(url, {
@@ -119,21 +117,12 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const handleTopicChange = (slug: string) => {
     setSelectedTopic(slug);
     localStorage.setItem('dailyChallengeTopic', slug);
-    setTopicDropdownOpen(false);
     fetchDailyChallenge(false, slug);
   };
 
   useEffect(() => {
     fetchDailyChallenge(false, selectedTopic);
   }, []);
-
-  useEffect(() => {
-    if (!topicDropdownOpen) return;
-    const close = () => setTopicDropdownOpen(false);
-    // Use setTimeout to avoid immediately closing on the same click that opened
-    const t = setTimeout(() => document.addEventListener('click', close), 0);
-    return () => { clearTimeout(t); document.removeEventListener('click', close); };
-  }, [topicDropdownOpen]);
 
   const handleAddToPotd = async () => {
     if (!problem || !onAddToPotd) return;
@@ -257,7 +246,6 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
   const platformInfo = getPlatformInfo(problem.platform);
 
   return (
-    <>
     <SpotlightCard className="border-accent/20 bg-slate-900/80 backdrop-blur-xl overflow-hidden relative group h-full">
       {/* Decorative gradient background matching platform */}
       <div className="absolute inset-0 bg-gradient-to-br from-accent/10 via-transparent to-primary/5 opacity-60" />
@@ -272,22 +260,18 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
           </div>
           <div className="flex items-center gap-2">
             {/* Topic selector */}
-            <div className="relative">
-              <button
-                ref={dropdownBtnRef}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (dropdownBtnRef.current) {
-                    setDropdownRect(dropdownBtnRef.current.getBoundingClientRect());
-                  }
-                  setTopicDropdownOpen(o => !o);
-                }}
-                className="flex items-center gap-1 rounded-md border border-white/20 bg-white/10 px-2 py-1 text-[10px] text-white/80 hover:bg-white/20 transition-colors"
-              >
-                {TOPIC_OPTIONS.find(t => t.slug === selectedTopic)?.label ?? 'Daily Pick'}
-                <ChevronDown className="h-2.5 w-2.5 opacity-60" />
-              </button>
-            </div>
+            <Select value={selectedTopic} onValueChange={handleTopicChange}>
+              <SelectTrigger className="h-6 w-32 border-white/20 bg-white/10 text-[10px] text-white/80 hover:bg-white/20 focus:ring-0 focus:ring-offset-0 [&>svg]:opacity-60">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className="bg-slate-900 border-white/10 text-white">
+                {TOPIC_OPTIONS.map(opt => (
+                  <SelectItem key={opt.slug} value={opt.slug} className="text-xs text-white/70 focus:bg-white/10 focus:text-white data-[state=checked]:text-accent">
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Button
               variant="ghost"
               size="sm"
@@ -369,35 +353,6 @@ const DailyChallenge = ({ onAddToPotd }: DailyChallengeProps) => {
         </div>
       </CardContent>
     </SpotlightCard>
-
-    {/* Fixed-position dropdown — renders outside overflow-hidden card */}
-    {topicDropdownOpen && dropdownRect && (
-      <div
-        style={{
-          position: 'fixed',
-          top: dropdownRect.bottom + 4,
-          right: window.innerWidth - dropdownRect.right,
-          zIndex: 9999,
-        }}
-        className="w-44 rounded-lg border border-white/10 bg-slate-900 shadow-xl py-1 max-h-64 overflow-y-auto custom-scrollbar"
-      >
-        {TOPIC_OPTIONS.map(opt => (
-          <button
-            key={opt.slug}
-            onClick={() => handleTopicChange(opt.slug)}
-            className={cn(
-              "w-full text-left px-3 py-1.5 text-xs transition-colors",
-              selectedTopic === opt.slug
-                ? "bg-accent/20 text-accent"
-                : "text-white/70 hover:bg-white/10 hover:text-white"
-            )}
-          >
-            {opt.label}
-          </button>
-        ))}
-      </div>
-    )}
-    </>
   );
 };
 
