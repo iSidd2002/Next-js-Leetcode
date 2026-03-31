@@ -514,7 +514,7 @@ export function TopicGroupedProblemList({
               topic={topic}
               count={topicProblems.length}
               difficulty={getDifficultyStats(topicProblems)}
-              defaultOpen={topicProblems.length <= 5}
+              defaultOpen={false}
             >
               <div className="divide-y divide-border/50">
                 {topicProblems.map(problem => renderProblemRow(problem))}
