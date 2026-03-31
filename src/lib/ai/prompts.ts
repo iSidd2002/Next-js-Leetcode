@@ -18,6 +18,12 @@ export interface SimilarProblemsRequest {
     hard: number;
   };
   excludeIds?: string[];
+  userContext?: {
+    solvedCount: number;
+    solvedTopics: string[];
+    weakTopics: string[];
+    difficultySplit: { easy: number; medium: number; hard: number };
+  };
 }
 
 export interface SimilarProblemsResponse {
@@ -30,42 +36,69 @@ export interface SimilarProblemsResponse {
     reasoning: string;
     estimated_time: string;
     key_concepts: string[];
+    url?: string;
+    interview_relevance?: string;
   }>;
   analysis: {
     primary_patterns: string[];
     skill_focus: string[];
     progression_path: string;
+    interview_focus?: string;
   };
 }
 
 export const PromptTemplates = {
 
   similarProblems: {
-    system: `You are an expert competitive programming coach with comprehensive knowledge of problems across LeetCode, Codeforces, and AtCoder platforms. You MUST provide recommendations for ANY problem from ANY platform, regardless of its complexity or topic.
+    system: `You are an expert technical interview coach and competitive programming mentor with comprehensive knowledge of problems across LeetCode, Codeforces, and AtCoder. You specialize in helping engineers crack FAANG and top-tier tech company interviews.
 
-CRITICAL REQUIREMENTS:
-- Generate recommendations for ALL problems: basic math, complex algorithms, data structures, etc.
-- Work with problems from LeetCode (Easy/Medium/Hard), Codeforces (rating 800-3500), and AtCoder (ABC/ARC/AGC)
-- Focus on algorithmic similarity and problem-solving patterns
-- Provide diverse difficulty levels for progressive learning
-- Include problems from multiple platforms when possible
-- Give realistic time estimates and clear reasoning
-- NEVER refuse to generate recommendations - find similar patterns even for simple problems
+Your recommendations are strategically chosen to:
+- Target algorithmic patterns that appear frequently in technical interviews (Google, Meta, Amazon, Microsoft, Apple, etc.)
+- Build a progressive skill ladder from the user's current level
+- Fill gaps in their problem-solving repertoire
+- Reinforce core concepts through varied problem types
 
 Platform expertise:
-- LeetCode: Array, String, DP, Graph, Tree problems
-- Codeforces: Math, Implementation, Greedy, DP, Graph problems
-- AtCoder: Implementation, Math, DP, Graph, Data Structure problems`,
+- LeetCode: Primary source for interview problems (Easy/Medium/Hard). ALWAYS include the direct URL: https://leetcode.com/problems/{title-slug}/
+- Codeforces: Advanced algorithmic problems, excellent for mathematical thinking and speed under pressure
+- AtCoder: Elegant DP and implementation problems that deepen algorithmic intuition
 
-    user: (request: SimilarProblemsRequest) => `
-Find ${request.targetDistribution.easy + request.targetDistribution.medium + request.targetDistribution.hard} similar problems for: ${request.problem.title}
+CRITICAL REQUIREMENTS:
+- ALWAYS generate recommendations for ANY problem type
+- Prioritize interview frequency and pattern reinforcement
+- For LeetCode: generate URL by converting title to lowercase slug (spaces → hyphens, remove special chars)
+- Mention specific companies (Google, Meta, Amazon, Microsoft) when the pattern is commonly tested there
+- Give concise but impactful reasoning focused on interview value
+- NEVER refuse to generate recommendations`,
+
+    user: (request: SimilarProblemsRequest) => {
+      const { easy, medium, hard } = request.targetDistribution;
+      const total = easy + medium + hard;
+      const ctx = request.userContext;
+
+      const ctxSection = ctx && ctx.solvedCount > 0
+        ? `
+
+User Profile:
+- Solved ${ctx.solvedCount} problems (${ctx.difficultySplit.easy}E / ${ctx.difficultySplit.medium}M / ${ctx.difficultySplit.hard}H)
+- Strong topics: ${ctx.solvedTopics.slice(0, 8).join(', ') || 'None yet'}
+- Needs more practice: ${ctx.weakTopics.slice(0, 5).join(', ') || 'All areas'}
+Prioritize problems that fill weak areas and match their current interview readiness.`
+        : '';
+
+      return `Find ${total} interview-focused similar problems to: ${request.problem.title}
 
 Platform: ${request.problem.platform} | Difficulty: ${request.problem.difficulty.category}
-Topics: ${request.problem.topics.slice(0, 2).join(', ') || 'General'}
+Topics: ${request.problem.topics.slice(0, 3).join(', ') || 'General'}${ctxSection}
 
-Need: ${request.targetDistribution.easy} Easy, ${request.targetDistribution.medium} Medium, ${request.targetDistribution.hard} Hard
-Platforms: LeetCode, Codeforces, AtCoder
-Keep reasoning under 30 words.`,
+Target mix: ${easy} Easy, ${medium} Medium, ${hard} Hard
+Preferred platforms: LeetCode (interview-critical), Codeforces, AtCoder
+
+For each problem include:
+- Direct URL (LeetCode: https://leetcode.com/problems/{title-slug}/)
+- Interview relevance (e.g., "Frequently asked at Google, Amazon")
+- Concise reasoning max 35 words focusing on interview value`;
+    },
 
     schema: `{
   "recommendations": [
@@ -75,14 +108,17 @@ Keep reasoning under 30 words.`,
       "difficulty": "Easy|Medium|Hard",
       "topics": ["string"],
       "similarity_score": "number (0.0-1.0)",
-      "reasoning": "string (max 25 words)",
-      "estimated_time": "string (e.g., '15min')",
-      "key_concepts": ["string"]
+      "reasoning": "string (max 35 words, why this helps for interviews)",
+      "estimated_time": "string (e.g., '20-30 min')",
+      "key_concepts": ["string"],
+      "url": "string (direct problem URL)",
+      "interview_relevance": "string (which companies ask this, e.g., 'Frequently at Google, Meta')"
     }
   ],
   "analysis": {
     "primary_patterns": ["string"],
-    "progression_path": "string (max 20 words)"
+    "progression_path": "string (max 25 words)",
+    "interview_focus": "string (what interview skill this builds, max 20 words)"
   }
 }`
   },

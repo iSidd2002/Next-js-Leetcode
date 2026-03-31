@@ -58,6 +58,7 @@ interface TopicGroupedProblemListProps {
     customDays?: number,
     moveToLearned?: boolean
   ) => void;
+  onAddProblem?: (problem: Omit<Problem, 'id' | 'createdAt'>) => void;
   isLearnedList?: boolean;
   title?: string;
 }
@@ -105,6 +106,7 @@ export function TopicGroupedProblemList({
   onDeleteProblem,
   onEditProblem,
   onProblemReviewed,
+  onAddProblem,
   isLearnedList = false,
   title = "Problems by Topic",
 }: TopicGroupedProblemListProps) {
@@ -572,7 +574,11 @@ export function TopicGroupedProblemList({
             </DialogTitle>
           </DialogHeader>
           {selectedProblem && (
-            <SimilarProblems problem={selectedProblem} />
+            <SimilarProblems
+              problem={selectedProblem}
+              userProblems={problems}
+              onAddProblem={onAddProblem}
+            />
           )}
         </DialogContent>
       </Dialog>

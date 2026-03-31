@@ -321,7 +321,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
           <CardContent className="relative">
             <div className="text-4xl font-bold tracking-tight">
                 <StatsCounter value={activeDays} />
-                <span className="text-base font-normal text-muted-foreground"> / 365</span>
+                <span className="text-base font-normal text-muted-foreground"> / {totalDays}</span>
             </div>
             <p className="text-xs text-muted-foreground mt-2">
               <span className="text-blue-500 font-semibold">{activePercentage}%</span> consistency

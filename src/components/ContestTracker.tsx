@@ -119,7 +119,7 @@ export default function ContestTracker({ contests, onAddContest, onUpdateContest
               <Globe className="h-5 w-5 text-primary" />
               <h2 className="text-lg font-semibold">Global Contest Calendar</h2>
             </div>
-            <AllContestsList />
+            <AllContestsList onAddContest={onAddContest} />
           </div>
         )}
         <ContestForm

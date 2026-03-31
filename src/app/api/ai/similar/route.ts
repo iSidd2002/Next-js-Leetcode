@@ -142,7 +142,8 @@ export async function POST(request: NextRequest) {
         description: normalizedProblem.description
       },
       targetDistribution,
-      excludeIds: body.excludeIds || []
+      excludeIds: body.excludeIds || [],
+      userContext: body.userContext
     };
 
     // Check cache first

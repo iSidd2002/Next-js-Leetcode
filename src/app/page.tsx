@@ -905,6 +905,7 @@ export default function HomePage() {
                       onDeleteProblem={handleDeleteProblem}
                       onEditProblem={handleEditProblem}
                       onProblemReviewed={handleProblemReviewed}
+                      onAddProblem={handleAddProblem}
                       isLearnedList={false}
                       title="Problems by Topic"
                     />

@@ -6,18 +6,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
-import { 
-  Trophy, 
-  Calendar, 
-  Clock, 
-  ExternalLink, 
-  Users, 
+import {
+  Trophy,
+  Calendar,
+  Clock,
+  ExternalLink,
+  Users,
   RefreshCw,
   Search,
   Globe,
   Play,
   CheckCircle,
-  Timer
+  Timer,
+  BookmarkPlus,
+  BookmarkCheck
 } from 'lucide-react';
 import {
   Select,
@@ -27,27 +29,49 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { format, formatDistanceToNow, isAfter, isBefore } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
+import type { Contest as TrackerContest } from '@/types';
 
-interface Contest {
+interface GlobalContest {
   id: string;
   name: string;
   platform: string;
   startTime: string;
   endTime: string;
-  duration: number;
+  duration: number; // hours
   status: 'upcoming' | 'running' | 'finished';
   url: string;
   type?: string;
   participants?: number;
 }
 
+function mapPlatform(platform: string): TrackerContest['platform'] {
+  const p = platform.toLowerCase();
+  if (p === 'leetcode') return 'leetcode';
+  if (p === 'codeforces') return 'codeforces';
+  if (p === 'atcoder') return 'atcoder';
+  if (p === 'codechef') return 'codechef';
+  return 'other';
+}
+
+function toTrackerContest(c: GlobalContest): Omit<TrackerContest, 'id' | 'createdAt' | 'updatedAt'> {
+  return {
+    platform: mapPlatform(c.platform),
+    name: c.name,
+    startTime: c.startTime,
+    duration: Math.round(c.duration * 60), // hours → minutes
+    url: c.url,
+    status: c.status === 'upcoming' ? 'scheduled' : c.status,
+    type: c.type,
+  };
+}
+
 interface ContestData {
-  all: Contest[];
+  all: GlobalContest[];
   categorized: {
-    upcoming: Contest[];
-    running: Contest[];
-    recent: Contest[];
+    upcoming: GlobalContest[];
+    running: GlobalContest[];
+    recent: GlobalContest[];
   };
   summary: {
     total: number;
@@ -79,11 +103,16 @@ const needsRefresh = (): boolean => {
   }
 };
 
-const AllContestsList = () => {
+interface AllContestsListProps {
+  onAddContest?: (contest: Omit<TrackerContest, 'id' | 'createdAt' | 'updatedAt'>) => void;
+}
+
+const AllContestsList = ({ onAddContest }: AllContestsListProps) => {
   const [contests, setContests] = useState<ContestData | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
+  const [addedIds, setAddedIds] = useState<Set<string>>(new Set());
 
   const fetchAllContests = async (silent = false) => {
     setLoading(true);
@@ -117,7 +146,7 @@ const AllContestsList = () => {
     if (needsRefresh()) fetchAllContests(true);
   }, []);
 
-  const filterContests = (contestList: Contest[]) => {
+  const filterContests = (contestList: GlobalContest[]) => {
     return contestList.filter(contest => {
       const matchesSearch = contest.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            contest.platform.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -159,7 +188,7 @@ const AllContestsList = () => {
     return colors[platform] || 'bg-gray-500';
   };
 
-  const ContestCard = ({ contest }: { contest: Contest }) => {
+  const ContestCard = ({ contest }: { contest: GlobalContest }) => {
     const startTime = new Date(contest.startTime);
     const endTime = new Date(contest.endTime);
     const now = new Date();
@@ -187,14 +216,35 @@ const AllContestsList = () => {
                 </div>
               </CardDescription>
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.open(contest.url, '_blank')}
-              className="ml-2"
-            >
-              <ExternalLink className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-1 ml-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.open(contest.url, '_blank')}
+                className="h-8 w-8 p-0"
+              >
+                <ExternalLink className="h-4 w-4" />
+              </Button>
+              {onAddContest && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`h-8 w-8 p-0 ${addedIds.has(contest.id) ? 'text-emerald-500' : 'text-muted-foreground hover:text-primary'}`}
+                  onClick={() => {
+                    if (addedIds.has(contest.id)) return;
+                    onAddContest(toTrackerContest(contest));
+                    setAddedIds(prev => new Set([...prev, contest.id]));
+                    toast.success(`"${contest.name}" added to your contest tracker!`);
+                  }}
+                  title={addedIds.has(contest.id) ? 'Added to tracker' : 'Add to tracker'}
+                >
+                  {addedIds.has(contest.id)
+                    ? <BookmarkCheck className="h-4 w-4" />
+                    : <BookmarkPlus className="h-4 w-4" />
+                  }
+                </Button>
+              )}
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pt-0">
