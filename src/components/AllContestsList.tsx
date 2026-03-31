@@ -58,34 +58,63 @@ interface ContestData {
   };
 }
 
+const CACHE_KEY = 'allContestsData';
+const LAST_FETCH_KEY = 'allContestsLastFetch';
+
+// Returns true if data should be refreshed (past 5:30 AM today and not yet fetched today)
+const needsRefresh = (): boolean => {
+  try {
+    const lastFetch = localStorage.getItem(LAST_FETCH_KEY);
+    if (!lastFetch) return true;
+    const lastFetchTime = new Date(parseInt(lastFetch));
+    const now = new Date();
+    const today530 = new Date(now);
+    today530.setHours(5, 30, 0, 0);
+    // Past 5:30 AM today but last fetch was before that
+    if (now >= today530 && lastFetchTime < today530) return true;
+    // Fallback: older than 24h
+    return now.getTime() - lastFetchTime.getTime() > 24 * 60 * 60 * 1000;
+  } catch {
+    return true;
+  }
+};
+
 const AllContestsList = () => {
   const [contests, setContests] = useState<ContestData | null>(null);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPlatform, setSelectedPlatform] = useState<string>('all');
 
-  const fetchAllContests = async () => {
+  const fetchAllContests = async (silent = false) => {
     setLoading(true);
     try {
       const response = await fetch('/api/contests/all');
       const data = await response.json();
-      
+
       if (data.success) {
         setContests(data.data);
-        toast.success(`Loaded ${data.data.summary.total} contests from ${data.data.summary.platforms.length} platforms!`);
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data.data));
+        localStorage.setItem(LAST_FETCH_KEY, Date.now().toString());
+        if (!silent) toast.success(`Loaded ${data.data.summary.total} contests from ${data.data.summary.platforms.length} platforms!`);
       } else {
         throw new Error(data.error || 'Failed to fetch contests');
       }
     } catch (error) {
       console.error('Error fetching contests:', error);
-      toast.error('Failed to load contests');
+      if (!silent) toast.error('Failed to load contests');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchAllContests();
+    // Load cache immediately so the UI shows without a spinner
+    try {
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) setContests(JSON.parse(cached));
+    } catch {}
+    // Refresh in background if past 5:30 AM and not yet refreshed today
+    if (needsRefresh()) fetchAllContests(true);
   }, []);
 
   const filterContests = (contestList: Contest[]) => {
@@ -221,7 +250,7 @@ const AllContestsList = () => {
         <p className="text-sm text-muted-foreground">
           {contests.summary.total} contests from {contests.summary.platforms.length} platforms
         </p>
-        <Button onClick={fetchAllContests} disabled={loading} size="sm" variant="outline">
+        <Button onClick={() => fetchAllContests(false)} disabled={loading} size="sm" variant="outline">
           <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
           Refresh
         </Button>
