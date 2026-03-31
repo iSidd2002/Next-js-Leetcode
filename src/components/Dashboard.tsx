@@ -11,7 +11,7 @@ import DailyChallenge from './DailyChallenge';
 import ExternalResourcesCard from './ExternalResourcesCard';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 import Greeting from './Greeting';
 import StatsCounter from './StatsCounter';
@@ -33,6 +33,14 @@ interface DashboardProps {
 const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems, onCleanupPotd, onAddDailyChallenge }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
   const [isCleaningPotd, setIsCleaningPotd] = useState(false);
+  const heatmapScrollRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll heatmap to show today (rightmost column) on mount
+  useEffect(() => {
+    if (heatmapScrollRef.current) {
+      heatmapScrollRef.current.scrollLeft = heatmapScrollRef.current.scrollWidth;
+    }
+  }, []);
 
   const totalProblems = problems.length;
   const potdProblems = problems.filter(p => p.source === 'potd');
@@ -436,7 +444,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                 const gridPx = weeks.length * STEP - 4; // total cell grid width
                 const spacerPx = 40; // w-7 (28) + gap-3 (12)
                 return (
-              <div className="w-full overflow-x-auto pb-3 custom-scrollbar">
+              <div ref={heatmapScrollRef} className="w-full overflow-x-auto pb-3 custom-scrollbar">
                 <div style={{ width: spacerPx + gridPx + 'px' }}>
                   {/* Month labels row */}
                   <div className="flex mb-2">
