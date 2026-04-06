@@ -124,61 +124,60 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    // Sanitize inputs
-    let sanitizedName: string;
-    let sanitizedPlatform: string;
-    let sanitizedUrl: string;
-    let sanitizedStatus: string;
-    
+    // Sanitize inputs and save in one try/catch for clean error handling
     try {
-      sanitizedName = sanitizeString(contestData.name, 'Name');
-      sanitizedPlatform = sanitizeString(contestData.platform, 'Platform');
-      sanitizedUrl = contestData.url ? sanitizeUrl(contestData.url) : '';
-      sanitizedStatus = contestData.status ? sanitizeString(contestData.status, 'Status') : 'scheduled';
-      
-      // Validate lengths
+      const sanitizedName = sanitizeString(contestData.name, 'Name');
+      const sanitizedPlatform = sanitizeString(contestData.platform, 'Platform');
+      const sanitizedUrl = contestData.url ? sanitizeUrl(contestData.url) : '';
+      const sanitizedStatus = contestData.status ? sanitizeString(contestData.status, 'Status') : 'scheduled';
+
       if (sanitizedName.length > 500) {
         throw new Error('Name must not exceed 500 characters');
       }
-    } catch (validationError) {
+
+      const contest = new Contest({
+        userId: user.id,
+        name: sanitizedName,
+        platform: sanitizedPlatform,
+        startTime: contestData.startTime || new Date().toISOString(),
+        duration: contestData.duration || 120,
+        url: sanitizedUrl,
+        rank: contestData.rank,
+        problemsSolved: contestData.problemsSolved || 0,
+        totalProblems: contestData.totalProblems,
+        status: sanitizedStatus
+      });
+
+      await contest.save();
+
+      return NextResponse.json({
+        success: true,
+        data: {
+          id: contest._id.toString(),
+          name: contest.name,
+          platform: contest.platform,
+          startTime: contest.startTime,
+          duration: contest.duration,
+          url: contest.url,
+          rank: contest.rank,
+          problemsSolved: contest.problemsSolved,
+          totalProblems: contest.totalProblems,
+          status: contest.status
+        }
+      }, { status: 201 });
+
+    } catch (validationError: unknown) {
+      if ((validationError as { code?: number }).code === 11000) {
+        return NextResponse.json({
+          success: false,
+          error: 'Contest already exists'
+        }, { status: 409 });
+      }
       return NextResponse.json({
         success: false,
         error: validationError instanceof Error ? validationError.message : 'Invalid input'
       }, { status: 400 });
     }
-
-    const contest = new Contest({
-      userId: user.id,
-      name: sanitizedName,
-      platform: sanitizedPlatform,
-      startTime: contestData.startTime || new Date().toISOString(),
-      duration: contestData.duration || 120, // Default 2 hours
-      url: sanitizedUrl,
-      rank: contestData.rank,
-      problemsSolved: contestData.problemsSolved || 0,
-      totalProblems: contestData.totalProblems,
-      status: sanitizedStatus
-    });
-
-    await contest.save();
-
-    const formattedContest = {
-      id: contest._id.toString(),
-      name: contest.name,
-      platform: contest.platform,
-      startTime: contest.startTime,
-      duration: contest.duration,
-      url: contest.url,
-      rank: contest.rank,
-      problemsSolved: contest.problemsSolved,
-      totalProblems: contest.totalProblems,
-      status: contest.status
-    };
-
-    return NextResponse.json({
-      success: true,
-      data: formattedContest
-    }, { status: 201 });
 
   } catch (error) {
     console.error('Create contest error:', error);

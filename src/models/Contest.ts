@@ -11,7 +11,7 @@ export interface IContest extends Document {
   rank?: number;
   problemsSolved?: number;
   totalProblems?: number;
-  status: 'scheduled' | 'live' | 'completed';
+  status: 'scheduled' | 'running' | 'finished';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,7 +44,7 @@ const ContestSchema = new Schema<IContest>({
   },
   url: {
     type: String,
-    required: true,
+    default: '',
     trim: true
   },
   rank: {
@@ -62,7 +62,7 @@ const ContestSchema = new Schema<IContest>({
   },
   status: {
     type: String,
-    enum: ['scheduled', 'live', 'completed'],
+    enum: ['scheduled', 'running', 'finished'],
     default: 'scheduled'
   }
 }, {

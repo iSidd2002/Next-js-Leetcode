@@ -421,6 +421,63 @@ class StorageService {
     }
   }
 
+  /**
+   * One-time migration: push locally-stored problems (created before auth was set up,
+   * or added while offline-mode was active) up to the server.
+   *
+   * Detection: client-generated IDs look like "1713456789123-a4b5c6d7e" (timestamp-random),
+   * while MongoDB ObjectIds are 24-char hex strings. Any problem whose ID doesn't match
+   * the MongoDB format was never persisted to the database.
+   *
+   * Company problems are intentionally local-only and are skipped.
+   *
+   * Returns the number of problems successfully migrated.
+   */
+  static async migrateLocalProblemsToServer(): Promise<number> {
+    if (this.isOfflineMode()) return 0;
+
+    try {
+      const raw = localStorage.getItem(PROBLEMS_KEY);
+      if (!raw) return 0;
+
+      let localProblems: Problem[];
+      try {
+        localProblems = JSON.parse(raw);
+      } catch {
+        return 0;
+      }
+
+      if (!localProblems.length) return 0;
+
+      // MongoDB ObjectIds are 24 lowercase hex chars
+      const isMongoId = (id: string) => /^[a-f0-9]{24}$/i.test(id);
+
+      const toMigrate = localProblems.filter(
+        p => !isMongoId(p.id) && p.source !== 'company'
+      );
+
+      if (!toMigrate.length) return 0;
+
+      let migrated = 0;
+      for (const problem of toMigrate) {
+        try {
+          // Strip local ID/createdAt so the server assigns real MongoDB ones
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const { id: _id, createdAt: _ca, ...data } = problem;
+          await ApiService.createProblem(data as Parameters<typeof ApiService.createProblem>[0]);
+          migrated++;
+        } catch {
+          // Skip duplicates (409), validation failures (400), etc.
+        }
+      }
+
+      return migrated;
+    } catch (error) {
+      console.error('Migration error:', error);
+      return 0;
+    }
+  }
+
   private static generateId(): string {
     return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }

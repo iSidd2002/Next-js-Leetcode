@@ -587,26 +587,20 @@ export default function HomePage() {
         return;
       }
 
-      const newProblem: Problem = {
+      const problemData: Omit<Problem, 'id' | 'createdAt'> = {
         ...potdProblem,
-        id: `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         source: 'manual',
         status: targetStatus,
         dateSolved: new Date().toISOString(),
-        createdAt: new Date().toISOString(),
-        // Only preserve review status if POTD was already marked for review
-        // Don't auto-mark for review - let user decide via "Mark for review" option
         isReview: potdProblem.isReview || false,
-        // Copy existing spaced repetition data if present
         repetition: potdProblem.repetition || 0,
         interval: potdProblem.interval || 0,
         nextReviewDate: potdProblem.nextReviewDate || null
       };
 
-      await StorageService.addProblem(newProblem);
-      const updated = [...problems, newProblem];
-      setProblems(updated);
-      await StorageService.saveProblems(updated);
+      // addProblem returns the server-assigned version (with MongoDB ID)
+      const created = await StorageService.addProblem(problemData);
+      setProblems(prev => [...prev, created]);
       toast.success(`Problem added to ${targetStatus === 'active' ? 'Problems' : 'Learned'}!`);
     } catch (error) {
       logger.error('Failed to add POTD to problems', error);
@@ -1042,6 +1036,12 @@ export default function HomePage() {
               try {
                 const userProfile = await ApiService.getProfile();
                 setCurrentUser(userProfile);
+                // Push any locally-stored problems that were never synced to the server
+                // (e.g. added while offline-mode was active, or before auth was set up)
+                const migrated = await StorageService.migrateLocalProblemsToServer();
+                if (migrated > 0) {
+                  toast.info(`Synced ${migrated} local problem${migrated === 1 ? '' : 's'} to your account`);
+                }
                 await loadUserData();
               } catch (error) {
                 logger.error('Post-auth data loading failed', error);

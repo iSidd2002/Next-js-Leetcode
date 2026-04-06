@@ -71,6 +71,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-token');
+        localStorage.removeItem('offline-mode'); // Ensure online mode after login
       }
 
       toast.success('Login successful!');
@@ -120,6 +121,7 @@ export default function AuthModal({ open, onOpenChange, onAuthSuccess }: AuthMod
 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('auth-token');
+        localStorage.removeItem('offline-mode'); // Ensure online mode after registration
       }
 
       toast.success('Registration successful!');
