@@ -415,15 +415,8 @@ export default function HomePage() {
   // Contest handlers
   const handleAddContest = async (contest: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
-      const newContest: Contest = {
-        ...contest,
-        id: generateId(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-      const updated = [...contests, newContest];
-      setContests(updated);
-      await StorageService.saveContests(updated);
+      const newContest = await StorageService.addContest(contest);
+      setContests(prev => [...prev, newContest]);
       toast.success('Contest added!');
     } catch (error) {
       logger.error('Failed to add contest', error);
@@ -433,11 +426,10 @@ export default function HomePage() {
 
   const handleUpdateContest = async (updatedContest: Contest) => {
     try {
-      const updated = contests.map(c =>
-        c.id === updatedContest.id ? { ...updatedContest, updatedAt: new Date() } : c
-      );
-      setContests(updated);
-      await StorageService.saveContests(updated);
+      const result = await StorageService.updateContest(updatedContest.id, updatedContest);
+      if (result) {
+        setContests(prev => prev.map(c => c.id === updatedContest.id ? result : c));
+      }
       toast.success('Contest updated!');
     } catch (error) {
       logger.error('Failed to update contest', error);
@@ -447,9 +439,8 @@ export default function HomePage() {
 
   const handleDeleteContest = async (id: string) => {
     try {
-      const updated = contests.filter(c => c.id !== id);
-      setContests(updated);
-      await StorageService.saveContests(updated);
+      await StorageService.deleteContest(id);
+      setContests(prev => prev.filter(c => c.id !== id));
       toast.success('Contest deleted!');
     } catch (error) {
       logger.error('Failed to delete contest', error);

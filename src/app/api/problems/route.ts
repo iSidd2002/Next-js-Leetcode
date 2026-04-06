@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     let limit: number;
     let offset: number;
     try {
-      limit = sanitizeInteger(searchParams.get('limit') || '100', 1, 1000);
+      limit = sanitizeInteger(searchParams.get('limit') || '1000', 1, 5000);
       offset = sanitizeInteger(searchParams.get('offset') || '0', 0, 100000);
     } catch (error) {
       return NextResponse.json({

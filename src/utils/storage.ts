@@ -81,15 +81,7 @@ class StorageService {
   }
 
   static async saveProblems(problems: Problem[]): Promise<void> {
-    // Always save to localStorage for offline support
     localStorage.setItem(PROBLEMS_KEY, JSON.stringify(problems));
-
-    if (!this.isOfflineMode()) {
-      // Sync with backend in the background
-      this.syncProblemsToServer(problems).catch(error => {
-        console.warn('Failed to sync problems to server:', error);
-      });
-    }
   }
 
   static async getPotdProblems(): Promise<Problem[]> {
@@ -162,11 +154,9 @@ class StorageService {
       return contests;
     } catch (error) {
       console.error('Error fetching contests from API:', error);
-      // If it's an authentication error, don't fallback to localStorage
       if (error instanceof Error && error.message.includes('Access token required')) {
-        throw error; // Re-throw authentication errors
+        throw error;
       }
-      // For other errors, fallback to local storage
       try {
         const contests = localStorage.getItem(CONTESTS_KEY);
         return contests ? JSON.parse(contests) : [];
@@ -177,16 +167,81 @@ class StorageService {
     }
   }
 
-  static async saveContests(contests: Contest[]): Promise<void> {
-    // Always save to localStorage for offline support
-    localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
-
-    if (!this.isOfflineMode()) {
-      // Sync with backend in the background
-      this.syncContestsToServer(contests).catch(error => {
-        console.warn('Failed to sync contests to server:', error);
-      });
+  static async addContest(contestData: Omit<Contest, 'id' | 'createdAt' | 'updatedAt'>): Promise<Contest> {
+    if (this.isOfflineMode()) {
+      const contests = await this.getContests();
+      const newContest: Contest = {
+        id: this.generateId(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        ...contestData,
+      };
+      contests.push(newContest);
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
+      return newContest;
     }
+
+    const newContest = await ApiService.createContest(contestData);
+    const cached = JSON.parse(localStorage.getItem(CONTESTS_KEY) || '[]') as Contest[];
+    cached.push(newContest);
+    localStorage.setItem(CONTESTS_KEY, JSON.stringify(cached));
+    return newContest;
+  }
+
+  static async updateContest(id: string, updates: Partial<Contest>): Promise<Contest | null> {
+    if (this.isOfflineMode()) {
+      const contests = await this.getContests();
+      const index = contests.findIndex(c => c.id === id);
+      if (index === -1) return null;
+      contests[index] = { ...contests[index], ...updates, updatedAt: new Date() };
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
+      return contests[index];
+    }
+
+    try {
+      const updatedContest = await ApiService.updateContest(id, updates);
+      const cached = JSON.parse(localStorage.getItem(CONTESTS_KEY) || '[]') as Contest[];
+      const index = cached.findIndex(c => c.id === id);
+      if (index !== -1) {
+        cached[index] = updatedContest;
+        localStorage.setItem(CONTESTS_KEY, JSON.stringify(cached));
+      }
+      return updatedContest;
+    } catch (error) {
+      console.error('Error updating contest via API, falling back to local storage:', error);
+      const contests = await this.getContests();
+      const index = contests.findIndex(c => c.id === id);
+      if (index === -1) return null;
+      contests[index] = { ...contests[index], ...updates, updatedAt: new Date() };
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
+      return contests[index];
+    }
+  }
+
+  static async deleteContest(id: string): Promise<boolean> {
+    if (this.isOfflineMode()) {
+      const contests = await this.getContests();
+      const filtered = contests.filter(c => c.id !== id);
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(filtered));
+      return true;
+    }
+
+    try {
+      await ApiService.deleteContest(id);
+      const cached = JSON.parse(localStorage.getItem(CONTESTS_KEY) || '[]') as Contest[];
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(cached.filter(c => c.id !== id)));
+      return true;
+    } catch (error) {
+      console.error('Error deleting contest via API, falling back to local storage:', error);
+      const contests = await this.getContests();
+      localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests.filter(c => c.id !== id)));
+      return true;
+    }
+  }
+
+  static async saveContests(contests: Contest[]): Promise<void> {
+    // Only used for bulk offline caching — individual ops use addContest/updateContest/deleteContest
+    localStorage.setItem(CONTESTS_KEY, JSON.stringify(contests));
   }
 
   // Company Problems methods (for imported company problems that are not yet solved)
@@ -367,7 +422,7 @@ class StorageService {
   }
 
   private static generateId(): string {
-    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 
   // Utility methods for offline/online mode
@@ -398,33 +453,6 @@ class StorageService {
     }
   }
 
-  private static async syncProblemsToServer(problems: Problem[]): Promise<void> {
-    try {
-      // This is called when saving problems locally - just log for now
-      console.log('🔄 Syncing problems to server in background...');
-
-      // Note: Individual problem sync happens through addProblem, updateProblem, deleteProblem
-      // This method is for bulk operations if needed in the future
-
-    } catch (error) {
-      console.error('Failed to sync problems to server:', error);
-      throw error;
-    }
-  }
-
-  private static async syncContestsToServer(contests: Contest[]): Promise<void> {
-    try {
-      console.log('🔄 Syncing contests to server in background...');
-
-      // Contests are typically read-only data fetched from external APIs
-      // So we don't usually need to sync them back to our server
-      // This is mainly for caching purposes
-
-    } catch (error) {
-      console.error('Failed to sync contests to server:', error);
-      throw error;
-    }
-  }
 
   // Todo methods
   static async getTodos(): Promise<Todo[]> {
@@ -548,20 +576,8 @@ class StorageService {
 
   private static async syncProblemsWithServer(): Promise<void> {
     try {
-      console.log('🔄 Syncing problems with server...');
-
-      // Get local problems
-      const localProblems = JSON.parse(localStorage.getItem(PROBLEMS_KEY) || '[]') as Problem[];
-
-      // Get server problems
       const serverProblems = await ApiService.getProblems();
-
-      // Simple strategy: server data takes precedence
-      // In a more complex app, you'd implement conflict resolution
       localStorage.setItem(PROBLEMS_KEY, JSON.stringify(serverProblems));
-
-      console.log(`✅ Synced ${serverProblems.length} problems from server`);
-
     } catch (error) {
       console.error('Failed to sync problems with server:', error);
       throw error;
@@ -582,20 +598,6 @@ class StorageService {
 
     } catch (error) {
       console.error('Failed to sync contests with server:', error);
-      throw error;
-    }
-  }
-
-  private static async syncTodosWithServer(): Promise<void> {
-    try {
-      // Get server todos
-      const serverTodos = await ApiService.getTodos();
-
-      // Update local cache
-      localStorage.setItem(TODOS_KEY, JSON.stringify(serverTodos));
-
-    } catch (error) {
-      console.error('Failed to sync todos with server:', error);
       throw error;
     }
   }
