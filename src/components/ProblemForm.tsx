@@ -280,7 +280,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 name="dateSolved"
                 value={formData.dateSolved}
                 onChange={handleInputChange}
-                max={new Date().toISOString().split('T')[0]}
+                max={localDateString()}
                 data-testid="date-input"
             />
           </div>
