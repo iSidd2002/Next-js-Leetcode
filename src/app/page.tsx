@@ -23,6 +23,7 @@ import AuthModal from '@/components/AuthModal';
 import ContestTracker from '@/components/ContestTracker';
 import TodoList from '@/components/TodoList';
 import ExternalResources from '@/components/ExternalResources';
+import PatternPaths from '@/components/PatternPaths';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
 import { TopicGroupedProblemList } from '@/components/TopicGroupedProblemList';
@@ -45,7 +46,7 @@ import { toast } from 'sonner';
 import {
   Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
   LayoutDashboard, ListTodo, Building2, Trophy, RefreshCcw,
-  CheckCircle, BookOpen, BarChart3, Compass, Library, Download
+  CheckCircle, BookOpen, BarChart3, Compass, Library, Download, Route
 } from 'lucide-react';
 import { downloadLearnedCSV } from '@/utils/exportCsv';
 
@@ -842,6 +843,7 @@ export default function HomePage() {
                     { value: 'todos', icon: CheckCircle, label: 'Tasks' },
                     { value: 'learned', icon: BookOpen, label: 'Learned' },
                     { value: 'analytics', icon: BarChart3, label: 'Analytics' },
+                    { value: 'patterns', icon: Route, label: 'Patterns' },
                     { value: 'guide', icon: Compass, label: 'Guide' },
                     { value: 'resources', icon: Library, label: 'Resources' },
                   ].map(({ value, icon: Icon, label, count, countVariant }) => (
@@ -1000,6 +1002,14 @@ export default function HomePage() {
                   <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
                     <ErrorBoundary>
                       <Guide />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="patterns" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                    <ErrorBoundary>
+                      <PatternPaths />
                     </ErrorBoundary>
                   </div>
                 </TabsContent>

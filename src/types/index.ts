@@ -230,6 +230,25 @@ export interface Todo {
   notes?: string;
 }
 
+export interface StudyPathProblem {
+  id: string;
+  title: string;
+  url: string;
+  difficulty: 'Easy' | 'Medium' | 'Hard' | '';
+  notes: string;
+  completed: boolean;
+}
+
+export interface StudyPath {
+  id: string;
+  name: string;        // Pattern name (e.g. "Two Pointers")
+  topic: string;       // Topic name (e.g. "Arrays")
+  description: string;
+  problems: StudyPathProblem[];
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DBTodo {
   _id: string;
   userId: string;
