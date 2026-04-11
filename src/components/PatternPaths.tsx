@@ -24,8 +24,11 @@ import {
 import {
   Plus, Trash2, ChevronUp, ChevronDown, ExternalLink,
   CheckCircle2, Route, Edit2, BookOpen, X, Layers,
+  Bookmark, GraduationCap, Check,
 } from 'lucide-react';
 import type { StudyPath, StudyPathProblem } from '@/types';
+import StorageService from '@/utils/storage';
+import { toast } from 'sonner';
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
 
@@ -57,6 +60,12 @@ const DIFFICULTY_STYLES: Record<string, string> = {
   Medium: 'bg-amber-50   text-amber-700   border-amber-200',
   Hard:   'bg-rose-50    text-rose-700    border-rose-200',
 };
+
+function detectPlatform(url: string): 'leetcode' | 'codeforces' | 'atcoder' {
+  if (url.includes('codeforces.com')) return 'codeforces';
+  if (url.includes('atcoder.jp')) return 'atcoder';
+  return 'leetcode';
+}
 
 const emptyProblem = (): StudyPathProblem => ({
   id: genId(),
@@ -160,6 +169,47 @@ export default function PatternPaths() {
     setPaths(updated);
     savePaths(updated);
     if (expandedId === id) setExpandedId(null);
+  };
+
+  const pushToTracker = async (
+    prob: StudyPathProblem,
+    mode: 'review' | 'learned'
+  ) => {
+    if (!prob.url) {
+      toast.error('Add a URL to this problem first');
+      return;
+    }
+    try {
+      await StorageService.addProblem({
+        platform: detectPlatform(prob.url),
+        title: prob.title,
+        problemId: prob.title.toLowerCase().replace(/\s+/g, '-'),
+        difficulty: prob.difficulty || 'Medium',
+        url: prob.url,
+        dateSolved: new Date().toISOString(),
+        notes: prob.notes || '',
+        isReview: mode === 'review',
+        status: mode === 'learned' ? 'learned' : 'active',
+        repetition: 0,
+        interval: 0,
+        nextReviewDate: null,
+        topics: [],
+        companies: [],
+        source: 'manual',
+      });
+      toast.success(
+        mode === 'review'
+          ? `"${prob.title}" added to Review`
+          : `"${prob.title}" added to Learned`
+      );
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('already exists') || msg.includes('409')) {
+        toast.info(`"${prob.title}" is already in your tracker`);
+      } else {
+        toast.error('Failed to add problem to tracker');
+      }
+    }
   };
 
   const toggleProblem = (pathId: string, problemId: string) => {
@@ -331,6 +381,7 @@ export default function PatternPaths() {
                                   : 'bg-card border-border/60 hover:border-border'
                               }`}
                             >
+                              {/* Title row */}
                               <div className="flex items-center gap-2 flex-wrap">
                                 {prob.url ? (
                                   <a
@@ -368,6 +419,40 @@ export default function PatternPaths() {
                                   {prob.notes}
                                 </p>
                               )}
+
+                              {/* Action buttons */}
+                              <div className="flex items-center gap-1.5 mt-2.5 pt-2 border-t border-border/40">
+                                {/* Done toggle */}
+                                <button
+                                  onClick={() => toggleProblem(path.id, prob.id)}
+                                  className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border transition-colors ${
+                                    prob.completed
+                                      ? 'bg-violet-100 text-violet-700 border-violet-200 dark:bg-violet-900/30 dark:text-violet-300'
+                                      : 'bg-muted text-muted-foreground border-border hover:bg-muted/80'
+                                  }`}
+                                >
+                                  <Check className="h-3 w-3" />
+                                  {prob.completed ? 'Done' : 'Mark Done'}
+                                </button>
+
+                                {/* Push to Review */}
+                                <button
+                                  onClick={() => pushToTracker(prob, 'review')}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100 transition-colors dark:bg-amber-900/20 dark:text-amber-300 dark:border-amber-800"
+                                >
+                                  <Bookmark className="h-3 w-3" />
+                                  Add to Review
+                                </button>
+
+                                {/* Push to Learned */}
+                                <button
+                                  onClick={() => pushToTracker(prob, 'learned')}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 transition-colors dark:bg-emerald-900/20 dark:text-emerald-300 dark:border-emerald-800"
+                                >
+                                  <GraduationCap className="h-3 w-3" />
+                                  Add to Learned
+                                </button>
+                              </div>
                             </div>
                           </div>
                         ))}
