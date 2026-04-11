@@ -465,14 +465,14 @@ export default function PatternPaths() {
                         className="flex-1 h-8 text-sm"
                       />
                       <Select
-                        value={prob.difficulty}
-                        onValueChange={v => updateFormProblem(prob.id, { difficulty: v as StudyPathProblem['difficulty'] })}
+                        value={prob.difficulty || 'none'}
+                        onValueChange={v => updateFormProblem(prob.id, { difficulty: (v === 'none' ? '' : v) as StudyPathProblem['difficulty'] })}
                       >
                         <SelectTrigger className="w-[90px] h-8 text-xs">
                           <SelectValue placeholder="Diff" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">None</SelectItem>
+                          <SelectItem value="none">None</SelectItem>
                           <SelectItem value="Easy">Easy</SelectItem>
                           <SelectItem value="Medium">Medium</SelectItem>
                           <SelectItem value="Hard">Hard</SelectItem>
