@@ -156,19 +156,21 @@ export default function HomePage() {
   };
 
   // Problem handlers
-  const handleAddProblem = async (problem: Omit<Problem, 'id' | 'createdAt'>) => {
+  const handleAddProblem = async (problem: Omit<Problem, 'id' | 'createdAt'>): Promise<Problem | undefined> => {
     try {
       if (!isAuthenticated) {
         toast.error('Please log in to add problems');
         setShowAuthModal(true);
-        return;
+        return undefined;
       }
       const newProblem = await StorageService.addProblem(problem);
       setProblems(prev => [newProblem, ...prev]);
       toast.success('Problem added successfully!');
+      return newProblem;
     } catch (error) {
       logger.error('Failed to add problem', error);
       toast.error('Failed to add problem');
+      return undefined;
     }
   };
 
@@ -1009,7 +1011,13 @@ export default function HomePage() {
                 <TabsContent value="patterns" className="mt-0">
                   <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
                     <ErrorBoundary>
-                      <PatternPaths />
+                      <PatternPaths
+                        onAddProblem={handleAddProblem}
+                        onScheduleReview={(problem) => {
+                          setProblemToScheduleReview(problem);
+                          setShowScheduleReviewDialog(true);
+                        }}
+                      />
                     </ErrorBoundary>
                   </div>
                 </TabsContent>

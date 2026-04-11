@@ -26,8 +26,7 @@ import {
   CheckCircle2, Route, Edit2, BookOpen, X, Layers,
   Bookmark, GraduationCap, Check,
 } from 'lucide-react';
-import type { StudyPath, StudyPathProblem } from '@/types';
-import StorageService from '@/utils/storage';
+import type { StudyPath, StudyPathProblem, Problem } from '@/types';
 import { toast } from 'sonner';
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
@@ -78,7 +77,12 @@ const emptyProblem = (): StudyPathProblem => ({
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function PatternPaths() {
+interface PatternPathsProps {
+  onAddProblem: (problem: Omit<Problem, 'id' | 'createdAt'>) => Promise<Problem | undefined>;
+  onScheduleReview: (problem: Problem) => void;
+}
+
+export default function PatternPaths({ onAddProblem, onScheduleReview }: PatternPathsProps) {
   const [paths, setPaths] = useState<StudyPath[]>(() => loadPaths());
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPath, setEditingPath] = useState<StudyPath | null>(null);
@@ -179,36 +183,30 @@ export default function PatternPaths() {
       toast.error('Add a URL to this problem first');
       return;
     }
-    try {
-      await StorageService.addProblem({
-        platform: detectPlatform(prob.url),
-        title: prob.title,
-        problemId: prob.title.toLowerCase().replace(/\s+/g, '-'),
-        difficulty: prob.difficulty || 'Medium',
-        url: prob.url,
-        dateSolved: new Date().toISOString(),
-        notes: prob.notes || '',
-        isReview: mode === 'review',
-        status: mode === 'learned' ? 'learned' : 'active',
-        repetition: 0,
-        interval: 0,
-        nextReviewDate: null,
-        topics: [],
-        companies: [],
-        source: 'manual',
-      });
-      toast.success(
-        mode === 'review'
-          ? `"${prob.title}" added to Review`
-          : `"${prob.title}" added to Learned`
-      );
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('already exists') || msg.includes('409')) {
-        toast.info(`"${prob.title}" is already in your tracker`);
-      } else {
-        toast.error('Failed to add problem to tracker');
-      }
+    const created = await onAddProblem({
+      platform: detectPlatform(prob.url),
+      title: prob.title,
+      problemId: prob.title.toLowerCase().replace(/\s+/g, '-'),
+      difficulty: prob.difficulty || 'Medium',
+      url: prob.url,
+      dateSolved: new Date().toISOString(),
+      notes: prob.notes || '',
+      isReview: mode === 'review',
+      status: mode === 'learned' ? 'learned' : 'active',
+      repetition: 0,
+      interval: 0,
+      nextReviewDate: null,
+      topics: [],
+      companies: [],
+      source: 'manual',
+    });
+
+    // onAddProblem shows its own toast on success/failure.
+    // If added to review, open the schedule-review dialog so the user
+    // can pick the interval — same flow as marking a problem for review
+    // in the main tracker.
+    if (created && mode === 'review') {
+      onScheduleReview(created);
     }
   };
 
