@@ -210,6 +210,12 @@ export default function HomePage() {
         setProblems(prev => prev.map(p => p.id === id ? updatedProblem : p));
       }
       toast.success('Problem updated!');
+
+      // If the user just toggled isReview on, open the schedule-review dialog
+      if (updates.isReview === true && !existingProblem.isReview) {
+        setProblemToScheduleReview(updatedProblem);
+        setShowScheduleReviewDialog(true);
+      }
     } catch (error) {
       logger.error('Failed to update problem', error);
       toast.error('Failed to update problem');

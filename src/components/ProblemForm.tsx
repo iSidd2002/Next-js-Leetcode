@@ -176,22 +176,33 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
       filename: problemData.codeFilename
     });
 
+    const buildPathProblem = (): StudyPathProblem => ({
+      id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+      title: problemData.title,
+      url: problemData.url,
+      difficulty: (['Easy', 'Medium', 'Hard'].includes(problemData.difficulty)
+        ? problemData.difficulty as StudyPathProblem['difficulty']
+        : ''),
+      notes: '',
+      completed: false,
+    });
+
     if (problemToEdit) {
       onUpdateProblem(problemToEdit.id, problemData);
+      // Optionally add the edited problem to a pattern path
+      if (onAddToPath && selectedPathId !== 'none') {
+        const pathProblem = buildPathProblem();
+        if (selectedPathId === '__new__' && newPathName.trim() && newPathTopic.trim()) {
+          onAddToPath('__new__', pathProblem, { name: newPathName.trim(), topic: newPathTopic.trim() });
+        } else if (selectedPathId !== '__new__') {
+          onAddToPath(selectedPathId, pathProblem);
+        }
+      }
     } else {
       onAddProblem(problemData);
       // Optionally add the problem to a pattern path
       if (onAddToPath && selectedPathId !== 'none') {
-        const pathProblem: StudyPathProblem = {
-          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
-          title: problemData.title,
-          url: problemData.url,
-          difficulty: (['Easy', 'Medium', 'Hard'].includes(problemData.difficulty)
-            ? problemData.difficulty as StudyPathProblem['difficulty']
-            : ''),
-          notes: '',
-          completed: false,
-        };
+        const pathProblem = buildPathProblem();
         if (selectedPathId === '__new__' && newPathName.trim() && newPathTopic.trim()) {
           onAddToPath('__new__', pathProblem, { name: newPathName.trim(), topic: newPathTopic.trim() });
         } else if (selectedPathId !== '__new__') {
@@ -404,7 +415,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                 </Label>
               </div>
 
-              {!problemToEdit && onAddToPath && (
+              {onAddToPath && (
                 <div className="space-y-2 pt-1 border-t border-border/50">
                   <Label className="flex items-center gap-1.5 text-sm">
                     <Route className="h-3.5 w-3.5 text-violet-500" />
