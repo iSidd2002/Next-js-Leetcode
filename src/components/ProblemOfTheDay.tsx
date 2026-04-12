@@ -3,10 +3,10 @@ import type {
   ActiveDailyCodingChallengeQuestion,
 } from "@/types";
 import { Button } from "@/components/ui/button";
-import { CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { CardContent } from "@/components/ui/card";
 import { SpotlightCard } from "@/components/ui/spotlight-card";
 import { Badge } from "@/components/ui/badge";
-import { ExternalLink, Calendar, Plus, Trophy } from "lucide-react";
+import { ExternalLink, Calendar, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ... (keep imports and constants)
@@ -98,42 +98,29 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
 
   if (loading) {
     return (
-      <SpotlightCard className="border-white/10 bg-card/30 backdrop-blur-md h-full">
-        <CardHeader className="pb-4 pt-5 px-5">
-          <CardTitle className="text-sm flex items-center gap-2.5 text-muted-foreground">
-            <Calendar className="h-4 w-4" />
-            Problem of the Day
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5">
-          <div className="h-24 bg-white/5 rounded-xl animate-pulse"></div>
+      <SpotlightCard className="border-white/10 bg-card/30 backdrop-blur-md">
+        <CardContent className="px-4 py-3">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="text-xs text-muted-foreground">Daily POTD</span>
+          </div>
+          <div className="h-10 bg-white/5 rounded-lg animate-pulse" />
         </CardContent>
       </SpotlightCard>
     );
   }
 
-  // Error fallback UI
   if (error && !problem) {
     return (
-      <SpotlightCard className="border-red-500/20 bg-red-500/5 backdrop-blur-md h-full">
-        <CardHeader className="pb-4 pt-5 px-5">
-           <CardTitle className="text-sm flex items-center gap-2.5 text-red-400">
-            <Calendar className="h-4 w-4" />
-            Problem of the Day
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-5 pb-5 space-y-3">
-          <div className="text-sm text-red-300/80">
-            Unable to load daily problem.
+      <SpotlightCard className="border-red-500/20 bg-red-500/5 backdrop-blur-md">
+        <CardContent className="px-4 py-3 space-y-2">
+          <div className="flex items-center gap-2">
+            <Calendar className="h-3.5 w-3.5 text-red-400" />
+            <span className="text-xs text-red-400">Daily POTD — unavailable</span>
           </div>
-          <Button variant="outline" size="sm" asChild className="w-full border-red-500/20 hover:bg-red-500/10 text-red-400">
-            <a
-              href="https://leetcode.com/problemset/all/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2"
-            >
-              <ExternalLink className="h-3 w-3" />
+          <Button variant="outline" size="sm" asChild className="w-full h-7 text-xs border-red-500/20 hover:bg-red-500/10 text-red-400">
+            <a href="https://leetcode.com/problemset/all/" target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3 w-3 mr-1.5" />
               Open LeetCode
             </a>
           </Button>
@@ -142,106 +129,84 @@ const ProblemOfTheDay = ({ onAddPotd }: ProblemOfTheDayProps) => {
     );
   }
 
-  if (!problem) {
-    return null;
-  }
+  if (!problem) return null;
 
-  const {
-    question: { title, difficulty, topicTags },
-    link,
-  } = problem;
+  const { question: { title, difficulty, topicTags }, link } = problem;
 
   const getDifficultyColor = (level: string) => {
     switch (level.toLowerCase()) {
-      case "easy":
-        return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20";
-      case "medium":
-        return "text-amber-400 bg-amber-400/10 border-amber-400/20";
-      case "hard":
-        return "text-rose-400 bg-rose-400/10 border-rose-400/20";
-      default:
-        return "text-slate-400 bg-slate-400/10 border-slate-400/20";
-    }
-  };
-
-  const handleAddToList = () => {
-    if (problem) {
-      onAddPotd(problem);
+      case "easy":   return "text-emerald-400 bg-emerald-400/10 border-emerald-400/20";
+      case "medium": return "text-amber-400 bg-amber-400/10 border-amber-400/20";
+      case "hard":   return "text-rose-400 bg-rose-400/10 border-rose-400/20";
+      default:       return "text-slate-400 bg-slate-400/10 border-slate-400/20";
     }
   };
 
   return (
-    <SpotlightCard className="border-primary/20 bg-slate-900/80 backdrop-blur-xl overflow-hidden relative group h-full">
-      {/* Decorative gradient background */}
+    <SpotlightCard className="border-primary/20 bg-slate-900/80 backdrop-blur-xl overflow-hidden relative">
       <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-accent/5 opacity-60" />
-      
-      <CardHeader className="pb-4 pt-5 px-5 relative z-10">
-        <CardTitle className="text-sm flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="p-1.5 rounded-lg bg-primary/10 text-primary ring-1 ring-primary/20">
-              <Calendar className="h-4 w-4" />
-            </div>
-            <span className="font-semibold tracking-tight text-white">Daily POTD</span>
+
+      <CardContent className="relative z-10 px-4 py-3 space-y-2.5">
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <Calendar className="h-3.5 w-3.5 text-primary" />
+            <span className="text-xs font-semibold text-white/80 tracking-tight">Daily POTD</span>
           </div>
-          <Badge variant="outline" className={cn("text-[10px] h-6 px-2.5 font-medium border", getDifficultyColor(difficulty))}>
+          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-medium border", getDifficultyColor(difficulty))}>
             {difficulty}
           </Badge>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="relative z-10 px-5 pb-5 space-y-4">
-        <div className="space-y-3.5">
-          <a
-            href={`https://leetcode.com${link}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block text-base font-bold text-white hover:text-primary transition-colors line-clamp-2 leading-snug"
-            title={title}
-          >
-            {title}
-          </a>
-          
-          <div className="flex flex-wrap gap-2">
-            {topicTags.slice(0, 3).map((tag) => (
-              <span
-                key={tag.id}
-                className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/60 hover:bg-slate-800 px-2.5 h-6 text-[10px] text-slate-300 font-normal transition-colors"
-              >
-                {tag.name}
-              </span>
-            ))}
-            {topicTags.length > 3 && (
-              <span className="inline-flex items-center rounded-md border border-slate-700 bg-slate-800/60 px-2.5 h-6 text-[10px] text-slate-400 font-normal">
-                +{topicTags.length - 3}
-              </span>
-            )}
-          </div>
         </div>
-        
-        <div className="grid grid-cols-2 gap-2.5 pt-2">
-           <Button 
-            onClick={handleAddToList} 
-            size="sm" 
-            className="h-9 text-xs font-medium bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20 transition-all"
-           >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
-              Add to Problems
-           </Button>
-           <Button 
-            variant="outline" 
-            size="sm" 
-            asChild 
-            className="h-9 text-xs font-medium border-slate-700 bg-slate-800/60 text-white/80 hover:bg-slate-800 hover:text-white transition-all"
-           >
-              <a
-                href={`https://leetcode.com${link}`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-                Solve Now
-              </a>
-           </Button>
+
+        {/* Title */}
+        <a
+          href={`https://leetcode.com${link}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="block text-sm font-bold text-white hover:text-primary transition-colors line-clamp-2 leading-snug"
+          title={title}
+        >
+          {title}
+        </a>
+
+        {/* Tags */}
+        <div className="flex flex-wrap gap-1">
+          {topicTags.slice(0, 3).map((tag) => (
+            <span
+              key={tag.id}
+              className="inline-flex items-center rounded border border-slate-700 bg-slate-800/60 px-1.5 h-5 text-[10px] text-slate-300"
+            >
+              {tag.name}
+            </span>
+          ))}
+          {topicTags.length > 3 && (
+            <span className="inline-flex items-center rounded border border-slate-700 bg-slate-800/60 px-1.5 h-5 text-[10px] text-slate-400">
+              +{topicTags.length - 3}
+            </span>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex gap-2">
+          <Button
+            onClick={() => onAddPotd(problem)}
+            size="sm"
+            className="flex-1 h-7 text-xs bg-primary hover:bg-primary/90 text-primary-foreground"
+          >
+            <Plus className="h-3 w-3 mr-1" />
+            Add
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            asChild
+            className="flex-1 h-7 text-xs border-slate-700 bg-slate-800/60 text-white/80 hover:bg-slate-800 hover:text-white"
+          >
+            <a href={`https://leetcode.com${link}`} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3 w-3 mr-1" />
+              Solve
+            </a>
+          </Button>
         </div>
       </CardContent>
     </SpotlightCard>
