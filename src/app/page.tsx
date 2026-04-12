@@ -23,7 +23,7 @@ import AuthModal from '@/components/AuthModal';
 import ContestTracker from '@/components/ContestTracker';
 import TodoList from '@/components/TodoList';
 import ExternalResources from '@/components/ExternalResources';
-import PatternPaths, { loadPaths, savePaths, genId } from '@/components/PatternPaths';
+import PatternPaths, { genId } from '@/components/PatternPaths';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
 import { TopicGroupedProblemList } from '@/components/TopicGroupedProblemList';
@@ -68,7 +68,7 @@ export default function HomePage() {
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
-  const [patternPaths, setPatternPaths] = useState<StudyPath[]>(() => loadPaths());
+  const [patternPaths, setPatternPaths] = useState<StudyPath[]>([]);
   // Schedule Review Dialog state
   const [showScheduleReviewDialog, setShowScheduleReviewDialog] = useState(false);
   const [problemToScheduleReview, setProblemToScheduleReview] = useState<Problem | null>(null);
@@ -116,11 +116,12 @@ export default function HomePage() {
 
   const loadUserData = async () => {
     try {
-      const [problemsData, potdData, contestsData, todosData] = await Promise.all([
+      const [problemsData, potdData, contestsData, todosData, patternsData] = await Promise.all([
         StorageService.getProblems(),
         StorageService.getPotdProblems(),
         StorageService.getContests(),
-        StorageService.getTodos()
+        StorageService.getTodos(),
+        ApiService.getPatternPaths().catch(() => [] as StudyPath[]),
       ]);
 
       const cleanedProblems = cleanupInvalidDates(problemsData);
@@ -130,6 +131,7 @@ export default function HomePage() {
       setPotdProblems(cleanedPotdProblems);
       setContests(contestsData);
       setTodos(todosData);
+      setPatternPaths(patternsData);
 
       // Auto POTD cleanup
       try {
@@ -345,9 +347,40 @@ export default function HomePage() {
     }
   };
 
-  const handlePatternPathsChange = (paths: StudyPath[]) => {
-    setPatternPaths(paths);
-    savePaths(paths);
+  const handlePatternPathsChange = async (paths: StudyPath[]) => {
+    const prev = patternPaths;
+    setPatternPaths(paths); // optimistic update
+
+    const deleted = prev.filter(p => !paths.find(n => n.id === p.id));
+    const created = paths.filter(p => !prev.find(o => o.id === p.id));
+    const updated = paths.filter(p => {
+      const old = prev.find(o => o.id === p.id);
+      return old && JSON.stringify(old) !== JSON.stringify(p);
+    });
+
+    try {
+      const results = await Promise.all([
+        ...deleted.map(p => ApiService.deletePatternPath(p.id)),
+        ...created.map(p => ApiService.createPatternPath({ name: p.name, topic: p.topic, description: p.description, problems: p.problems, createdAt: p.createdAt, updatedAt: p.updatedAt })),
+        ...updated.map(p => ApiService.updatePatternPath(p.id, { name: p.name, topic: p.topic, description: p.description, problems: p.problems })),
+      ]);
+
+      // For newly created paths, the server returns a MongoDB _id.
+      // Remap local temp IDs to the real server IDs.
+      if (created.length > 0) {
+        const createdResults = results.slice(deleted.length, deleted.length + created.length) as StudyPath[];
+        setPatternPaths(current =>
+          current.map(p => {
+            const idx = created.findIndex(c => c.id === p.id);
+            return idx !== -1 ? { ...p, id: createdResults[idx].id } : p;
+          })
+        );
+      }
+    } catch (error) {
+      logger.error('Failed to sync pattern paths', error);
+      toast.error('Failed to save pattern paths');
+      setPatternPaths(prev); // rollback on error
+    }
   };
 
   const handleAddToPath = (

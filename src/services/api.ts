@@ -1,4 +1,4 @@
-import type { Problem, Contest, User, AuthResponse, ApiResponse, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
+import type { Problem, Contest, User, AuthResponse, ApiResponse, ActiveDailyCodingChallengeQuestion, Todo, StudyPath } from '@/types';
 
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
   ? process.env.NEXT_PUBLIC_API_URL || '/api'
@@ -310,6 +310,32 @@ class ApiService {
     await this.request(`/todos/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  // Pattern path methods
+  static async getPatternPaths(): Promise<StudyPath[]> {
+    const response = await this.request<StudyPath[]>('/patterns');
+    return response.data!;
+  }
+
+  static async createPatternPath(path: Omit<StudyPath, 'id'>): Promise<StudyPath> {
+    const response = await this.request<StudyPath>('/patterns', {
+      method: 'POST',
+      body: JSON.stringify(path),
+    });
+    return response.data!;
+  }
+
+  static async updatePatternPath(id: string, path: Partial<StudyPath>): Promise<StudyPath> {
+    const response = await this.request<StudyPath>(`/patterns/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(path),
+    });
+    return response.data!;
+  }
+
+  static async deletePatternPath(id: string): Promise<void> {
+    await this.request(`/patterns/${id}`, { method: 'DELETE' });
   }
 }
 
