@@ -1,11 +1,12 @@
 "use client"
 
-import type { Problem, Todo } from '@/types';
+import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon, Sparkles, Brain, ExternalLink, BookOpen } from 'lucide-react';
 import { isToday, isPast, subMonths } from 'date-fns';
+import ProblemOfTheDay from './ProblemOfTheDay';
 import ExternalResourcesCard from './ExternalResourcesCard';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
@@ -23,10 +24,11 @@ interface DashboardProps {
   learnedProblems: Problem[];
   todos?: Todo[];
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
+  onAddPotd: (potd: ActiveDailyCodingChallengeQuestion) => void;
   onImportProblems: (companyName: string, problemsToImport: any[]) => void;
 }
 
-const Dashboard = ({ problems, learnedProblems, todos = [], onUpdateProblem, onImportProblems }: DashboardProps) => {
+const Dashboard = ({ problems, learnedProblems, todos = [], onUpdateProblem, onAddPotd, onImportProblems }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
   const heatmapScrollRef = useRef<HTMLDivElement>(null);
 
@@ -605,6 +607,9 @@ const Dashboard = ({ problems, learnedProblems, todos = [], onUpdateProblem, onI
 
         {/* Sidebar - Daily Tasks & Actions */}
         <div className="space-y-5">
+          {/* LeetCode Problem of the Day */}
+          <ProblemOfTheDay onAddPotd={onAddPotd} />
+
           {/* Practice Today — learned problems by repetition */}
           <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
             <CardHeader className="pb-3 pt-5 px-5">

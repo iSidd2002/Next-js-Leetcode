@@ -929,6 +929,7 @@ export default function HomePage() {
                       learnedProblems={learnedProblems}
                       todos={todos}
                       onUpdateProblem={handleUpdateProblem}
+                      onAddPotd={handleAddPotdProblem}
                       onImportProblems={handleImportProblems}
                     />
                   </ErrorBoundary>
