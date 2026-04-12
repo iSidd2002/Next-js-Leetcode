@@ -413,6 +413,66 @@ export default function HomePage() {
     handlePatternPathsChange(updated);
   };
 
+  // Sync all pattern-path problems to the tracker, skipping duplicates (matched by URL).
+  const handleSyncAllPatternProblems = async (
+    patternProblems: StudyPathProblem[]
+  ): Promise<{ added: number; skipped: number }> => {
+    // Build a set of already-tracked URLs for O(1) lookup.
+    // Include both problems and potdProblems since POTD can also have the same URL.
+    const trackedUrls = new Set<string>(
+      [...problems, ...potdProblems]
+        .filter(p => p.url)
+        .map(p => p.url.trim().toLowerCase())
+    );
+
+    // Deduplicate within the incoming batch itself (same URL may appear in multiple paths).
+    const seen = new Set<string>();
+    const toAdd: StudyPathProblem[] = [];
+    let skipped = 0;
+
+    for (const p of patternProblems) {
+      const key = p.url.trim().toLowerCase();
+      if (trackedUrls.has(key) || seen.has(key)) {
+        skipped++;
+      } else {
+        seen.add(key);
+        toAdd.push(p);
+      }
+    }
+
+    // Add new problems sequentially to avoid race conditions on the problems state.
+    let added = 0;
+    for (const p of toAdd) {
+      try {
+        const newProblem = await StorageService.addProblem({
+          platform: p.url.includes('codeforces.com') ? 'codeforces'
+            : p.url.includes('atcoder.jp') ? 'atcoder'
+            : 'leetcode',
+          title: p.title,
+          problemId: p.title.toLowerCase().replace(/\s+/g, '-'),
+          difficulty: p.difficulty || 'Medium',
+          url: p.url,
+          dateSolved: new Date().toISOString(),
+          notes: p.notes || '',
+          isReview: false,
+          status: 'learned',
+          repetition: 0,
+          interval: 0,
+          nextReviewDate: null,
+          topics: [],
+          companies: [],
+          source: 'pattern',
+        });
+        setProblems(prev => [newProblem, ...prev]);
+        added++;
+      } catch (err) {
+        logger.error('Failed to sync pattern problem', err);
+      }
+    }
+
+    return { added, skipped };
+  };
+
   const handleOpenForm = (problem?: Problem) => {
     setProblemToEdit(problem || null);
     setIsFormOpen(true);
@@ -1117,6 +1177,8 @@ export default function HomePage() {
                           setProblemToScheduleReview(problem);
                           setShowScheduleReviewDialog(true);
                         }}
+                        trackedProblems={[...problems, ...potdProblems]}
+                        onSyncAll={handleSyncAllPatternProblems}
                       />
                     </ErrorBoundary>
                   </div>

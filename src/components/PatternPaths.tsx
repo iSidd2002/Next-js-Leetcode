@@ -24,7 +24,7 @@ import {
 import {
   Plus, Trash2, ChevronUp, ChevronDown, ExternalLink,
   CheckCircle2, Route, Edit2, BookOpen, X, Layers,
-  Bookmark, GraduationCap, Check,
+  Bookmark, GraduationCap, Check, RefreshCw,
 } from 'lucide-react';
 import type { StudyPath, StudyPathProblem, Problem } from '@/types';
 import { toast } from 'sonner';
@@ -65,10 +65,13 @@ interface PatternPathsProps {
   onPathsChange: (paths: StudyPath[]) => void;
   onAddProblem: (problem: Omit<Problem, 'id' | 'createdAt'>) => Promise<Problem | undefined>;
   onScheduleReview: (problem: Problem) => void;
+  trackedProblems: Problem[];
+  onSyncAll: (problems: StudyPathProblem[]) => Promise<{ added: number; skipped: number }>;
 }
 
-export default function PatternPaths({ paths, onPathsChange, onAddProblem, onScheduleReview }: PatternPathsProps) {
+export default function PatternPaths({ paths, onPathsChange, onAddProblem, onScheduleReview, trackedProblems, onSyncAll }: PatternPathsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [editingPath, setEditingPath] = useState<StudyPath | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -205,6 +208,32 @@ export default function PatternPaths({ paths, onPathsChange, onAddProblem, onSch
     onPathsChange(updated);
   };
 
+  const handleSyncAll = async () => {
+    // Collect all pattern problems that have a URL
+    const allProblems = paths.flatMap(p => p.problems).filter(p => p.url.trim());
+
+    if (allProblems.length === 0) {
+      toast.info('No problems with URLs to sync. Add URLs to your pattern problems first.');
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const { added, skipped } = await onSyncAll(allProblems);
+      if (added === 0) {
+        toast.info(`All ${skipped} problem${skipped !== 1 ? 's' : ''} already in tracker — nothing to sync.`);
+      } else {
+        toast.success(
+          `Synced ${added} problem${added !== 1 ? 's' : ''}${skipped > 0 ? ` · ${skipped} already tracked` : ''}.`
+        );
+      }
+    } catch {
+      toast.error('Sync failed. Please try again.');
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -221,10 +250,24 @@ export default function PatternPaths({ paths, onPathsChange, onAddProblem, onSch
             Group problems by pattern and follow the order to build intuition step by step.
           </p>
         </div>
-        <Button onClick={openCreate} className="gap-2">
-          <Plus className="h-4 w-4" />
-          New Path
-        </Button>
+        <div className="flex items-center gap-2">
+          {paths.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSyncAll}
+              disabled={isSyncing}
+              className="gap-1.5 text-violet-600 border-violet-200 hover:bg-violet-50 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-900/20"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${isSyncing ? 'animate-spin' : ''}`} />
+              {isSyncing ? 'Syncing…' : 'Sync to Tracker'}
+            </Button>
+          )}
+          <Button onClick={openCreate} className="gap-2">
+            <Plus className="h-4 w-4" />
+            New Path
+          </Button>
+        </div>
       </div>
 
       {/* ── Empty state ── */}
