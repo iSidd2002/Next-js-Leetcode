@@ -31,24 +31,24 @@ import { toast } from 'sonner';
 
 // ─── localStorage helpers ────────────────────────────────────────────────────
 
-const STORAGE_KEY = 'pattern-paths';
+export const PATTERN_PATHS_KEY = 'pattern-paths';
 
-function loadPaths(): StudyPath[] {
+export function loadPaths(): StudyPath[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = typeof window !== 'undefined' ? localStorage.getItem(PATTERN_PATHS_KEY) : null;
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
   }
 }
 
-function savePaths(paths: StudyPath[]): void {
+export function savePaths(paths: StudyPath[]): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(paths));
+    localStorage.setItem(PATTERN_PATHS_KEY, JSON.stringify(paths));
   } catch {}
 }
 
-function genId(): string {
+export function genId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 }
 
@@ -78,12 +78,13 @@ const emptyProblem = (): StudyPathProblem => ({
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface PatternPathsProps {
+  paths: StudyPath[];
+  onPathsChange: (paths: StudyPath[]) => void;
   onAddProblem: (problem: Omit<Problem, 'id' | 'createdAt'>) => Promise<Problem | undefined>;
   onScheduleReview: (problem: Problem) => void;
 }
 
-export default function PatternPaths({ onAddProblem, onScheduleReview }: PatternPathsProps) {
-  const [paths, setPaths] = useState<StudyPath[]>(() => loadPaths());
+export default function PatternPaths({ paths, onPathsChange, onAddProblem, onScheduleReview }: PatternPathsProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPath, setEditingPath] = useState<StudyPath | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -163,15 +164,13 @@ export default function PatternPaths({ onAddProblem, onScheduleReview }: Pattern
       updated = [newPath, ...paths];
     }
 
-    setPaths(updated);
-    savePaths(updated);
+    onPathsChange(updated);
     setDialogOpen(false);
   };
 
   const deletePath = (id: string) => {
     const updated = paths.filter(p => p.id !== id);
-    setPaths(updated);
-    savePaths(updated);
+    onPathsChange(updated);
     if (expandedId === id) setExpandedId(null);
   };
 
@@ -220,8 +219,7 @@ export default function PatternPaths({ onAddProblem, onScheduleReview }: Pattern
         ),
       }
     );
-    setPaths(updated);
-    savePaths(updated);
+    onPathsChange(updated);
   };
 
   // ── Render ─────────────────────────────────────────────────────────────────

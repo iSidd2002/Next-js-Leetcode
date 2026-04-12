@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Problem, Contest, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
+import type { Problem, Contest, ActiveDailyCodingChallengeQuestion, Todo, StudyPath, StudyPathProblem } from '@/types';
 import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
@@ -23,7 +23,7 @@ import AuthModal from '@/components/AuthModal';
 import ContestTracker from '@/components/ContestTracker';
 import TodoList from '@/components/TodoList';
 import ExternalResources from '@/components/ExternalResources';
-import PatternPaths from '@/components/PatternPaths';
+import PatternPaths, { loadPaths, savePaths, genId } from '@/components/PatternPaths';
 import Guide from '@/components/Guide';
 import { CommandMenu } from '@/components/CommandMenu';
 import { TopicGroupedProblemList } from '@/components/TopicGroupedProblemList';
@@ -68,6 +68,7 @@ export default function HomePage() {
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [patternPaths, setPatternPaths] = useState<StudyPath[]>(() => loadPaths());
   // Schedule Review Dialog state
   const [showScheduleReviewDialog, setShowScheduleReviewDialog] = useState(false);
   const [problemToScheduleReview, setProblemToScheduleReview] = useState<Problem | null>(null);
@@ -168,6 +169,10 @@ export default function HomePage() {
       const newProblem = await StorageService.addProblem(problem);
       setProblems(prev => [newProblem, ...prev]);
       toast.success('Problem added successfully!');
+      if (problem.isReview) {
+        setProblemToScheduleReview(newProblem);
+        setShowScheduleReviewDialog(true);
+      }
       return newProblem;
     } catch (error) {
       logger.error('Failed to add problem', error);
@@ -338,6 +343,38 @@ export default function HomePage() {
       logger.error('Failed to delete all problems', error);
       toast.error('Failed to delete all problems');
     }
+  };
+
+  const handlePatternPathsChange = (paths: StudyPath[]) => {
+    setPatternPaths(paths);
+    savePaths(paths);
+  };
+
+  const handleAddToPath = (
+    pathId: string,
+    problem: StudyPathProblem,
+    newPath?: { name: string; topic: string }
+  ) => {
+    let updated: StudyPath[];
+    if (pathId === '__new__' && newPath) {
+      const created: StudyPath = {
+        id: genId(),
+        name: newPath.name,
+        topic: newPath.topic,
+        description: '',
+        problems: [problem],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      updated = [created, ...patternPaths];
+    } else {
+      updated = patternPaths.map(p =>
+        p.id === pathId
+          ? { ...p, problems: [...p.problems, problem], updatedAt: new Date().toISOString() }
+          : p
+      );
+    }
+    handlePatternPathsChange(updated);
   };
 
   const handleOpenForm = (problem?: Problem) => {
@@ -1038,6 +1075,8 @@ export default function HomePage() {
                   <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
                     <ErrorBoundary>
                       <PatternPaths
+                        paths={patternPaths}
+                        onPathsChange={handlePatternPathsChange}
                         onAddProblem={handleAddProblem}
                         onScheduleReview={(problem) => {
                           setProblemToScheduleReview(problem);
@@ -1068,6 +1107,8 @@ export default function HomePage() {
             onAddProblem={handleAddProblem}
             onUpdateProblem={(id: string, updates: Partial<Problem>) => handleUpdateProblem(id, updates)}
             problemToEdit={problemToEdit}
+            patternPaths={patternPaths}
+            onAddToPath={handleAddToPath}
           />
         )}
 

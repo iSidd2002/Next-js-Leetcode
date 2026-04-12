@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo } from 'react';
-import type { Problem } from '@/types';
+import type { Problem, StudyPath, StudyPathProblem } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CodeSnippetEditor } from './CodeSnippetEditor';
 import { leetcodeTopics, codeforcesTopics } from '@/lib/topics';
 import { companies } from '@/lib/companies';
-import { Code2, FileText, Brain, Sparkles, Loader2 } from 'lucide-react';
+import { Code2, FileText, Brain, Sparkles, Loader2, Route } from 'lucide-react';
 import { cn, localDateString } from '@/lib/utils';
 import { TagInput } from '@/components/ui/tag-input';
 import { Textarea } from '@/components/ui/textarea';
@@ -25,6 +25,8 @@ interface ProblemFormProps {
   onAddProblem: (problem: Omit<Problem, 'id' | 'createdAt'>) => void;
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
   problemToEdit: Problem | null;
+  patternPaths?: StudyPath[];
+  onAddToPath?: (pathId: string, problem: StudyPathProblem, newPath?: { name: string; topic: string }) => void;
 }
 
 type FormData = Omit<Problem, 'id' | 'createdAt' | 'problemId'>;
@@ -58,10 +60,13 @@ const getInitialFormState = (): FormData => ({
 });
 
 
-const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, problemToEdit }: ProblemFormProps) => {
+const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, problemToEdit, patternPaths, onAddToPath }: ProblemFormProps) => {
   const [formData, setFormData] = useState<FormData>(getInitialFormState);
   const [aiPatternLoading, setAiPatternLoading] = useState(false);
   const [patternSuggestions, setPatternSuggestions] = useState<string[]>([]);
+  const [selectedPathId, setSelectedPathId] = useState<string>('none');
+  const [newPathName, setNewPathName] = useState('');
+  const [newPathTopic, setNewPathTopic] = useState('');
 
   useEffect(() => {
     if (problemToEdit) {
@@ -81,6 +86,10 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
     } else {
       setFormData(getInitialFormState());
     }
+    // Reset pattern path selection whenever the dialog opens/closes
+    setSelectedPathId('none');
+    setNewPathName('');
+    setNewPathTopic('');
   }, [problemToEdit, open]);
 
   const topicOptions = useMemo<Option[]>(() => {
@@ -171,6 +180,24 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
       onUpdateProblem(problemToEdit.id, problemData);
     } else {
       onAddProblem(problemData);
+      // Optionally add the problem to a pattern path
+      if (onAddToPath && selectedPathId !== 'none') {
+        const pathProblem: StudyPathProblem = {
+          id: `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`,
+          title: problemData.title,
+          url: problemData.url,
+          difficulty: (['Easy', 'Medium', 'Hard'].includes(problemData.difficulty)
+            ? problemData.difficulty as StudyPathProblem['difficulty']
+            : ''),
+          notes: '',
+          completed: false,
+        };
+        if (selectedPathId === '__new__' && newPathName.trim() && newPathTopic.trim()) {
+          onAddToPath('__new__', pathProblem, { name: newPathName.trim(), topic: newPathTopic.trim() });
+        } else if (selectedPathId !== '__new__') {
+          onAddToPath(selectedPathId, pathProblem);
+        }
+      }
     }
 
     onOpenChange(false);
@@ -366,7 +393,7 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
           </div>
 
               <div className="flex items-center space-x-2">
-                <Checkbox 
+                <Checkbox
                     id="isReview"
                     name="isReview"
                     checked={formData.isReview}
@@ -376,6 +403,46 @@ const ProblemForm = ({ open, onOpenChange, onAddProblem, onUpdateProblem, proble
                   Mark for review later
                 </Label>
               </div>
+
+              {!problemToEdit && onAddToPath && (
+                <div className="space-y-2 pt-1 border-t border-border/50">
+                  <Label className="flex items-center gap-1.5 text-sm">
+                    <Route className="h-3.5 w-3.5 text-violet-500" />
+                    Add to Pattern Path
+                    <span className="text-muted-foreground font-normal">(optional)</span>
+                  </Label>
+                  <Select value={selectedPathId} onValueChange={setSelectedPathId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="None" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">— None —</SelectItem>
+                      <SelectItem value="__new__">+ Create new path</SelectItem>
+                      {(patternPaths ?? []).map(p => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} <span className="text-muted-foreground">({p.topic})</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedPathId === '__new__' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <Input
+                        placeholder="Pattern name *"
+                        value={newPathName}
+                        onChange={e => setNewPathName(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                      <Input
+                        placeholder="Topic *"
+                        value={newPathTopic}
+                        onChange={e => setNewPathTopic(e.target.value)}
+                        className="h-8 text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="analysis" className="space-y-4 mt-4">
