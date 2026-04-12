@@ -926,12 +926,10 @@ export default function HomePage() {
                   <ErrorBoundary>
                     <Dashboard
                       problems={manualProblems}
+                      learnedProblems={learnedProblems}
                       todos={todos}
                       onUpdateProblem={handleUpdateProblem}
-                      onAddPotd={handleAddPotdProblem}
                       onImportProblems={handleImportProblems}
-                      onCleanupPotd={handleCleanupPotd}
-                      onAddDailyChallenge={handleAddDailyChallengeToPotd}
                     />
                   </ErrorBoundary>
                 </TabsContent>

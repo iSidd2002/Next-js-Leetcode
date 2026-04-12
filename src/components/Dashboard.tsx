@@ -1,13 +1,11 @@
 "use client"
 
-import type { Problem, ActiveDailyCodingChallengeQuestion, Todo } from '@/types';
+import type { Problem, Todo } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Trash2, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon, Sparkles } from 'lucide-react';
+import { BookCopy, CalendarDays, Star, Trophy, Clock, Download, CheckSquare, AlertTriangle, Target, Activity, Zap, Flame, TrendingUp, Clock as HistoryIcon, Sparkles, Brain, ExternalLink, BookOpen } from 'lucide-react';
 import { isToday, isPast, subMonths } from 'date-fns';
-import ProblemOfTheDay from './ProblemOfTheDay';
-import DailyChallenge from './DailyChallenge';
 import ExternalResourcesCard from './ExternalResourcesCard';
 import { format, isSameDay, subDays, eachDayOfInterval, differenceInDays, eachWeekOfInterval } from 'date-fns';
 import ImportProblems from './ImportProblems';
@@ -22,17 +20,14 @@ import { BorderBeam } from '@/components/ui/border-beam';
 
 interface DashboardProps {
   problems: Problem[];
+  learnedProblems: Problem[];
   todos?: Todo[];
   onUpdateProblem: (id: string, updates: Partial<Problem>) => void;
-  onAddPotd: (potd: ActiveDailyCodingChallengeQuestion) => void;
   onImportProblems: (companyName: string, problemsToImport: any[]) => void;
-  onCleanupPotd?: () => Promise<void>;
-  onAddDailyChallenge?: (dailyProblem: any) => Promise<void>;
 }
 
-const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportProblems, onCleanupPotd, onAddDailyChallenge }: DashboardProps) => {
+const Dashboard = ({ problems, learnedProblems, todos = [], onUpdateProblem, onImportProblems }: DashboardProps) => {
   const [isImporting, setIsImporting] = useState(false);
-  const [isCleaningPotd, setIsCleaningPotd] = useState(false);
   const heatmapScrollRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll heatmap to show today (rightmost column) on mount
@@ -43,26 +38,22 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
   }, []);
 
   const totalProblems = problems.length;
-  const potdProblems = problems.filter(p => p.source === 'potd');
-  const expiredPotdCount = potdProblems.filter(p => {
-    const problemDate = new Date(p.dateSolved || p.createdAt);
+
+  // Pick up to 5 learned problems to practice today.
+  // Priority: past-due nextReviewDate → lowest repetition → oldest dateSolved.
+  const practiceToday = useMemo(() => {
     const now = new Date();
-    const daysDifference = Math.floor((now.getTime() - problemDate.getTime()) / (1000 * 60 * 60 * 24));
-    return daysDifference > 7; // POTD retention period
-  }).length;
-
-  const handleCleanupPotd = async () => {
-    if (!onCleanupPotd) return;
-
-    setIsCleaningPotd(true);
-    try {
-      await onCleanupPotd();
-    } catch (error) {
-      console.error('POTD cleanup failed:', error);
-    } finally {
-      setIsCleaningPotd(false);
-    }
-  };
+    return [...learnedProblems]
+      .sort((a, b) => {
+        const aDue = !!(a.nextReviewDate && new Date(a.nextReviewDate) <= now);
+        const bDue = !!(b.nextReviewDate && new Date(b.nextReviewDate) <= now);
+        if (aDue !== bDue) return aDue ? -1 : 1;
+        const repDiff = (a.repetition ?? 0) - (b.repetition ?? 0);
+        if (repDiff !== 0) return repDiff;
+        return new Date(a.dateSolved).getTime() - new Date(b.dateSolved).getTime();
+      })
+      .slice(0, 5);
+  }, [learnedProblems]);
   const thisWeek = problems.filter((p) => {
     const weekAgo = new Date();
     weekAgo.setDate(weekAgo.getDate() - 7);
@@ -614,11 +605,85 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
 
         {/* Sidebar - Daily Tasks & Actions */}
         <div className="space-y-5">
-          {/* Daily Actions */}
-          <div className="grid gap-4">
-             <ProblemOfTheDay onAddPotd={onAddPotd} />
-             <DailyChallenge onAddToPotd={onAddDailyChallenge} />
-          </div>
+          {/* Practice Today — learned problems by repetition */}
+          <Card className="border-none shadow-md bg-card/50 backdrop-blur-sm">
+            <CardHeader className="pb-3 pt-5 px-5">
+              <CardTitle className="text-sm flex items-center gap-2.5">
+                <Brain className="h-4 w-4 text-violet-500" />
+                Practice Today
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">
+                Revisit learned problems to reinforce memory
+              </p>
+            </CardHeader>
+            <CardContent className="px-5 pb-5">
+              {learnedProblems.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-6 text-center gap-2">
+                  <BookOpen className="h-8 w-8 text-muted-foreground/40" />
+                  <p className="text-sm text-muted-foreground">
+                    No learned problems yet.
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Solve problems and mark them as <span className="font-medium">Learned</span> to see them here.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {practiceToday.map((p, idx) => {
+                    const isDue = !!(p.nextReviewDate && new Date(p.nextReviewDate) <= new Date());
+                    return (
+                      <div key={p.id} className="flex items-start gap-2.5 group">
+                        <span className="mt-0.5 text-[11px] font-bold text-muted-foreground/60 w-4 shrink-0 text-right">
+                          {idx + 1}
+                        </span>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {p.url ? (
+                              <a
+                                href={p.url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm font-medium leading-snug hover:underline flex items-center gap-1 truncate"
+                              >
+                                {p.title}
+                                <ExternalLink className="h-3 w-3 opacity-40 shrink-0" />
+                              </a>
+                            ) : (
+                              <span className="text-sm font-medium leading-snug truncate">{p.title}</span>
+                            )}
+                            <Badge
+                              variant="outline"
+                              className={cn(
+                                'text-[10px] px-1.5 shrink-0',
+                                p.difficulty === 'Easy' && 'text-emerald-600 border-emerald-200 bg-emerald-50 dark:bg-emerald-900/20',
+                                p.difficulty === 'Medium' && 'text-amber-600 border-amber-200 bg-amber-50 dark:bg-amber-900/20',
+                                p.difficulty === 'Hard' && 'text-rose-600 border-rose-200 bg-rose-50 dark:bg-rose-900/20',
+                              )}
+                            >
+                              {p.difficulty}
+                            </Badge>
+                            {isDue && (
+                              <Badge variant="destructive" className="text-[10px] px-1.5 shrink-0">
+                                Due
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">
+                            Rep {p.repetition ?? 0} · solved {format(new Date(p.dateSolved), 'MMM d')}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  {learnedProblems.length > 5 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      +{learnedProblems.length - 5} more in Learned tab
+                    </p>
+                  )}
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Todo Snapshot */}
           {totalTodos > 0 && (
@@ -635,7 +700,7 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
                    <span className="text-sm font-medium">{Math.round((completedTodos / totalTodos) * 100) || 0}%</span>
                  </div>
                  <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                   <div 
+                   <div
                       className="h-full bg-primary transition-all duration-1000 ease-out"
                       style={{ width: `${(completedTodos / totalTodos) * 100}%` }}
                    />
@@ -663,27 +728,15 @@ const Dashboard = ({ problems, todos = [], onUpdateProblem, onAddPotd, onImportP
               </CardTitle>
             </CardHeader>
             <CardContent className="px-5 pb-5 space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start transition-all hover:bg-primary/10 hover:border-primary/50" 
+              <Button
+                variant="outline"
+                className="w-full justify-start transition-all hover:bg-primary/10 hover:border-primary/50"
                 onClick={() => setIsImporting(true)}
               >
                 <Download className="h-4 w-4 mr-2 text-muted-foreground" />
                 Import Problems
               </Button>
               <ExternalResourcesCard />
-              
-              {onCleanupPotd && (
-                 <Button 
-                    variant="ghost" 
-                    className="w-full justify-start text-muted-foreground hover:text-destructive"
-                    onClick={handleCleanupPotd}
-                    disabled={isCleaningPotd || expiredPotdCount === 0}
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Clean Old POTD ({expiredPotdCount})
-                  </Button>
-              )}
             </CardContent>
           </Card>
         </div>
