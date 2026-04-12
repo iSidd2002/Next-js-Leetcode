@@ -9,6 +9,7 @@ export interface IUser extends Document {
     theme?: 'light' | 'dark';
     notifications?: boolean;
     emailUpdates?: boolean;
+    reviewIntervals?: number[];
   };
   createdAt: Date;
   updatedAt: Date;
@@ -48,6 +49,10 @@ const UserSchema = new Schema<IUser>({
     emailUpdates: {
       type: Boolean,
       default: false
+    },
+    reviewIntervals: {
+      type: [Number],
+      default: [2, 5, 7]
     }
   },
 }, {

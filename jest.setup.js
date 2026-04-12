@@ -33,27 +33,36 @@ jest.mock('react-syntax-highlighter/dist/esm/styles/prism', () => ({
 // Mock CSS imports
 jest.mock('./src/components/ui/MarkdownEditor.css', () => ({}), { virtual: true });
 
-// Global mock for API service
+// Global mock for API service (no { virtual: true } so it replaces the real module)
 jest.mock('@/services/api', () => ({
   __esModule: true,
   default: {
     isAuthenticated: jest.fn(() => false),
     getProblems: jest.fn(() => Promise.resolve([])),
-    createProblem: jest.fn(),
-    updateProblem: jest.fn(),
-    deleteProblem: jest.fn(),
+    createProblem: jest.fn(() => Promise.resolve({})),
+    updateProblem: jest.fn(() => Promise.resolve({})),
+    deleteProblem: jest.fn(() => Promise.resolve()),
+    deleteAllProblems: jest.fn(() => Promise.resolve(0)),
     getContests: jest.fn(() => Promise.resolve([])),
-    createContest: jest.fn(),
-    updateContest: jest.fn(),
-    deleteContest: jest.fn(),
+    createContest: jest.fn(() => Promise.resolve({})),
+    updateContest: jest.fn(() => Promise.resolve({})),
+    deleteContest: jest.fn(() => Promise.resolve()),
+    getTodos: jest.fn(() => Promise.resolve([])),
+    createTodo: jest.fn(() => Promise.resolve({})),
+    updateTodo: jest.fn(() => Promise.resolve({})),
+    deleteTodo: jest.fn(() => Promise.resolve()),
+    getPatternPaths: jest.fn(() => Promise.resolve([])),
+    createPatternPath: jest.fn(() => Promise.resolve({})),
+    updatePatternPath: jest.fn(() => Promise.resolve({})),
+    deletePatternPath: jest.fn(() => Promise.resolve()),
     clearAuthState: jest.fn(),
+    checkAuthStatus: jest.fn(() => Promise.resolve(false)),
     login: jest.fn(),
     register: jest.fn(),
     logout: jest.fn(),
-    getToken: jest.fn(),
-    setToken: jest.fn(),
+    getProfile: jest.fn(),
   }
-}), { virtual: true });
+}));
 
 // Mock localStorage
 const localStorageMock = {

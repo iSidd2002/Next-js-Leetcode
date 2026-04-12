@@ -8,7 +8,7 @@ import { generateId } from '@/utils/id';
 import { cleanupInvalidDates } from '@/utils/dateMigration';
 import { initializeSpacedRepetition } from '@/utils/spacedRepetition';
 import { calculateNextReviewEnhanced } from '@/utils/enhancedSpacedRepetition';
-import { getReviewIntervals } from '@/utils/settingsStorage';
+import { getReviewIntervals, loadSettingsFromServer } from '@/utils/settingsStorage';
 import { isToday, isPast } from 'date-fns';
 import { logger } from '@/utils/logger';
 
@@ -122,6 +122,9 @@ export default function HomePage() {
         StorageService.getContests(),
         StorageService.getTodos(),
         ApiService.getPatternPaths().catch(() => [] as StudyPath[]),
+        // Load settings from server to prime the localStorage cache so
+        // synchronous getReviewIntervals() returns up-to-date values.
+        loadSettingsFromServer().catch(() => null),
       ]);
 
       const cleanedProblems = cleanupInvalidDates(problemsData);

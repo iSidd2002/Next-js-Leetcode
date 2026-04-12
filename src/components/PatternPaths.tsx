@@ -29,24 +29,7 @@ import {
 import type { StudyPath, StudyPathProblem, Problem } from '@/types';
 import { toast } from 'sonner';
 
-// ─── localStorage helpers ────────────────────────────────────────────────────
-
-export const PATTERN_PATHS_KEY = 'pattern-paths';
-
-export function loadPaths(): StudyPath[] {
-  try {
-    const raw = typeof window !== 'undefined' ? localStorage.getItem(PATTERN_PATHS_KEY) : null;
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-export function savePaths(paths: StudyPath[]): void {
-  try {
-    localStorage.setItem(PATTERN_PATHS_KEY, JSON.stringify(paths));
-  } catch {}
-}
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 export function genId(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;

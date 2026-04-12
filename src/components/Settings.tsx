@@ -14,7 +14,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { getReviewIntervals, saveReviewIntervals } from '@/utils/settingsStorage';
+import {
+  getReviewIntervals,
+  saveReviewIntervals,
+  getNotificationsEnabled,
+  saveSettingsToServer,
+} from '@/utils/settingsStorage';
 import { toast } from 'sonner';
 import { X, Plus } from 'lucide-react';
 import StorageService from '@/utils/storage';
@@ -34,7 +39,7 @@ export function Settings({ children, onSettingsSave }: SettingsProps) {
   useEffect(() => {
     if (open) {
       setIntervals(getReviewIntervals());
-      setEnableNotifications(localStorage.getItem('enableNotifications') === 'true');
+      setEnableNotifications(getNotificationsEnabled());
     }
   }, [open]);
 
@@ -53,16 +58,18 @@ export function Settings({ children, onSettingsSave }: SettingsProps) {
     setIntervals(newIntervals);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (intervals.some(i => i <= 0)) {
       toast.error('Intervals must be positive numbers.');
       return;
     }
+    // Update local cache immediately
     saveReviewIntervals(intervals);
     onSettingsSave(intervals);
+    // Persist to MongoDB (fire-and-forget, cache already updated)
+    saveSettingsToServer({ reviewIntervals: intervals, notifications: enableNotifications });
     toast.success('Settings saved!');
     setOpen(false);
-    localStorage.setItem('enableNotifications', enableNotifications.toString());
   };
 
   // Function to export data
