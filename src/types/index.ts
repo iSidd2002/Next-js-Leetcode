@@ -25,7 +25,7 @@ export interface Problem {
   topics: string[];
   status: 'active' | 'learned';
   companies: string[];
-  source: 'manual' | 'company' | 'potd'; // Track the source of the problem
+  source: 'manual' | 'company' | 'potd' | 'pattern'; // Track the source of the problem
   reviewHistory?: ReviewEntry[]; // Track review quality and progress
   averageQuality?: number; // Average quality score
   lastReviewQuality?: number; // Last review quality

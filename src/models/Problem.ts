@@ -110,7 +110,7 @@ const ProblemSchema = new Schema<IProblem>({
   }],
   source: {
     type: String,
-    enum: ['manual', 'company', 'potd'],
+    enum: ['manual', 'company', 'potd', 'pattern'],
     default: 'manual'
   },
   codeSnippet: {

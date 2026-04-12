@@ -686,8 +686,8 @@ export default function HomePage() {
   };
 
   // Computed values
-  const manualProblems = problems.filter(p => p.source === 'manual' || p.source === 'potd' || !p.source);
-  const activeProblems = manualProblems.filter(p => p.status === 'active' && !p.isReview);
+  const manualProblems = problems.filter(p => p.source !== 'pattern');
+  const activeProblems = manualProblems.filter(p => p.status === 'active');
   const allProblemsForReview = [...problems, ...potdProblems];
   const reviewProblems = allProblemsForReview.filter(p => p.isReview);
   const dueReviewProblems = reviewProblems.filter(p =>

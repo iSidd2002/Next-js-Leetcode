@@ -198,7 +198,7 @@ export default function PatternPaths({ onAddProblem, onScheduleReview }: Pattern
       nextReviewDate: null,
       topics: [],
       companies: [],
-      source: 'manual',
+      source: 'pattern',
     });
 
     // onAddProblem shows its own toast on success/failure.
