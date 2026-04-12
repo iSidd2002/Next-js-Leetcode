@@ -36,6 +36,7 @@ import { AppLogo } from '@/components/ui/app-logo';
 
 // UI Components
 import { Button } from '@/components/ui/button';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '@/components/ui/alert-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
@@ -46,7 +47,7 @@ import { toast } from 'sonner';
 import {
   Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
   LayoutDashboard, ListTodo, Building2, Trophy, RefreshCcw,
-  CheckCircle, BookOpen, BarChart3, Compass, Library, Download, Route
+  CheckCircle, BookOpen, BarChart3, Compass, Library, Download, Route, Trash2
 } from 'lucide-react';
 import { downloadLearnedCSV } from '@/utils/exportCsv';
 
@@ -66,6 +67,7 @@ export default function HomePage() {
   const [problemToEdit, setProblemToEdit] = useState<Problem | null>(null);
   const [isCommandMenuOpen, setIsCommandMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   // Schedule Review Dialog state
   const [showScheduleReviewDialog, setShowScheduleReviewDialog] = useState(false);
   const [problemToScheduleReview, setProblemToScheduleReview] = useState<Problem | null>(null);
@@ -323,6 +325,18 @@ export default function HomePage() {
     } catch (error) {
       logger.error('Failed to delete problem', error);
       toast.error('Failed to delete problem');
+    }
+  };
+
+  const handleDeleteAllProblems = async () => {
+    try {
+      await StorageService.deleteAllProblems();
+      setProblems([]);
+      setShowDeleteAllDialog(false);
+      toast.success('All problems deleted!');
+    } catch (error) {
+      logger.error('Failed to delete all problems', error);
+      toast.error('Failed to delete all problems');
     }
   };
 
@@ -887,6 +901,18 @@ export default function HomePage() {
 
                 <TabsContent value="problems" className="mt-0">
                   <ErrorBoundary>
+                    <div className="flex justify-end mb-3">
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setShowDeleteAllDialog(true)}
+                        disabled={activeProblems.length === 0}
+                        className="gap-1.5"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete All ({activeProblems.length})
+                      </Button>
+                    </div>
                     <TopicGroupedProblemList
                       problems={activeProblems}
                       onUpdateProblem={handleUpdateProblem}
@@ -1076,6 +1102,27 @@ export default function HomePage() {
             toast.success(`Review intervals updated: ${intervals.join(', ')} days`);
           }}
         />
+
+        {/* Delete All Problems confirmation */}
+        <AlertDialog open={showDeleteAllDialog} onOpenChange={setShowDeleteAllDialog}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete all problems?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete all {activeProblems.length} problems from your account and free up MongoDB storage. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDeleteAllProblems}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                Delete All
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {/* Schedule Review Dialog - for marking problems for review */}
         <EnhancedReviewDialog

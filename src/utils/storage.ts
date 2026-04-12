@@ -421,6 +421,21 @@ class StorageService {
     }
   }
 
+  static async deleteAllProblems(): Promise<number> {
+    if (this.isOfflineMode()) {
+      await this.saveProblems([]);
+      return 0;
+    }
+    try {
+      const deleted = await ApiService.deleteAllProblems();
+      localStorage.removeItem(PROBLEMS_KEY);
+      return deleted;
+    } catch (error) {
+      console.error('Error deleting all problems via API:', error);
+      throw error;
+    }
+  }
+
   /**
    * One-time migration: push locally-stored problems (created before auth was set up,
    * or added while offline-mode was active) up to the server.

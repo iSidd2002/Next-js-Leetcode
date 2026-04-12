@@ -225,6 +225,13 @@ class ApiService {
     });
   }
 
+  static async deleteAllProblems(): Promise<number> {
+    const response = await this.request<{ deleted: number }>('/problems/bulk', {
+      method: 'DELETE',
+    });
+    return response.data?.deleted ?? 0;
+  }
+
   // Contest methods
   static async getContests(): Promise<Contest[]> {
     const response = await this.request<Contest[]>('/contests');

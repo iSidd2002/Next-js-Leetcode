@@ -151,3 +151,33 @@ export async function POST(request: NextRequest) {
     }, { status: 500 });
   }
 }
+
+export async function DELETE(request: NextRequest) {
+  try {
+    const rateLimit = checkRateLimit(request, RateLimitPresets.API);
+    if (rateLimit.limited) {
+      const headers = getRateLimitHeaders(rateLimit, RateLimitPresets.API);
+      return NextResponse.json({
+        success: false,
+        error: 'Rate limit exceeded. Please try again later.'
+      }, { status: 429, headers });
+    }
+
+    await connectDB();
+
+    const user = await authenticateRequest(request);
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Access token required' }, { status: 401 });
+    }
+
+    const result = await Problem.deleteMany({ userId: user.id });
+
+    return NextResponse.json({
+      success: true,
+      data: { deleted: result.deletedCount }
+    });
+  } catch (error) {
+    console.error('Bulk delete problems error:', error);
+    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+  }
+}
