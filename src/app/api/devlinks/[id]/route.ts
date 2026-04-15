@@ -18,7 +18,7 @@ function toClient(doc: any) {
   };
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const rateLimit = checkRateLimit(request, RateLimitPresets.API);
     if (rateLimit.limited) {
@@ -31,10 +31,11 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const user = await authenticateRequest(request);
     if (!user) return NextResponse.json({ success: false, error: 'Access token required' }, { status: 401 });
 
+    const { id } = await params;
     const body = await request.json();
     const { url, title, description, category, tags, isRead } = body;
 
-    const link = await DevLink.findOne({ _id: params.id, userId: user.id });
+    const link = await DevLink.findOne({ _id: id, userId: user.id });
     if (!link) return NextResponse.json({ success: false, error: 'Link not found' }, { status: 404 });
 
     if (url !== undefined) {
@@ -57,7 +58,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const rateLimit = checkRateLimit(request, RateLimitPresets.API);
     if (rateLimit.limited) {
@@ -70,7 +71,8 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     const user = await authenticateRequest(request);
     if (!user) return NextResponse.json({ success: false, error: 'Access token required' }, { status: 401 });
 
-    const link = await DevLink.findOneAndDelete({ _id: params.id, userId: user.id });
+    const { id } = await params;
+    const link = await DevLink.findOneAndDelete({ _id: id, userId: user.id });
     if (!link) return NextResponse.json({ success: false, error: 'Link not found' }, { status: 404 });
 
     return NextResponse.json({ success: true });
