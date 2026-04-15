@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import type { Problem, Contest, ActiveDailyCodingChallengeQuestion, Todo, StudyPath, StudyPathProblem } from '@/types';
+import type { Problem, Contest, ActiveDailyCodingChallengeQuestion, Todo, StudyPath, StudyPathProblem, DevLink } from '@/types';
 import StorageService from '@/utils/storage';
 import ApiService from '@/services/api';
 import { generateId } from '@/utils/id';
@@ -25,6 +25,7 @@ import TodoList from '@/components/TodoList';
 import ExternalResources from '@/components/ExternalResources';
 import PatternPaths, { genId } from '@/components/PatternPaths';
 import Guide from '@/components/Guide';
+import DevLinks from '@/components/DevLinks';
 import { CommandMenu } from '@/components/CommandMenu';
 import { TopicGroupedProblemList } from '@/components/TopicGroupedProblemList';
 import { EnhancedSettings } from '@/components/EnhancedSettings';
@@ -47,7 +48,7 @@ import { toast } from 'sonner';
 import {
   Plus, Moon, Sun, Settings as SettingsIcon, LogOut, User, Command,
   LayoutDashboard, ListTodo, Building2, Trophy, RefreshCcw,
-  CheckCircle, BookOpen, BarChart3, Compass, Library, Download, Route, Trash2
+  CheckCircle, BookOpen, BarChart3, Compass, Library, Download, Route, Trash2, BookMarked
 } from 'lucide-react';
 import { downloadLearnedCSV } from '@/utils/exportCsv';
 
@@ -69,6 +70,7 @@ export default function HomePage() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
   const [patternPaths, setPatternPaths] = useState<StudyPath[]>([]);
+  const [devLinks, setDevLinks] = useState<DevLink[]>([]);
   // Schedule Review Dialog state
   const [showScheduleReviewDialog, setShowScheduleReviewDialog] = useState(false);
   const [problemToScheduleReview, setProblemToScheduleReview] = useState<Problem | null>(null);
@@ -116,7 +118,7 @@ export default function HomePage() {
 
   const loadUserData = async () => {
     try {
-      const [problemsData, potdData, contestsData, todosData, patternsData] = await Promise.all([
+      const [problemsData, potdData, contestsData, todosData, patternsData, , devLinksData] = await Promise.all([
         StorageService.getProblems(),
         StorageService.getPotdProblems(),
         StorageService.getContests(),
@@ -125,6 +127,10 @@ export default function HomePage() {
         // Load settings from server to prime the localStorage cache so
         // synchronous getReviewIntervals() returns up-to-date values.
         loadSettingsFromServer().catch(() => null),
+        fetch('/api/devlinks', { credentials: 'include' })
+          .then(r => r.json())
+          .then(j => (j.success ? (j.data as DevLink[]) : []))
+          .catch(() => [] as DevLink[]),
       ]);
 
       const cleanedProblems = cleanupInvalidDates(problemsData);
@@ -135,6 +141,7 @@ export default function HomePage() {
       setContests(contestsData);
       setTodos(todosData);
       setPatternPaths(patternsData);
+      setDevLinks(devLinksData);
 
       // Auto POTD cleanup
       try {
@@ -478,6 +485,61 @@ export default function HomePage() {
 
     return { added, skipped };
   };
+
+  // ─── Dev Links handlers ──────────────────────────────────────────────────────
+
+  const handleAddDevLink = async (data: Omit<DevLink, 'id' | 'createdAt' | 'updatedAt' | 'isRead'>) => {
+    try {
+      const res = await fetch('/api/devlinks', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      setDevLinks(prev => [json.data as DevLink, ...prev]);
+      toast.success('Link saved!');
+    } catch (error) {
+      logger.error('Failed to add dev link', error);
+      toast.error('Failed to save link');
+    }
+  };
+
+  const handleUpdateDevLink = async (id: string, updates: Partial<DevLink>) => {
+    try {
+      const res = await fetch(`/api/devlinks/${id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      setDevLinks(prev => prev.map(l => l.id === id ? (json.data as DevLink) : l));
+    } catch (error) {
+      logger.error('Failed to update dev link', error);
+      toast.error('Failed to update link');
+    }
+  };
+
+  const handleDeleteDevLink = async (id: string) => {
+    try {
+      const res = await fetch(`/api/devlinks/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error);
+      setDevLinks(prev => prev.filter(l => l.id !== id));
+      toast.success('Link deleted');
+    } catch (error) {
+      logger.error('Failed to delete dev link', error);
+      toast.error('Failed to delete link');
+    }
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────────
 
   const handleOpenForm = (problem?: Problem) => {
     setProblemToEdit(problem || null);
@@ -1001,6 +1063,7 @@ export default function HomePage() {
                     { value: 'patterns', icon: Route, label: 'Patterns' },
                     { value: 'guide', icon: Compass, label: 'Guide' },
                     { value: 'resources', icon: Library, label: 'Resources' },
+                    { value: 'devlinks', icon: BookMarked, label: 'Dev Links' },
                   ].map(({ value, icon: Icon, label, count, countVariant }) => (
                     <TabsTrigger
                       key={value}
@@ -1194,6 +1257,19 @@ export default function HomePage() {
                   <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
                     <ErrorBoundary>
                       <ExternalResources />
+                    </ErrorBoundary>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="devlinks" className="mt-0">
+                  <div className="rounded-xl border bg-card/50 backdrop-blur-sm p-6">
+                    <ErrorBoundary>
+                      <DevLinks
+                        links={devLinks}
+                        onAdd={handleAddDevLink}
+                        onUpdate={handleUpdateDevLink}
+                        onDelete={handleDeleteDevLink}
+                      />
                     </ErrorBoundary>
                   </div>
                 </TabsContent>

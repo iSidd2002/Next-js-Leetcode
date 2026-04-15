@@ -249,6 +249,18 @@ export interface StudyPath {
   updatedAt: string;
 }
 
+export interface DevLink {
+  id: string;
+  url: string;
+  title: string;
+  description?: string;
+  category: 'dsa' | 'system-design' | 'frontend' | 'backend' | 'tools' | 'interview' | 'other';
+  tags: string[];
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface DBTodo {
   _id: string;
   userId: string;
