@@ -1054,6 +1054,7 @@ export default function HomePage() {
                   {[
                     { value: 'dashboard', icon: LayoutDashboard, label: 'Dashboard' },
                     { value: 'problems', icon: ListTodo, label: 'Problems', count: activeProblems.length },
+                    { value: 'devlinks', icon: BookMarked, label: 'Dev Links' },
                     { value: 'companies', icon: Building2, label: 'Companies' },
                     { value: 'contests', icon: Trophy, label: 'Contests' },
                     { value: 'review', icon: RefreshCcw, label: 'Review', count: dueReviewProblems.length, countVariant: 'destructive' as const },
@@ -1063,7 +1064,6 @@ export default function HomePage() {
                     { value: 'patterns', icon: Route, label: 'Patterns' },
                     { value: 'guide', icon: Compass, label: 'Guide' },
                     { value: 'resources', icon: Library, label: 'Resources' },
-                    { value: 'devlinks', icon: BookMarked, label: 'Dev Links' },
                   ].map(({ value, icon: Icon, label, count, countVariant }) => (
                     <TabsTrigger
                       key={value}
